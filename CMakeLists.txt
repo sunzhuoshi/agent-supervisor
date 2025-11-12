@@ -15,14 +15,17 @@ add_executable(GitHubCopilotAgentBot
     src/NotificationService.cs
     src/NotificationHistory.cs
     src/Configuration.cs
+    src/SettingsForm.cs
+    src/SystemTrayManager.cs
     src/Models/PullRequestReview.cs
     src/Models/NotificationEntry.cs
 )
 
-# Set project properties
+# Set project properties for Windows Forms
 set_target_properties(GitHubCopilotAgentBot PROPERTIES
-    VS_DOTNET_TARGET_FRAMEWORK_VERSION "v6.0"
-    VS_DOTNET_REFERENCES "System;System.Net.Http;System.Text.Json"
+    VS_DOTNET_TARGET_FRAMEWORK_VERSION "v6.0-windows"
+    VS_DOTNET_REFERENCES "System;System.Net.Http;System.Text.Json;System.Windows.Forms;System.Drawing"
+    WIN32_EXECUTABLE TRUE
 )
 
 # Set output directory

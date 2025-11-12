@@ -1,147 +1,188 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using GitHubCopilotAgentBot;
+using System.Windows.Forms;
+using System.Diagnostics;
 
-class Program
+namespace GitHubCopilotAgentBot
 {
-    private static GitHubService? _gitHubService;
-    private static NotificationService? _notificationService;
-    private static NotificationHistory? _notificationHistory;
-    private static Configuration? _config;
-    private static CancellationTokenSource? _cts;
-    private static string? _lastPendingUrl;
-
-    static async Task Main(string[] args)
+    class Program
     {
-        Console.WriteLine("=== GitHub Copilot Agent Bot ===");
-        Console.WriteLine("Monitor PR reviews and get desktop notifications\n");
-
-        // Load or create configuration
-        _config = Configuration.Load();
-        if (string.IsNullOrEmpty(_config.PersonalAccessToken))
+        [STAThread]
+        static void Main(string[] args)
         {
-            _config = Configuration.CreateDefault();
-        }
-
-        if (string.IsNullOrEmpty(_config.PersonalAccessToken))
-        {
-            Console.WriteLine("Error: Personal Access Token is required.");
-            Console.WriteLine("Press any key to exit...");
-            Console.ReadKey();
-            return;
-        }
-
-        // Initialize services
-        _gitHubService = new GitHubService(_config.PersonalAccessToken);
-        _notificationHistory = new NotificationHistory(_config.MaxHistoryEntries);
-        _notificationService = new NotificationService(_notificationHistory);
-
-        // Verify GitHub connection
-        Console.WriteLine("Connecting to GitHub...");
-        var username = await _gitHubService.GetCurrentUserAsync();
-        if (string.IsNullOrEmpty(username))
-        {
-            Console.WriteLine("Error: Failed to connect to GitHub. Please check your Personal Access Token.");
-            Console.WriteLine("Press any key to exit...");
-            Console.ReadKey();
-            return;
-        }
-
-        Console.WriteLine($"Connected as: {username}");
-        Console.WriteLine($"Polling interval: {_config.PollingIntervalSeconds} seconds\n");
-
-        // Start monitoring
-        _cts = new CancellationTokenSource();
-        var monitoringTask = Task.Run(() => MonitorReviews(_cts.Token));
-
-        // Handle user input
-        Console.WriteLine("Commands:");
-        Console.WriteLine("  H - Show notification history");
-        Console.WriteLine("  O - Open last pending PR in browser");
-        Console.WriteLine("  R - Refresh now");
-        Console.WriteLine("  Q - Quit");
-        Console.WriteLine();
-
-        while (true)
-        {
-            if (Console.KeyAvailable)
-            {
-                var key = Console.ReadKey(true);
-                
-                switch (char.ToUpper(key.KeyChar))
-                {
-                    case 'H':
-                        _notificationService.DisplayHistory(20);
-                        break;
-                    
-                    case 'O':
-                        if (!string.IsNullOrEmpty(_lastPendingUrl))
-                        {
-                            _notificationService.OpenInBrowser(_lastPendingUrl);
-                        }
-                        else
-                        {
-                            Console.WriteLine("No pending PR to open.");
-                        }
-                        break;
-                    
-                    case 'R':
-                        Console.WriteLine("Refreshing now...");
-                        break;
-                    
-                    case 'Q':
-                        Console.WriteLine("\nShutting down...");
-                        _cts.Cancel();
-                        await monitoringTask;
-                        return;
-                }
-            }
-
-            await Task.Delay(100);
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(new BotApplicationContext());
         }
     }
 
-    static async Task MonitorReviews(CancellationToken cancellationToken)
+    public class BotApplicationContext : ApplicationContext
     {
-        Console.WriteLine($"Monitoring started. Checking every {_config!.PollingIntervalSeconds} seconds...\n");
-        
-        while (!cancellationToken.IsCancellationRequested)
+        private GitHubService? _gitHubService;
+        private NotificationHistory? _notificationHistory;
+        private SystemTrayManager? _systemTrayManager;
+        private Configuration? _config;
+        private CancellationTokenSource? _cts;
+        private Task? _monitoringTask;
+
+        public BotApplicationContext()
         {
-            try
-            {
-                var reviews = await _gitHubService!.GetPendingReviewsAsync();
-                
-                foreach (var review in reviews)
-                {
-                    _notificationService!.ShowNotification(review);
-                    _lastPendingUrl = review.HtmlUrl;
-                }
+            InitializeApplication();
+        }
 
-                if (reviews.Count > 0)
-                {
-                    Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Found {reviews.Count} new review(s)");
-                }
-                else
-                {
-                    Console.Write($"\r[{DateTime.Now:HH:mm:ss}] Monitoring... (No new reviews)");
-                }
-            }
-            catch (Exception ex)
+        private async void InitializeApplication()
+        {
+            // Load or create configuration
+            _config = Configuration.Load();
+            
+            if (string.IsNullOrEmpty(_config.PersonalAccessToken))
             {
-                Console.WriteLine($"\n[{DateTime.Now:HH:mm:ss}] Error during monitoring: {ex.Message}");
+                // Show settings dialog on first run
+                var settingsForm = new SettingsForm(_config);
+                if (settingsForm.ShowDialog() != DialogResult.OK || 
+                    string.IsNullOrEmpty(_config.PersonalAccessToken))
+                {
+                    MessageBox.Show("Personal Access Token is required to run the application.", 
+                        "Configuration Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    Application.Exit();
+                    return;
+                }
             }
 
-            try
+            // Initialize services
+            _notificationHistory = new NotificationHistory(_config.MaxHistoryEntries);
+            _systemTrayManager = new SystemTrayManager(
+                _notificationHistory,
+                OnSettingsClick,
+                OnExitClick,
+                OnOpenUrlClick);
+
+            _gitHubService = new GitHubService(_config.PersonalAccessToken);
+
+            // Verify GitHub connection
+            _systemTrayManager.UpdateStatus("Connecting to GitHub...");
+            var username = await _gitHubService.GetCurrentUserAsync();
+            
+            if (string.IsNullOrEmpty(username))
             {
-                await Task.Delay(TimeSpan.FromSeconds(_config!.PollingIntervalSeconds), cancellationToken);
+                MessageBox.Show("Failed to connect to GitHub. Please check your Personal Access Token.", 
+                    "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                OnSettingsClick();
+                return;
             }
-            catch (TaskCanceledException)
+
+            _systemTrayManager.UpdateStatus($"Connected as {username}");
+
+            // Start monitoring
+            _cts = new CancellationTokenSource();
+            _monitoringTask = Task.Run(() => MonitorReviews(_cts.Token));
+        }
+
+        private async Task MonitorReviews(CancellationToken cancellationToken)
+        {
+            while (!cancellationToken.IsCancellationRequested)
             {
-                break;
+                try
+                {
+                    var reviews = await _gitHubService!.GetPendingReviewsAsync();
+                    
+                    foreach (var review in reviews)
+                    {
+                        // Check if already notified
+                        if (!_notificationHistory!.HasBeenNotified(review.Id))
+                        {
+                            _systemTrayManager!.ShowNotification(review);
+                            
+                            var entry = new Models.NotificationEntry
+                            {
+                                Id = review.Id,
+                                Repository = review.RepositoryName,
+                                PullRequestNumber = review.PullRequestNumber,
+                                HtmlUrl = review.HtmlUrl,
+                                Reviewer = review.User?.Login ?? "Unknown",
+                                State = review.State,
+                                Body = review.Body,
+                                Timestamp = review.SubmittedAt,
+                                NotifiedAt = DateTime.UtcNow
+                            };
+                            
+                            _notificationHistory.Add(entry);
+                        }
+                    }
+
+                    if (reviews.Count > 0)
+                    {
+                        _systemTrayManager!.UpdateStatus($"Found {reviews.Count} new review(s)");
+                    }
+                    else
+                    {
+                        _systemTrayManager!.UpdateStatus("Monitoring... (No new reviews)");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _systemTrayManager?.UpdateStatus($"Error: {ex.Message}");
+                }
+
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(_config!.PollingIntervalSeconds), cancellationToken);
+                }
+                catch (TaskCanceledException)
+                {
+                    break;
+                }
             }
         }
 
-        Console.WriteLine("\nMonitoring stopped.");
+        private void OnSettingsClick()
+        {
+            var settingsForm = new SettingsForm(_config!);
+            if (settingsForm.ShowDialog() == DialogResult.OK)
+            {
+                // Restart monitoring with new settings
+                RestartMonitoring();
+            }
+        }
+
+        private void RestartMonitoring()
+        {
+            _cts?.Cancel();
+            _monitoringTask?.Wait(TimeSpan.FromSeconds(5));
+
+            _gitHubService = new GitHubService(_config!.PersonalAccessToken);
+            _notificationHistory = new NotificationHistory(_config.MaxHistoryEntries);
+
+            _cts = new CancellationTokenSource();
+            _monitoringTask = Task.Run(() => MonitorReviews(_cts.Token));
+
+            _systemTrayManager?.UpdateStatus("Monitoring restarted");
+        }
+
+        private void OnExitClick()
+        {
+            _cts?.Cancel();
+            _monitoringTask?.Wait(TimeSpan.FromSeconds(5));
+            _systemTrayManager?.Dispose();
+            Application.Exit();
+        }
+
+        private void OnOpenUrlClick(string url)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error opening browser: {ex.Message}", "Error", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
     }
 }

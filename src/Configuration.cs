@@ -20,10 +20,9 @@ namespace GitHubCopilotAgentBot
                     var config = JsonSerializer.Deserialize<Configuration>(json);
                     return config ?? new Configuration();
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    Console.WriteLine($"Error loading configuration: {ex.Message}");
-                    Console.WriteLine("Using default configuration.");
+                    // Return default configuration on error
                 }
             }
 
@@ -38,29 +37,10 @@ namespace GitHubCopilotAgentBot
                 var json = JsonSerializer.Serialize(this, options);
                 File.WriteAllText(ConfigFileName, json);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Console.WriteLine($"Error saving configuration: {ex.Message}");
+                // Silent fail - error will be shown in UI if needed
             }
-        }
-
-        public static Configuration CreateDefault()
-        {
-            var config = new Configuration();
-            Console.WriteLine("\nFirst-time setup:");
-            Console.Write("Enter your GitHub Personal Access Token: ");
-            config.PersonalAccessToken = Console.ReadLine()?.Trim() ?? string.Empty;
-
-            Console.Write("Enter polling interval in seconds (default: 60): ");
-            var intervalInput = Console.ReadLine()?.Trim();
-            if (!string.IsNullOrEmpty(intervalInput) && int.TryParse(intervalInput, out int interval))
-            {
-                config.PollingIntervalSeconds = interval;
-            }
-
-            config.Save();
-            Console.WriteLine("\nConfiguration saved to config.json");
-            return config;
         }
     }
 }

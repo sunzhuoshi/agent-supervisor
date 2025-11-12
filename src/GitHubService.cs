@@ -1,8 +1,8 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
-using GitHubCopilotAgentBot.Models;
+using AgentSupervisor.Models;
 
-namespace GitHubCopilotAgentBot
+namespace AgentSupervisor
 {
     public class GitHubService
     {

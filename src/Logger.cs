@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Diagnostics;
 
-namespace GitHubCopilotAgentBot
+namespace AgentSupervisor
 {
     public class Logger
     {

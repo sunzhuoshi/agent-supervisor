@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace GitHubCopilotAgentBot
+namespace AgentSupervisor
 {
     public class Configuration
     {

@@ -1,8 +1,8 @@
 using System.Runtime.InteropServices;
 using System.Diagnostics;
-using GitHubCopilotAgentBot.Models;
+using AgentSupervisor.Models;
 
-namespace GitHubCopilotAgentBot
+namespace AgentSupervisor
 {
     public class NotificationService
     {

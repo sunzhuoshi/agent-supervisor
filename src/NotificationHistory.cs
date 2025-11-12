@@ -1,7 +1,7 @@
 using System.Text.Json;
-using GitHubCopilotAgentBot.Models;
+using AgentSupervisor.Models;
 
-namespace GitHubCopilotAgentBot
+namespace AgentSupervisor
 {
     public class NotificationHistory
     {

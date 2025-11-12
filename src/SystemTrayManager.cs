@@ -13,12 +13,14 @@ namespace GitHubCopilotAgentBot
         private readonly Action _onSettingsClick;
         private readonly Action _onExitClick;
         private readonly Action<string> _onOpenUrlClick;
+        private Icon? _customIcon;
 
         public SystemTrayManager(
             NotificationHistory notificationHistory,
             Action onSettingsClick,
             Action onExitClick,
-            Action<string> onOpenUrlClick)
+            Action<string> onOpenUrlClick,
+            string? customIconPath = null)
         {
             Logger.LogInfo("Initializing SystemTrayManager");
             
@@ -26,6 +28,12 @@ namespace GitHubCopilotAgentBot
             _onSettingsClick = onSettingsClick;
             _onExitClick = onExitClick;
             _onOpenUrlClick = onOpenUrlClick;
+
+            // Load custom icon if provided
+            if (!string.IsNullOrWhiteSpace(customIconPath))
+            {
+                _customIcon = LoadCustomIcon(customIconPath);
+            }
 
             _contextMenu = CreateContextMenu();
             _notifyIcon = CreateNotifyIcon();
@@ -39,7 +47,7 @@ namespace GitHubCopilotAgentBot
             
             var icon = new NotifyIcon
             {
-                Icon = SystemIcons.Information,
+                Icon = _customIcon ?? SystemIcons.Information,
                 Visible = true,
                 Text = "Agent Supervisor"
             };
@@ -50,7 +58,7 @@ namespace GitHubCopilotAgentBot
             icon.Visible = false;
             icon.Visible = true;
             
-            Logger.LogInfo($"System tray icon created - Visible: {icon.Visible}, Text: {icon.Text}");
+            Logger.LogInfo($"System tray icon created - Visible: {icon.Visible}, Text: {icon.Text}, Custom Icon: {_customIcon != null}");
             
             return icon;
         }
@@ -127,10 +135,31 @@ namespace GitHubCopilotAgentBot
             _notifyIcon.Text = $"Agent Supervisor\n{status}";
         }
 
+        private Icon? LoadCustomIcon(string iconPath)
+        {
+            try
+            {
+                if (!File.Exists(iconPath))
+                {
+                    Logger.LogWarning($"Custom icon file not found: {iconPath}");
+                    return null;
+                }
+
+                Logger.LogInfo($"Loading custom icon from: {iconPath}");
+                return new Icon(iconPath);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Failed to load custom icon from: {iconPath}", ex);
+                return null;
+            }
+        }
+
         public void Dispose()
         {
             _notifyIcon?.Dispose();
             _contextMenu?.Dispose();
+            _customIcon?.Dispose();
         }
     }
 }

@@ -1,5 +1,6 @@
 {
   "PersonalAccessToken": "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN_HERE",
   "PollingIntervalSeconds": 60,
-  "MaxHistoryEntries": 100
+  "MaxHistoryEntries": 100,
+  "CustomIconPath": ""
 }

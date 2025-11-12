@@ -9,6 +9,7 @@ namespace GitHubCopilotAgentBot
         public int MaxHistoryEntries { get; set; } = 100;
         public string ProxyUrl { get; set; } = string.Empty;
         public bool UseProxy { get; set; } = false;
+        public string CustomIconPath { get; set; } = string.Empty;
 
         private const string ConfigFileName = "config.json";
 

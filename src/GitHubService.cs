@@ -31,7 +31,7 @@ namespace GitHubCopilotAgentBot
 
             _httpClient = new HttpClient(handler);
             _httpClient.DefaultRequestHeaders.UserAgent.Add(
-                new ProductInfoHeaderValue("GitHubCopilotAgentBot", "1.0"));
+                new ProductInfoHeaderValue("AgentSupervisor", "1.0"));
             _httpClient.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", personalAccessToken);
             _httpClient.DefaultRequestHeaders.Accept.Add(

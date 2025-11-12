@@ -8,7 +8,7 @@ namespace AgentSupervisor
     {
         private readonly HttpClient _httpClient;
         private readonly string _username;
-        private readonly HashSet<long> _seenReviewIds = new HashSet<long>();
+        private readonly ReviewRequestHistory _reviewRequestHistory;
 
         public GitHubService(string personalAccessToken, string? proxyUrl = null)
         {
@@ -39,6 +39,7 @@ namespace AgentSupervisor
             _httpClient.DefaultRequestHeaders.Add("X-GitHub-Api-Version", "2022-11-28");
 
             _username = string.Empty;
+            _reviewRequestHistory = new ReviewRequestHistory();
             Logger.LogInfo("GitHubService initialized");
         }
 
@@ -78,10 +79,11 @@ namespace AgentSupervisor
         public async Task<List<PullRequestReview>> GetPendingReviewsAsync()
         {
             var reviews = new List<PullRequestReview>();
+            var currentRequestIds = new List<string>();
 
             try
             {
-                Logger.LogInfo("Fetching pending reviews");
+                Logger.LogInfo("Fetching pending review requests");
                 var username = await GetCurrentUserAsync();
                 if (string.IsNullOrEmpty(username))
                 {
@@ -114,7 +116,7 @@ namespace AgentSupervisor
                     return reviews;
                 }
 
-                Logger.LogInfo($"Found {items.GetArrayLength()} PRs to check");
+                Logger.LogInfo($"Found {items.GetArrayLength()} review requests to check");
 
                 foreach (var item in items.EnumerateArray())
                 {
@@ -126,7 +128,7 @@ namespace AgentSupervisor
                             continue;
                         }
 
-                        // Get PR details to fetch reviews
+                        // Get PR details
                         Logger.LogInfo($"HTTP GET {pullRequestUrl}");
                         startTime = DateTime.UtcNow;
                         var prResponse = await _httpClient.GetAsync(pullRequestUrl);
@@ -144,30 +146,46 @@ namespace AgentSupervisor
                         var repoFullName = prDoc.RootElement.GetProperty("base")
                             .GetProperty("repo").GetProperty("full_name").GetString() ?? "";
                         var prNumber = prDoc.RootElement.GetProperty("number").GetInt32();
+                        var prId = prDoc.RootElement.GetProperty("id").GetInt64();
+                        var htmlUrl = prDoc.RootElement.GetProperty("html_url").GetString() ?? "";
+                        var title = prDoc.RootElement.GetProperty("title").GetString() ?? "";
+                        var createdAt = prDoc.RootElement.TryGetProperty("created_at", out var created)
+                            ? DateTime.Parse(created.GetString() ?? DateTime.UtcNow.ToString())
+                            : DateTime.UtcNow;
                         
-                        // Fetch reviews for this PR
-                        var reviewsUrl = $"{pullRequestUrl}/reviews";
-                        Logger.LogInfo($"HTTP GET {reviewsUrl}");
-                        startTime = DateTime.UtcNow;
-                        var reviewsResponse = await _httpClient.GetAsync(reviewsUrl);
-                        elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
-                        Logger.LogInfo($"HTTP Response: {(int)reviewsResponse.StatusCode} {reviewsResponse.StatusCode} | {elapsed:F0}ms | {reviewsUrl}");
+                        // Create unique identifier for this review request
+                        var requestId = $"{repoFullName}#{prNumber}";
+                        currentRequestIds.Add(requestId);
                         
-                        if (reviewsResponse.IsSuccessStatusCode)
+                        // Check if this is a new review request
+                        if (!_reviewRequestHistory.HasBeenSeen(requestId))
                         {
-                            var reviewsJson = await reviewsResponse.Content.ReadAsStringAsync();
-                            using var reviewsDoc = JsonDocument.Parse(reviewsJson);
-                            
-                            foreach (var reviewElement in reviewsDoc.RootElement.EnumerateArray())
+                            // Create a PullRequestReview object to represent the review request
+                            var review = new PullRequestReview
                             {
-                                var review = ParseReview(reviewElement, repoFullName, prNumber);
-                                if (review != null && !_seenReviewIds.Contains(review.Id))
+                                Id = prId,
+                                HtmlUrl = htmlUrl,
+                                State = "PENDING",
+                                Body = title,
+                                SubmittedAt = createdAt,
+                                RepositoryName = repoFullName,
+                                PullRequestNumber = prNumber
+                            };
+                            
+                            // Get PR author info if available
+                            if (prDoc.RootElement.TryGetProperty("user", out var userElement))
+                            {
+                                review.User = new User
                                 {
-                                    reviews.Add(review);
-                                    _seenReviewIds.Add(review.Id);
-                                    Logger.LogInfo($"New review found: {repoFullName} PR#{prNumber} - {review.State}");
-                                }
+                                    Login = userElement.GetProperty("login").GetString() ?? "",
+                                    HtmlUrl = userElement.TryGetProperty("html_url", out var userHtmlUrl)
+                                        ? userHtmlUrl.GetString() ?? ""
+                                        : ""
+                                };
                             }
+                            
+                            reviews.Add(review);
+                            Logger.LogInfo($"New review request found: {repoFullName} PR#{prNumber}");
                         }
                     }
                     catch (Exception ex)
@@ -176,51 +194,18 @@ namespace AgentSupervisor
                     }
                 }
 
-                Logger.LogInfo($"Fetched {reviews.Count} new reviews");
+                // Save all current request IDs to persistent storage
+                _reviewRequestHistory.MarkMultipleAsSeen(currentRequestIds);
+                
+                Logger.LogInfo($"Fetched {reviews.Count} new review requests");
             }
             catch (Exception ex)
             {
-                Logger.LogError("Error fetching pending reviews", ex);
+                Logger.LogError("Error fetching pending review requests", ex);
             }
 
             return reviews;
         }
-
-        private PullRequestReview? ParseReview(JsonElement element, string repoName, int prNumber)
-        {
-            try
-            {
-                var review = new PullRequestReview
-                {
-                    Id = element.GetProperty("id").GetInt64(),
-                    HtmlUrl = element.GetProperty("html_url").GetString() ?? "",
-                    State = element.GetProperty("state").GetString() ?? "",
-                    Body = element.TryGetProperty("body", out var body) ? body.GetString() ?? "" : "",
-                    SubmittedAt = element.TryGetProperty("submitted_at", out var submitted) 
-                        ? DateTime.Parse(submitted.GetString() ?? DateTime.UtcNow.ToString()) 
-                        : DateTime.UtcNow,
-                    RepositoryName = repoName,
-                    PullRequestNumber = prNumber
-                };
-
-                if (element.TryGetProperty("user", out var userElement))
-                {
-                    review.User = new User
-                    {
-                        Login = userElement.GetProperty("login").GetString() ?? "",
-                        HtmlUrl = userElement.TryGetProperty("html_url", out var htmlUrl) 
-                            ? htmlUrl.GetString() ?? "" 
-                            : ""
-                    };
-                }
-
-                return review;
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError("Error parsing review", ex);
-                return null;
-            }
-        }
     }
 }
+

@@ -13,6 +13,7 @@ namespace AgentSupervisor
         private readonly Action _onSettingsClick;
         private readonly Action _onExitClick;
         private readonly Action<string> _onOpenUrlClick;
+        private Icon? _customIcon;
 
         public SystemTrayManager(
             NotificationHistory notificationHistory,
@@ -27,6 +28,9 @@ namespace AgentSupervisor
             _onExitClick = onExitClick;
             _onOpenUrlClick = onOpenUrlClick;
 
+            // Create custom icon
+            _customIcon = CreateCustomIcon();
+
             _contextMenu = CreateContextMenu();
             _notifyIcon = CreateNotifyIcon();
             
@@ -39,7 +43,7 @@ namespace AgentSupervisor
             
             var icon = new NotifyIcon
             {
-                Icon = SystemIcons.Information,
+                Icon = _customIcon,
                 Visible = true,
                 Text = "Agent Supervisor"
             };
@@ -127,10 +131,46 @@ namespace AgentSupervisor
             _notifyIcon.Text = $"Agent Supervisor\n{status}";
         }
 
+        private Icon CreateCustomIcon()
+        {
+            try
+            {
+                // Create a simple custom icon with GitHub Copilot colors
+                using var bitmap = new Bitmap(16, 16);
+                using var graphics = Graphics.FromImage(bitmap);
+                
+                // Fill with a gradient from purple to blue (GitHub Copilot colors)
+                using var brush = new System.Drawing.Drawing2D.LinearGradientBrush(
+                    new Rectangle(0, 0, 16, 16),
+                    Color.FromArgb(138, 43, 226), // Purple
+                    Color.FromArgb(0, 122, 204),   // Blue
+                    45f);
+                
+                graphics.FillEllipse(brush, 0, 0, 16, 16);
+                
+                // Draw a simple "A" in white for "Agent"
+                using var font = new Font("Arial", 9, FontStyle.Bold);
+                using var textBrush = new SolidBrush(Color.White);
+                graphics.DrawString("A", font, textBrush, -1, 1);
+                
+                var hIcon = bitmap.GetHicon();
+                var icon = Icon.FromHandle(hIcon);
+                
+                Logger.LogInfo("Custom icon created successfully");
+                return icon;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Failed to create custom icon, using default", ex);
+                return SystemIcons.Information;
+            }
+        }
+
         public void Dispose()
         {
             _notifyIcon?.Dispose();
             _contextMenu?.Dispose();
+            _customIcon?.Dispose();
         }
     }
 }

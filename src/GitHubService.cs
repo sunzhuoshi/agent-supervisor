@@ -36,7 +36,7 @@ namespace GitHubCopilotAgentBot
                 new AuthenticationHeaderValue("Bearer", personalAccessToken);
             _httpClient.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
-            _httpClient.DefaultRequestHeaders.Add("X-GitHub-Api-Version", "2019-11-05");
+            _httpClient.DefaultRequestHeaders.Add("X-GitHub-Api-Version", "2022-11-28");
 
             _username = string.Empty;
             Logger.LogInfo("GitHubService initialized");

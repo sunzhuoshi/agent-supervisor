@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Diagnostics;
 
 namespace GitHubCopilotAgentBot
 {
@@ -31,6 +32,13 @@ namespace GitHubCopilotAgentBot
             {
                 try
                 {
+                    var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                    var logEntry = $"[{timestamp}] [{level}] {message}";
+                    
+                    // Write to debug output
+                    Debug.WriteLine(logEntry);
+                    
+                    // Write to file
                     // Rotate log if it's too large
                     if (File.Exists(LogFileName))
                     {
@@ -45,9 +53,7 @@ namespace GitHubCopilotAgentBot
                         }
                     }
 
-                    var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                    var logEntry = $"[{timestamp}] [{level}] {message}\n";
-                    File.AppendAllText(LogFileName, logEntry);
+                    File.AppendAllText(LogFileName, logEntry + "\n");
                 }
                 catch
                 {

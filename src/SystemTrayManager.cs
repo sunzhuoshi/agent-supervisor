@@ -20,6 +20,8 @@ namespace GitHubCopilotAgentBot
             Action onExitClick,
             Action<string> onOpenUrlClick)
         {
+            Logger.LogInfo("Initializing SystemTrayManager");
+            
             _notificationHistory = notificationHistory;
             _onSettingsClick = onSettingsClick;
             _onExitClick = onExitClick;
@@ -27,10 +29,14 @@ namespace GitHubCopilotAgentBot
 
             _contextMenu = CreateContextMenu();
             _notifyIcon = CreateNotifyIcon();
+            
+            Logger.LogInfo("SystemTrayManager initialized successfully");
         }
 
         private NotifyIcon CreateNotifyIcon()
         {
+            Logger.LogInfo("Creating system tray icon");
+            
             var icon = new NotifyIcon
             {
                 Icon = SystemIcons.Information,
@@ -39,6 +45,13 @@ namespace GitHubCopilotAgentBot
             };
             icon.ContextMenuStrip = _contextMenu;
             icon.DoubleClick += (s, e) => ShowRecentNotifications();
+            
+            // Ensure icon is shown (workaround for Windows 11 issues)
+            icon.Visible = false;
+            icon.Visible = true;
+            
+            Logger.LogInfo($"System tray icon created - Visible: {icon.Visible}, Text: {icon.Text}");
+            
             return icon;
         }
 

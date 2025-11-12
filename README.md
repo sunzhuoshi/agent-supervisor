@@ -4,6 +4,7 @@ A Windows system tray application that helps improve GitHub Copilot agents workf
 
 ## Features
 
+- **Taskbar Badge Overlay**: Shows the number of pending PR review requests on the taskbar icon
 - **System Tray Application**: Runs in background with system tray icon
 - **Monitor PR Reviews**: Automatically monitors pull request reviews assigned to the current user
 - **Desktop Notifications**: Displays Windows balloon tip notifications when new reviews are detected
@@ -51,12 +52,17 @@ dotnet build --configuration Release
    - Configure polling interval (default: 60 seconds)
    - Click "Save"
 
-2. **System Tray**:
-   - The application runs in the system tray (notification area)
-   - Look for the information icon in your system tray
+2. **Taskbar**:
+   - The application appears in the Windows taskbar with a custom icon
+   - A badge overlay displays the number of pending PR review requests (e.g., a red bubble with "3")
+   - The badge automatically updates when the pending count changes
+   
+3. **System Tray**:
+   - The application also runs in the system tray (notification area)
+   - Look for the custom purple-to-blue gradient icon with "A" in your system tray
    - The tooltip shows the current connection status
 
-3. **Using the Application**:
+4. **Using the Application**:
    - **Right-click the tray icon** to access the menu:
      - "Recent Notifications" - View the last 10 notifications
      - "Settings" - Change your configuration
@@ -64,6 +70,7 @@ dotnet build --configuration Release
      - "Exit" - Close the application
    - **Double-click the tray icon** - View recent notifications
    - **Click a balloon notification** - Opens the PR in your browser
+   - **Check the taskbar badge** - See how many reviews are pending at a glance
 
 ## Configuration
 
@@ -82,10 +89,11 @@ You can edit this file manually or use the Settings UI (right-click tray icon �
 ## How It Works
 
 1. **Background Monitoring**: The application runs in the background, checking GitHub every N seconds
-2. **System Tray**: Displays an icon in the Windows notification area
-3. **Balloon Notifications**: When a new PR review is detected, a Windows balloon tip notification appears
-4. **Notification History**: All notifications are saved to `notification_history.json`
-5. **Click to Open**: Click on a notification to open the PR in your default browser
+2. **Taskbar Badge**: Shows a number bubble on the taskbar icon indicating pending review requests
+3. **System Tray**: Displays an icon in the Windows notification area
+4. **Balloon Notifications**: When a new PR review is detected, a Windows balloon tip notification appears
+5. **Notification History**: All notifications are saved to `notification_history.json`
+6. **Click to Open**: Click on a notification to open the PR in your default browser
 
 ## Files Created
 
@@ -101,6 +109,8 @@ AgentSupervisor/
 ├── AgentSupervisor.csproj # .NET project file
 ├── src/
 │   ├── Program.cs               # Main entry point and application context
+│   ├── MainWindow.cs            # Hidden window for taskbar presence
+│   ├── TaskbarBadgeManager.cs   # Taskbar badge overlay management
 │   ├── SettingsForm.cs          # Settings UI form
 │   ├── AboutForm.cs             # About dialog
 │   ├── SystemTrayManager.cs     # System tray icon and notifications

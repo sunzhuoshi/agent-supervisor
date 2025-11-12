@@ -16,8 +16,8 @@ A Windows system tray application that helps improve GitHub Copilot agents workf
 ## Requirements
 
 - Windows OS
-- .NET 6.0 SDK or later (for building)
-- .NET 6.0 Runtime (for running)
+- .NET 8.0 SDK or later (for building)
+- .NET 8.0 Runtime (for running)
 - GitHub Personal Access Token with appropriate permissions
 
 ## GitHub Personal Access Token Setup
@@ -39,7 +39,7 @@ dotnet restore
 dotnet build --configuration Release
 
 # The executable will be at:
-# bin/Release/net6.0-windows/GitHubCopilotAgentBot.exe
+# bin/Release/net8.0-windows/GitHubCopilotAgentBot.exe
 ```
 
 ## Running the Application
@@ -122,7 +122,7 @@ GitHubCopilotAgentBot/
 ## Troubleshooting
 
 ### Application doesn't start
-- Ensure .NET 6.0 Runtime is installed
+- Ensure .NET 8.0 Runtime is installed
 - Check Windows Event Viewer for error messages
 - Try running from command line to see error output
 
@@ -143,7 +143,7 @@ GitHubCopilotAgentBot/
 - The icon is a standard Windows information icon
 
 ### Build errors
-- Ensure .NET 6.0 SDK is installed: `dotnet --version`
+- Ensure .NET 8.0 SDK is installed: `dotnet --version`
 - Try cleaning the build: `dotnet clean` then `dotnet build`
 
 ## Differences from Console Version

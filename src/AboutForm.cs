@@ -3,7 +3,7 @@ using System.Windows.Forms;
 using System.Drawing;
 using System.Reflection;
 
-namespace GitHubCopilotAgentBot
+namespace AgentSupervisor
 {
     public partial class AboutForm : Form
     {
@@ -56,7 +56,7 @@ namespace GitHubCopilotAgentBot
             // Copyright Label
             var copyrightLabel = new Label
             {
-                Text = $"© {DateTime.Now.Year} GitHubCopilotAgentBot Contributors",
+                Text = $"© {DateTime.Now.Year} Agent Supervisor Contributors",
                 Location = new Point(20, 140),
                 Size = new Size(410, 20),
                 TextAlign = ContentAlignment.MiddleCenter
@@ -66,7 +66,7 @@ namespace GitHubCopilotAgentBot
             // GitHub Link Label
             var githubLinkLabel = new LinkLabel
             {
-                Text = "github.com/sunzhuoshi/GitHubCopilotAgentBot",
+                Text = "github.com/sunzhuoshi/AgentSupervisor",
                 Location = new Point(20, 170),
                 Size = new Size(410, 20),
                 TextAlign = ContentAlignment.MiddleCenter
@@ -77,7 +77,7 @@ namespace GitHubCopilotAgentBot
                 {
                     System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                     {
-                        FileName = "https://github.com/sunzhuoshi/GitHubCopilotAgentBot",
+                        FileName = "https://github.com/sunzhuoshi/AgentSupervisor",
                         UseShellExecute = true
                     });
                 }

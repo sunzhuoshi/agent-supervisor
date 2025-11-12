@@ -34,6 +34,6 @@ jobs:
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: GitHubCopilotAgentBot-Release
+        name: AgentSupervisor-Release
         path: bin/Release/net8.0-windows/
         if-no-files-found: error

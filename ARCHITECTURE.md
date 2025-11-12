@@ -2,7 +2,7 @@
 
 ## Overview
 
-GitHubCopilotAgentBot is a Windows console application written in C# that monitors GitHub pull request reviews and provides desktop notifications without interfering with Windows system notifications.
+Agent Supervisor is a Windows console application written in C# that monitors GitHub pull request reviews and provides desktop notifications without interfering with Windows system notifications.
 
 ## System Architecture
 
@@ -186,7 +186,7 @@ GitHubCopilotAgentBot is a Windows console application written in C# that monito
 
 ### .NET CLI Build
 - Standard .NET 6.0 Windows Forms project
-- Uses `GitHubCopilotAgentBot.csproj`
+- Uses `AgentSupervisor.csproj`
 - Targets `net6.0-windows` framework
 - Builds to `bin/Debug/net6.0-windows/` or `bin/Release/net6.0-windows/`
 

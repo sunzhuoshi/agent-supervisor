@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace GitHubCopilotAgentBot.Models
+namespace AgentSupervisor.Models
 {
     public class PullRequestReview
     {

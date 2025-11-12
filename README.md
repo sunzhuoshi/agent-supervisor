@@ -1,4 +1,4 @@
-# GitHubCopilotAgentBot
+# Agent Supervisor
 
 A Windows system tray application that helps improve GitHub Copilot agents workflows by monitoring pull request reviews and sending desktop notifications.
 
@@ -39,13 +39,13 @@ dotnet restore
 dotnet build --configuration Release
 
 # The executable will be at:
-# bin/Release/net8.0-windows/GitHubCopilotAgentBot.exe
+# bin/Release/net8.0-windows/AgentSupervisor.exe
 ```
 
 ## Running the Application
 
 1. **First Run**:
-   - Double-click `GitHubCopilotAgentBot.exe`
+   - Double-click `AgentSupervisor.exe`
    - A settings dialog will appear
    - Enter your GitHub Personal Access Token
    - Configure polling interval (default: 60 seconds)
@@ -96,8 +96,8 @@ Both files are excluded from git via `.gitignore`.
 ## Project Structure
 
 ```
-GitHubCopilotAgentBot/
-├── GitHubCopilotAgentBot.csproj # .NET project file
+AgentSupervisor/
+├── AgentSupervisor.csproj # .NET project file
 ├── src/
 │   ├── Program.cs               # Main entry point and application context
 │   ├── SettingsForm.cs          # Settings UI form

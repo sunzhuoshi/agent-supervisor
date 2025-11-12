@@ -20,7 +20,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '6.0.x'
+        dotnet-version: '8.0.x'
     
     - name: Restore dependencies
       run: dotnet restore
@@ -35,5 +35,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: GitHubCopilotAgentBot-Release
-        path: bin/Release/net6.0-windows/
+        path: bin/Release/net8.0-windows/
         if-no-files-found: error

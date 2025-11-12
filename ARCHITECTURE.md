@@ -185,15 +185,10 @@ GitHubCopilotAgentBot is a Windows console application written in C# that monito
 ## Build System
 
 ### .NET CLI Build
-- Standard .NET 6.0 project
+- Standard .NET 6.0 Windows Forms project
 - Uses `GitHubCopilotAgentBot.csproj`
-- Builds to `bin/Debug/net6.0/` or `bin/Release/net6.0/`
-
-### CMake Build
-- `CMakeLists.txt` supports Visual Studio integration
-- Enables CSharp language in CMake
-- Configures NuGet package references
-- Outputs to `build/bin/`
+- Targets `net6.0-windows` framework
+- Builds to `bin/Debug/net6.0-windows/` or `bin/Release/net6.0-windows/`
 
 ## Error Handling
 

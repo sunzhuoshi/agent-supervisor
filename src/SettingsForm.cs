@@ -23,7 +23,7 @@ namespace GitHubCopilotAgentBot
 
         private void InitializeComponents()
         {
-            this.Text = "GitHub Copilot Agent Bot - Settings";
+            this.Text = "Agent Supervisor - Settings";
             this.Size = new System.Drawing.Size(500, 400);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;

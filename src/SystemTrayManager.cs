@@ -41,7 +41,7 @@ namespace GitHubCopilotAgentBot
             {
                 Icon = SystemIcons.Information,
                 Visible = true,
-                Text = "GitHub Copilot Agent Bot"
+                Text = "Agent Supervisor"
             };
             icon.ContextMenuStrip = _contextMenu;
             icon.DoubleClick += (s, e) => ShowRecentNotifications();
@@ -124,7 +124,7 @@ namespace GitHubCopilotAgentBot
 
         public void UpdateStatus(string status)
         {
-            _notifyIcon.Text = $"GitHub Copilot Agent Bot\n{status}";
+            _notifyIcon.Text = $"Agent Supervisor\n{status}";
         }
 
         public void Dispose()

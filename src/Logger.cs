@@ -7,7 +7,7 @@ namespace GitHubCopilotAgentBot
     public class Logger
     {
         private static readonly object _lockObject = new object();
-        private const string LogFileName = "GitHubCopilotAgentBot.log";
+        private const string LogFileName = "AgentSupervisor.log";
         private const int MaxLogSizeBytes = 10 * 1024 * 1024; // 10 MB
 
         public static void LogInfo(string message)

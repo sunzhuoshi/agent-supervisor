@@ -60,6 +60,7 @@ dotnet build --configuration Release
    - **Right-click the tray icon** to access the menu:
      - "Recent Notifications" - View the last 10 notifications
      - "Settings" - Change your configuration
+     - "About" - View application information
      - "Exit" - Close the application
    - **Double-click the tray icon** - View recent notifications
    - **Click a balloon notification** - Opens the PR in your browser
@@ -101,6 +102,7 @@ AgentSupervisor/
 ├── src/
 │   ├── Program.cs               # Main entry point and application context
 │   ├── SettingsForm.cs          # Settings UI form
+│   ├── AboutForm.cs             # About dialog
 │   ├── SystemTrayManager.cs     # System tray icon and notifications
 │   ├── GitHubService.cs         # GitHub API integration
 │   ├── NotificationHistory.cs   # Persistent notification storage

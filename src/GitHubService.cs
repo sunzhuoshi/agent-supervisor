@@ -51,8 +51,15 @@ namespace GitHubCopilotAgentBot
 
             try
             {
-                Logger.LogInfo("Fetching current user from GitHub API");
-                var response = await _httpClient.GetAsync("https://api.github.com/user");
+                var url = "https://api.github.com/user";
+                Logger.LogInfo($"HTTP GET {url}");
+                
+                var startTime = DateTime.UtcNow;
+                var response = await _httpClient.GetAsync(url);
+                var elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
+                
+                Logger.LogInfo($"HTTP Response: {(int)response.StatusCode} {response.StatusCode} | {elapsed:F0}ms | {url}");
+                
                 response.EnsureSuccessStatusCode();
                 
                 var json = await response.Content.ReadAsStringAsync();
@@ -84,7 +91,13 @@ namespace GitHubCopilotAgentBot
 
                 // Get all pull requests where the user is requested as a reviewer
                 var searchUrl = $"https://api.github.com/search/issues?q=type:pr+review-requested:{username}+state:open&sort=updated&per_page=50";
+                Logger.LogInfo($"HTTP GET {searchUrl}");
+                
+                var startTime = DateTime.UtcNow;
                 var response = await _httpClient.GetAsync(searchUrl);
+                var elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
+                
+                Logger.LogInfo($"HTTP Response: {(int)response.StatusCode} {response.StatusCode} | {elapsed:F0}ms | {searchUrl}");
                 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -114,7 +127,12 @@ namespace GitHubCopilotAgentBot
                         }
 
                         // Get PR details to fetch reviews
+                        Logger.LogInfo($"HTTP GET {pullRequestUrl}");
+                        startTime = DateTime.UtcNow;
                         var prResponse = await _httpClient.GetAsync(pullRequestUrl);
+                        elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
+                        Logger.LogInfo($"HTTP Response: {(int)prResponse.StatusCode} {prResponse.StatusCode} | {elapsed:F0}ms | {pullRequestUrl}");
+                        
                         if (!prResponse.IsSuccessStatusCode)
                         {
                             continue;
@@ -129,7 +147,11 @@ namespace GitHubCopilotAgentBot
                         
                         // Fetch reviews for this PR
                         var reviewsUrl = $"{pullRequestUrl}/reviews";
+                        Logger.LogInfo($"HTTP GET {reviewsUrl}");
+                        startTime = DateTime.UtcNow;
                         var reviewsResponse = await _httpClient.GetAsync(reviewsUrl);
+                        elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
+                        Logger.LogInfo($"HTTP Response: {(int)reviewsResponse.StatusCode} {reviewsResponse.StatusCode} | {elapsed:F0}ms | {reviewsUrl}");
                         
                         if (reviewsResponse.IsSuccessStatusCode)
                         {

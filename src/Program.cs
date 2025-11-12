@@ -59,8 +59,7 @@ namespace GitHubCopilotAgentBot
                 _notificationHistory,
                 OnSettingsClick,
                 OnExitClick,
-                OnOpenUrlClick,
-                _config.CustomIconPath);
+                OnOpenUrlClick);
 
             var proxyUrl = _config.UseProxy ? _config.ProxyUrl : null;
             _gitHubService = new GitHubService(_config.PersonalAccessToken, proxyUrl);
@@ -169,15 +168,6 @@ namespace GitHubCopilotAgentBot
             var proxyUrl = _config!.UseProxy ? _config.ProxyUrl : null;
             _gitHubService = new GitHubService(_config!.PersonalAccessToken, proxyUrl);
             _notificationHistory = new NotificationHistory(_config.MaxHistoryEntries);
-
-            // Recreate system tray manager with potentially new icon
-            _systemTrayManager?.Dispose();
-            _systemTrayManager = new SystemTrayManager(
-                _notificationHistory,
-                OnSettingsClick,
-                OnExitClick,
-                OnOpenUrlClick,
-                _config.CustomIconPath);
 
             _cts = new CancellationTokenSource();
             _monitoringTask = Task.Run(() => MonitorReviews(_cts.Token));

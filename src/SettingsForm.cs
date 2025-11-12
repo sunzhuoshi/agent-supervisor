@@ -11,8 +11,6 @@ namespace GitHubCopilotAgentBot
         private NumericUpDown _maxHistoryNumeric = null!;
         private CheckBox _useProxyCheckBox = null!;
         private TextBox _proxyUrlTextBox = null!;
-        private TextBox _customIconTextBox = null!;
-        private Button _browseIconButton = null!;
         private Button _saveButton = null!;
         private Button _cancelButton = null!;
 
@@ -26,7 +24,7 @@ namespace GitHubCopilotAgentBot
         private void InitializeComponents()
         {
             this.Text = "Agent Supervisor - Settings";
-            this.Size = new System.Drawing.Size(500, 470);
+            this.Size = new System.Drawing.Size(500, 400);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -103,49 +101,11 @@ namespace GitHubCopilotAgentBot
             };
             this.Controls.Add(_maxHistoryNumeric);
 
-            // Custom Icon Label
-            var iconLabel = new Label
-            {
-                Text = "Custom Tray Icon (.ico file):",
-                Location = new System.Drawing.Point(20, 180),
-                Size = new System.Drawing.Size(200, 20)
-            };
-            this.Controls.Add(iconLabel);
-
-            // Custom Icon TextBox
-            _customIconTextBox = new TextBox
-            {
-                Location = new System.Drawing.Point(20, 205),
-                Size = new System.Drawing.Size(350, 25),
-                ReadOnly = true
-            };
-            this.Controls.Add(_customIconTextBox);
-
-            // Browse Icon Button
-            _browseIconButton = new Button
-            {
-                Text = "Browse...",
-                Location = new System.Drawing.Point(380, 203),
-                Size = new System.Drawing.Size(90, 27)
-            };
-            _browseIconButton.Click += BrowseIconButton_Click;
-            this.Controls.Add(_browseIconButton);
-
-            // Clear Icon Button
-            var clearIconButton = new Button
-            {
-                Text = "Clear",
-                Location = new System.Drawing.Point(20, 237),
-                Size = new System.Drawing.Size(75, 25)
-            };
-            clearIconButton.Click += (s, e) => _customIconTextBox.Text = string.Empty;
-            this.Controls.Add(clearIconButton);
-
             // Proxy Group
             var proxyGroup = new GroupBox
             {
                 Text = "Proxy Settings",
-                Location = new System.Drawing.Point(20, 275),
+                Location = new System.Drawing.Point(20, 180),
                 Size = new System.Drawing.Size(450, 100)
             };
             this.Controls.Add(proxyGroup);
@@ -185,7 +145,7 @@ namespace GitHubCopilotAgentBot
             _saveButton = new Button
             {
                 Text = "Save",
-                Location = new System.Drawing.Point(290, 395),
+                Location = new System.Drawing.Point(290, 320),
                 Size = new System.Drawing.Size(85, 30),
                 DialogResult = DialogResult.OK
             };
@@ -196,7 +156,7 @@ namespace GitHubCopilotAgentBot
             _cancelButton = new Button
             {
                 Text = "Cancel",
-                Location = new System.Drawing.Point(385, 395),
+                Location = new System.Drawing.Point(385, 320),
                 Size = new System.Drawing.Size(85, 30),
                 DialogResult = DialogResult.Cancel
             };
@@ -211,27 +171,9 @@ namespace GitHubCopilotAgentBot
             _tokenTextBox.Text = _configuration.PersonalAccessToken;
             _intervalNumeric.Value = _configuration.PollingIntervalSeconds;
             _maxHistoryNumeric.Value = _configuration.MaxHistoryEntries;
-            _customIconTextBox.Text = _configuration.CustomIconPath;
             _useProxyCheckBox.Checked = _configuration.UseProxy;
             _proxyUrlTextBox.Text = _configuration.ProxyUrl;
             _proxyUrlTextBox.Enabled = _configuration.UseProxy;
-        }
-
-        private void BrowseIconButton_Click(object? sender, EventArgs e)
-        {
-            using var openFileDialog = new OpenFileDialog
-            {
-                Title = "Select Custom Icon",
-                Filter = "Icon Files (*.ico)|*.ico|All Files (*.*)|*.*",
-                FilterIndex = 1,
-                CheckFileExists = true,
-                CheckPathExists = true
-            };
-
-            if (openFileDialog.ShowDialog() == DialogResult.OK)
-            {
-                _customIconTextBox.Text = openFileDialog.FileName;
-            }
         }
 
         private void SaveButton_Click(object? sender, EventArgs e)
@@ -252,28 +194,9 @@ namespace GitHubCopilotAgentBot
                 return;
             }
 
-            // Validate custom icon path if provided
-            if (!string.IsNullOrWhiteSpace(_customIconTextBox.Text) && !File.Exists(_customIconTextBox.Text))
-            {
-                var result = MessageBox.Show(
-                    "The custom icon file does not exist. Do you want to continue without a custom icon?",
-                    "Icon File Not Found",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Warning);
-                
-                if (result == DialogResult.No)
-                {
-                    this.DialogResult = DialogResult.None;
-                    return;
-                }
-                
-                _customIconTextBox.Text = string.Empty;
-            }
-
             _configuration.PersonalAccessToken = _tokenTextBox.Text.Trim();
             _configuration.PollingIntervalSeconds = (int)_intervalNumeric.Value;
             _configuration.MaxHistoryEntries = (int)_maxHistoryNumeric.Value;
-            _configuration.CustomIconPath = _customIconTextBox.Text.Trim();
             _configuration.UseProxy = _useProxyCheckBox.Checked;
             _configuration.ProxyUrl = _proxyUrlTextBox.Text.Trim();
             _configuration.Save();

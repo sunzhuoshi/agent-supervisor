@@ -19,8 +19,7 @@ namespace GitHubCopilotAgentBot
             NotificationHistory notificationHistory,
             Action onSettingsClick,
             Action onExitClick,
-            Action<string> onOpenUrlClick,
-            string? customIconPath = null)
+            Action<string> onOpenUrlClick)
         {
             Logger.LogInfo("Initializing SystemTrayManager");
             
@@ -29,11 +28,8 @@ namespace GitHubCopilotAgentBot
             _onExitClick = onExitClick;
             _onOpenUrlClick = onOpenUrlClick;
 
-            // Load custom icon if provided
-            if (!string.IsNullOrWhiteSpace(customIconPath))
-            {
-                _customIcon = LoadCustomIcon(customIconPath);
-            }
+            // Create custom icon
+            _customIcon = CreateCustomIcon();
 
             _contextMenu = CreateContextMenu();
             _notifyIcon = CreateNotifyIcon();
@@ -47,7 +43,7 @@ namespace GitHubCopilotAgentBot
             
             var icon = new NotifyIcon
             {
-                Icon = _customIcon ?? SystemIcons.Information,
+                Icon = _customIcon,
                 Visible = true,
                 Text = "Agent Supervisor"
             };
@@ -58,7 +54,7 @@ namespace GitHubCopilotAgentBot
             icon.Visible = false;
             icon.Visible = true;
             
-            Logger.LogInfo($"System tray icon created - Visible: {icon.Visible}, Text: {icon.Text}, Custom Icon: {_customIcon != null}");
+            Logger.LogInfo($"System tray icon created - Visible: {icon.Visible}, Text: {icon.Text}");
             
             return icon;
         }
@@ -135,23 +131,38 @@ namespace GitHubCopilotAgentBot
             _notifyIcon.Text = $"Agent Supervisor\n{status}";
         }
 
-        private Icon? LoadCustomIcon(string iconPath)
+        private Icon CreateCustomIcon()
         {
             try
             {
-                if (!File.Exists(iconPath))
-                {
-                    Logger.LogWarning($"Custom icon file not found: {iconPath}");
-                    return null;
-                }
-
-                Logger.LogInfo($"Loading custom icon from: {iconPath}");
-                return new Icon(iconPath);
+                // Create a simple custom icon with GitHub Copilot colors
+                using var bitmap = new Bitmap(16, 16);
+                using var graphics = Graphics.FromImage(bitmap);
+                
+                // Fill with a gradient from purple to blue (GitHub Copilot colors)
+                using var brush = new System.Drawing.Drawing2D.LinearGradientBrush(
+                    new Rectangle(0, 0, 16, 16),
+                    Color.FromArgb(138, 43, 226), // Purple
+                    Color.FromArgb(0, 122, 204),   // Blue
+                    45f);
+                
+                graphics.FillEllipse(brush, 0, 0, 16, 16);
+                
+                // Draw a simple "A" in white for "Agent"
+                using var font = new Font("Arial", 9, FontStyle.Bold);
+                using var textBrush = new SolidBrush(Color.White);
+                graphics.DrawString("A", font, textBrush, -1, 1);
+                
+                var hIcon = bitmap.GetHicon();
+                var icon = Icon.FromHandle(hIcon);
+                
+                Logger.LogInfo("Custom icon created successfully");
+                return icon;
             }
             catch (Exception ex)
             {
-                Logger.LogError($"Failed to load custom icon from: {iconPath}", ex);
-                return null;
+                Logger.LogError("Failed to create custom icon, using default", ex);
+                return SystemIcons.Information;
             }
         }
 

@@ -9,6 +9,8 @@ namespace GitHubCopilotAgentBot
         private TextBox _tokenTextBox = null!;
         private NumericUpDown _intervalNumeric = null!;
         private NumericUpDown _maxHistoryNumeric = null!;
+        private CheckBox _useProxyCheckBox = null!;
+        private TextBox _proxyUrlTextBox = null!;
         private Button _saveButton = null!;
         private Button _cancelButton = null!;
 
@@ -22,7 +24,7 @@ namespace GitHubCopilotAgentBot
         private void InitializeComponents()
         {
             this.Text = "GitHub Copilot Agent Bot - Settings";
-            this.Size = new System.Drawing.Size(500, 300);
+            this.Size = new System.Drawing.Size(500, 400);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -99,11 +101,51 @@ namespace GitHubCopilotAgentBot
             };
             this.Controls.Add(_maxHistoryNumeric);
 
+            // Proxy Group
+            var proxyGroup = new GroupBox
+            {
+                Text = "Proxy Settings",
+                Location = new System.Drawing.Point(20, 180),
+                Size = new System.Drawing.Size(450, 100)
+            };
+            this.Controls.Add(proxyGroup);
+
+            // Use Proxy CheckBox
+            _useProxyCheckBox = new CheckBox
+            {
+                Text = "Use Proxy",
+                Location = new System.Drawing.Point(10, 25),
+                Size = new System.Drawing.Size(150, 20)
+            };
+            _useProxyCheckBox.CheckedChanged += (s, e) =>
+            {
+                _proxyUrlTextBox.Enabled = _useProxyCheckBox.Checked;
+            };
+            proxyGroup.Controls.Add(_useProxyCheckBox);
+
+            // Proxy URL Label
+            var proxyLabel = new Label
+            {
+                Text = "Proxy URL (e.g., http://proxy:8080):",
+                Location = new System.Drawing.Point(10, 50),
+                Size = new System.Drawing.Size(430, 20)
+            };
+            proxyGroup.Controls.Add(proxyLabel);
+
+            // Proxy URL TextBox
+            _proxyUrlTextBox = new TextBox
+            {
+                Location = new System.Drawing.Point(10, 70),
+                Size = new System.Drawing.Size(430, 25),
+                Enabled = false
+            };
+            proxyGroup.Controls.Add(_proxyUrlTextBox);
+
             // Save Button
             _saveButton = new Button
             {
                 Text = "Save",
-                Location = new System.Drawing.Point(290, 220),
+                Location = new System.Drawing.Point(290, 320),
                 Size = new System.Drawing.Size(85, 30),
                 DialogResult = DialogResult.OK
             };
@@ -114,7 +156,7 @@ namespace GitHubCopilotAgentBot
             _cancelButton = new Button
             {
                 Text = "Cancel",
-                Location = new System.Drawing.Point(385, 220),
+                Location = new System.Drawing.Point(385, 320),
                 Size = new System.Drawing.Size(85, 30),
                 DialogResult = DialogResult.Cancel
             };
@@ -129,6 +171,9 @@ namespace GitHubCopilotAgentBot
             _tokenTextBox.Text = _configuration.PersonalAccessToken;
             _intervalNumeric.Value = _configuration.PollingIntervalSeconds;
             _maxHistoryNumeric.Value = _configuration.MaxHistoryEntries;
+            _useProxyCheckBox.Checked = _configuration.UseProxy;
+            _proxyUrlTextBox.Text = _configuration.ProxyUrl;
+            _proxyUrlTextBox.Enabled = _configuration.UseProxy;
         }
 
         private void SaveButton_Click(object? sender, EventArgs e)
@@ -141,9 +186,19 @@ namespace GitHubCopilotAgentBot
                 return;
             }
 
+            if (_useProxyCheckBox.Checked && string.IsNullOrWhiteSpace(_proxyUrlTextBox.Text))
+            {
+                MessageBox.Show("Proxy URL is required when proxy is enabled.", "Validation Error", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                this.DialogResult = DialogResult.None;
+                return;
+            }
+
             _configuration.PersonalAccessToken = _tokenTextBox.Text.Trim();
             _configuration.PollingIntervalSeconds = (int)_intervalNumeric.Value;
             _configuration.MaxHistoryEntries = (int)_maxHistoryNumeric.Value;
+            _configuration.UseProxy = _useProxyCheckBox.Checked;
+            _configuration.ProxyUrl = _proxyUrlTextBox.Text.Trim();
             _configuration.Save();
 
             MessageBox.Show("Settings saved successfully.", "Success", 

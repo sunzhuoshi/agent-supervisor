@@ -10,9 +10,26 @@ namespace GitHubCopilotAgentBot
         private readonly string _username;
         private readonly HashSet<long> _seenReviewIds = new HashSet<long>();
 
-        public GitHubService(string personalAccessToken)
+        public GitHubService(string personalAccessToken, string? proxyUrl = null)
         {
-            _httpClient = new HttpClient();
+            var handler = new HttpClientHandler();
+            
+            // Configure proxy if provided
+            if (!string.IsNullOrEmpty(proxyUrl))
+            {
+                try
+                {
+                    handler.Proxy = new System.Net.WebProxy(proxyUrl);
+                    handler.UseProxy = true;
+                    Logger.LogInfo($"Using proxy: {proxyUrl}");
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError($"Failed to configure proxy: {proxyUrl}", ex);
+                }
+            }
+
+            _httpClient = new HttpClient(handler);
             _httpClient.DefaultRequestHeaders.UserAgent.Add(
                 new ProductInfoHeaderValue("GitHubCopilotAgentBot", "1.0"));
             _httpClient.DefaultRequestHeaders.Authorization =
@@ -22,6 +39,7 @@ namespace GitHubCopilotAgentBot
             _httpClient.DefaultRequestHeaders.Add("X-GitHub-Api-Version", "2019-11-05");
 
             _username = string.Empty;
+            Logger.LogInfo("GitHubService initialized");
         }
 
         public async Task<string> GetCurrentUserAsync()
@@ -33,17 +51,19 @@ namespace GitHubCopilotAgentBot
 
             try
             {
+                Logger.LogInfo("Fetching current user from GitHub API");
                 var response = await _httpClient.GetAsync("https://api.github.com/user");
                 response.EnsureSuccessStatusCode();
                 
                 var json = await response.Content.ReadAsStringAsync();
                 using var doc = JsonDocument.Parse(json);
                 var login = doc.RootElement.GetProperty("login").GetString();
+                Logger.LogInfo($"Current user: {login}");
                 return login ?? string.Empty;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error getting current user: {ex.Message}");
+                Logger.LogError("Error getting current user", ex);
                 return string.Empty;
             }
         }
@@ -54,10 +74,11 @@ namespace GitHubCopilotAgentBot
 
             try
             {
+                Logger.LogInfo("Fetching pending reviews");
                 var username = await GetCurrentUserAsync();
                 if (string.IsNullOrEmpty(username))
                 {
-                    Console.WriteLine("Unable to get current username.");
+                    Logger.LogWarning("Unable to get current username");
                     return reviews;
                 }
 
@@ -67,7 +88,7 @@ namespace GitHubCopilotAgentBot
                 
                 if (!response.IsSuccessStatusCode)
                 {
-                    Console.WriteLine($"Error fetching PRs: {response.StatusCode}");
+                    Logger.LogError($"Error fetching PRs: {response.StatusCode}");
                     return reviews;
                 }
 
@@ -76,8 +97,11 @@ namespace GitHubCopilotAgentBot
                 
                 if (!doc.RootElement.TryGetProperty("items", out var items))
                 {
+                    Logger.LogInfo("No items found in search results");
                     return reviews;
                 }
+
+                Logger.LogInfo($"Found {items.GetArrayLength()} PRs to check");
 
                 foreach (var item in items.EnumerateArray())
                 {
@@ -119,19 +143,22 @@ namespace GitHubCopilotAgentBot
                                 {
                                     reviews.Add(review);
                                     _seenReviewIds.Add(review.Id);
+                                    Logger.LogInfo($"New review found: {repoFullName} PR#{prNumber} - {review.State}");
                                 }
                             }
                         }
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Error processing PR item: {ex.Message}");
+                        Logger.LogError("Error processing PR item", ex);
                     }
                 }
+
+                Logger.LogInfo($"Fetched {reviews.Count} new reviews");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error fetching pending reviews: {ex.Message}");
+                Logger.LogError("Error fetching pending reviews", ex);
             }
 
             return reviews;
@@ -167,8 +194,9 @@ namespace GitHubCopilotAgentBot
 
                 return review;
             }
-            catch
+            catch (Exception ex)
             {
+                Logger.LogError("Error parsing review", ex);
                 return null;
             }
         }

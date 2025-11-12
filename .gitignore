@@ -103,8 +103,10 @@ _ReSharper*/
 # Visual Studio Code
 .vscode/
 
-# Notification history
+# Application files
 notification_history.json
-
-# Configuration
 config.json
+
+# Log files
+*.log
+*.log.*.bak

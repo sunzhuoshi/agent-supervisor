@@ -7,6 +7,8 @@ namespace GitHubCopilotAgentBot
         public string PersonalAccessToken { get; set; } = string.Empty;
         public int PollingIntervalSeconds { get; set; } = 60;
         public int MaxHistoryEntries { get; set; } = 100;
+        public string ProxyUrl { get; set; } = string.Empty;
+        public bool UseProxy { get; set; } = false;
 
         private const string ConfigFileName = "config.json";
 
@@ -18,10 +20,12 @@ namespace GitHubCopilotAgentBot
                 {
                     var json = File.ReadAllText(ConfigFileName);
                     var config = JsonSerializer.Deserialize<Configuration>(json);
+                    Logger.LogInfo("Configuration loaded successfully");
                     return config ?? new Configuration();
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    Logger.LogError("Failed to load configuration", ex);
                     // Return default configuration on error
                 }
             }
@@ -36,9 +40,11 @@ namespace GitHubCopilotAgentBot
                 var options = new JsonSerializerOptions { WriteIndented = true };
                 var json = JsonSerializer.Serialize(this, options);
                 File.WriteAllText(ConfigFileName, json);
+                Logger.LogInfo("Configuration saved successfully");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Logger.LogError("Failed to save configuration", ex);
                 // Silent fail - error will be shown in UI if needed
             }
         }

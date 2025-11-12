@@ -33,6 +33,8 @@ namespace GitHubCopilotAgentBot
 
         private async void InitializeApplication()
         {
+            Logger.LogInfo("Application starting");
+            
             // Load or create configuration
             _config = Configuration.Load();
             
@@ -43,6 +45,7 @@ namespace GitHubCopilotAgentBot
                 if (settingsForm.ShowDialog() != DialogResult.OK || 
                     string.IsNullOrEmpty(_config.PersonalAccessToken))
                 {
+                    Logger.LogWarning("Application exiting - no token configured");
                     MessageBox.Show("Personal Access Token is required to run the application.", 
                         "Configuration Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     Application.Exit();
@@ -58,7 +61,8 @@ namespace GitHubCopilotAgentBot
                 OnExitClick,
                 OnOpenUrlClick);
 
-            _gitHubService = new GitHubService(_config.PersonalAccessToken);
+            var proxyUrl = _config.UseProxy ? _config.ProxyUrl : null;
+            _gitHubService = new GitHubService(_config.PersonalAccessToken, proxyUrl);
 
             // Verify GitHub connection
             _systemTrayManager.UpdateStatus("Connecting to GitHub...");
@@ -66,6 +70,7 @@ namespace GitHubCopilotAgentBot
             
             if (string.IsNullOrEmpty(username))
             {
+                Logger.LogError("Failed to connect to GitHub");
                 MessageBox.Show("Failed to connect to GitHub. Please check your Personal Access Token.", 
                     "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 OnSettingsClick();
@@ -73,6 +78,7 @@ namespace GitHubCopilotAgentBot
             }
 
             _systemTrayManager.UpdateStatus($"Connected as {username}");
+            Logger.LogInfo($"Connected to GitHub as {username}");
 
             // Start monitoring
             _cts = new CancellationTokenSource();
@@ -81,6 +87,8 @@ namespace GitHubCopilotAgentBot
 
         private async Task MonitorReviews(CancellationToken cancellationToken)
         {
+            Logger.LogInfo($"Monitoring started with interval: {_config!.PollingIntervalSeconds} seconds");
+            
             while (!cancellationToken.IsCancellationRequested)
             {
                 try
@@ -108,6 +116,7 @@ namespace GitHubCopilotAgentBot
                             };
                             
                             _notificationHistory.Add(entry);
+                            Logger.LogInfo($"Notification shown for review: {entry.Repository} PR#{entry.PullRequestNumber}");
                         }
                     }
 
@@ -122,6 +131,7 @@ namespace GitHubCopilotAgentBot
                 }
                 catch (Exception ex)
                 {
+                    Logger.LogError("Error during monitoring", ex);
                     _systemTrayManager?.UpdateStatus($"Error: {ex.Message}");
                 }
 
@@ -131,9 +141,12 @@ namespace GitHubCopilotAgentBot
                 }
                 catch (TaskCanceledException)
                 {
+                    Logger.LogInfo("Monitoring cancelled");
                     break;
                 }
             }
+            
+            Logger.LogInfo("Monitoring stopped");
         }
 
         private void OnSettingsClick()
@@ -148,10 +161,12 @@ namespace GitHubCopilotAgentBot
 
         private void RestartMonitoring()
         {
+            Logger.LogInfo("Restarting monitoring with new configuration");
             _cts?.Cancel();
             _monitoringTask?.Wait(TimeSpan.FromSeconds(5));
 
-            _gitHubService = new GitHubService(_config!.PersonalAccessToken);
+            var proxyUrl = _config!.UseProxy ? _config.ProxyUrl : null;
+            _gitHubService = new GitHubService(_config!.PersonalAccessToken, proxyUrl);
             _notificationHistory = new NotificationHistory(_config.MaxHistoryEntries);
 
             _cts = new CancellationTokenSource();
@@ -162,6 +177,7 @@ namespace GitHubCopilotAgentBot
 
         private void OnExitClick()
         {
+            Logger.LogInfo("Application exiting");
             _cts?.Cancel();
             _monitoringTask?.Wait(TimeSpan.FromSeconds(5));
             _systemTrayManager?.Dispose();
@@ -172,6 +188,7 @@ namespace GitHubCopilotAgentBot
         {
             try
             {
+                Logger.LogInfo($"Opening URL: {url}");
                 Process.Start(new ProcessStartInfo
                 {
                     FileName = url,
@@ -180,6 +197,7 @@ namespace GitHubCopilotAgentBot
             }
             catch (Exception ex)
             {
+                Logger.LogError($"Error opening URL: {url}", ex);
                 MessageBox.Show($"Error opening browser: {ex.Message}", "Error", 
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }

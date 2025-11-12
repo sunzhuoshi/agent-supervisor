@@ -69,6 +69,10 @@ namespace GitHubCopilotAgentBot
             settingsItem.Click += (s, e) => _onSettingsClick();
             menu.Items.Add(settingsItem);
 
+            var aboutItem = new ToolStripMenuItem("About");
+            aboutItem.Click += (s, e) => ShowAbout();
+            menu.Items.Add(aboutItem);
+
             menu.Items.Add(new ToolStripSeparator());
 
             var exitItem = new ToolStripMenuItem("Exit");
@@ -120,6 +124,12 @@ namespace GitHubCopilotAgentBot
             {
                 _onOpenUrlClick(recent[0].HtmlUrl);
             }
+        }
+
+        private void ShowAbout()
+        {
+            var aboutForm = new AboutForm();
+            aboutForm.ShowDialog();
         }
 
         public void UpdateStatus(string status)

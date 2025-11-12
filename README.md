@@ -164,3 +164,39 @@ See LICENSE file for details.
 ## Contributing
 
 Contributions are welcome! Please feel free to submit issues or pull requests.
+
+## Releases
+
+Releases are automatically created when a version tag is pushed to the repository. The release workflow:
+
+1. Verifies that the tag version matches the version in `AgentSupervisor.csproj`
+2. Builds the application in Release configuration
+3. Checks for security vulnerabilities
+4. Creates a GitHub release with auto-generated release notes
+5. Uploads a zip file containing the application and dependencies
+
+### Creating a Release
+
+To create a new release:
+
+1. Update the version in `AgentSupervisor.csproj`:
+   ```xml
+   <Version>1.0.0</Version>
+   <AssemblyVersion>1.0.0</AssemblyVersion>
+   <FileVersion>1.0.0</FileVersion>
+   ```
+
+2. Commit and push the version change:
+   ```bash
+   git add AgentSupervisor.csproj
+   git commit -m "Bump version to 1.0.0"
+   git push
+   ```
+
+3. Create and push a tag:
+   ```bash
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
+
+The release workflow will automatically run and create a GitHub release with the build artifacts.

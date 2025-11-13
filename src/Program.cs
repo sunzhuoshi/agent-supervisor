@@ -162,20 +162,21 @@ namespace AgentSupervisor
                         }
                     }
 
-                    // Update taskbar badge with total pending review count
-                    var totalPendingCount = await _gitHubService!.GetPendingReviewCountAsync();
+                    // Update taskbar badge with count of unread review requests
+                    var unreadCount = _reviewRequestService!.GetNewCount();
                     if (_mainWindow != null && !_mainWindow.IsDisposed)
                     {
-                        _mainWindow.Invoke(() => _badgeManager!.UpdateBadgeCount(newReviewCount));
+                        _mainWindow.Invoke(() => _badgeManager!.UpdateBadgeCount(unreadCount));
                     }
 
+                    var totalPendingCount = await _gitHubService!.GetPendingReviewCountAsync();
                     if (newReviewCount > 0)
                     {
-                        _systemTrayManager!.UpdateStatus($"{totalPendingCount} pending review(s) - {newReviewCount} new");
+                        _systemTrayManager!.UpdateStatus($"{totalPendingCount} pending review(s) - {unreadCount} unread");
                     }
                     else
                     {
-                        _systemTrayManager!.UpdateStatus($"{totalPendingCount} pending review(s)");
+                        _systemTrayManager!.UpdateStatus($"{totalPendingCount} pending review(s) - {unreadCount} unread");
                     }
                 }
                 catch (Exception ex)
@@ -255,20 +256,20 @@ namespace AgentSupervisor
             }
         }
 
-        private async void RefreshTaskbarBadge()
+        private void RefreshTaskbarBadge()
         {
             try
             {
-                // Get the current pending review count from GitHub
-                var totalPendingCount = await _gitHubService!.GetPendingReviewCountAsync();
+                // Get the current unread review count from ReviewRequestService
+                var unreadCount = _reviewRequestService!.GetNewCount();
                 
                 // Update the taskbar badge on the UI thread
                 if (_mainWindow != null && !_mainWindow.IsDisposed)
                 {
-                    _mainWindow.Invoke(() => _badgeManager!.UpdateBadgeCount(totalPendingCount));
+                    _mainWindow.Invoke(() => _badgeManager!.UpdateBadgeCount(unreadCount));
                 }
                 
-                Logger.LogInfo($"Taskbar badge refreshed: {totalPendingCount} pending review(s)");
+                Logger.LogInfo($"Taskbar badge refreshed: {unreadCount} unread review(s)");
             }
             catch (Exception ex)
             {

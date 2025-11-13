@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.IO;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 
@@ -83,23 +84,39 @@ namespace AgentSupervisor
             graphics.SmoothingMode = SmoothingMode.AntiAlias;
             graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
             
-            // Draw base circle with GitHub Copilot-inspired gradient
-            using var brush = new LinearGradientBrush(
-                new Rectangle(0, 0, 32, 32),
-                Color.FromArgb(138, 43, 226), // Purple
-                Color.FromArgb(0, 122, 204),   // Blue
-                45f);
-            
-            graphics.FillEllipse(brush, 2, 2, 28, 28);
-            
-            // Draw white "A" for Agent
-            using var font = new Font("Arial", 16, FontStyle.Bold);
-            using var textBrush = new SolidBrush(Color.White);
-            var text = "A";
-            var textSize = graphics.MeasureString(text, font);
-            var textX = (32 - textSize.Width) / 2;
-            var textY = (32 - textSize.Height) / 2;
-            graphics.DrawString(text, font, textBrush, textX, textY);
+            // Load and draw the app_icon.ico as base
+            try
+            {
+                var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "res", "app_icon.ico");
+                if (File.Exists(iconPath))
+                {
+                    using var baseIcon = new Icon(iconPath, 32, 32);
+                    using var baseIconBitmap = baseIcon.ToBitmap();
+                    graphics.DrawImage(baseIconBitmap, 0, 0, 32, 32);
+                }
+                else
+                {
+                    Logger.LogWarning($"app_icon.ico not found at {iconPath}, using fallback");
+                    // Fallback: Draw base circle with GitHub Copilot-inspired gradient
+                    using var brush = new LinearGradientBrush(
+                        new Rectangle(0, 0, 32, 32),
+                        Color.FromArgb(138, 43, 226), // Purple
+                        Color.FromArgb(0, 122, 204),   // Blue
+                        45f);
+                    graphics.FillEllipse(brush, 2, 2, 28, 28);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Failed to load app_icon.ico for badge", ex);
+                // Fallback: Draw base circle
+                using var brush = new LinearGradientBrush(
+                    new Rectangle(0, 0, 32, 32),
+                    Color.FromArgb(138, 43, 226), // Purple
+                    Color.FromArgb(0, 122, 204),   // Blue
+                    45f);
+                graphics.FillEllipse(brush, 2, 2, 28, 28);
+            }
             
             // Draw badge overlay in top-right corner
             if (count > 0)
@@ -141,23 +158,39 @@ namespace AgentSupervisor
             graphics.SmoothingMode = SmoothingMode.AntiAlias;
             graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
             
-            // Draw base circle with GitHub Copilot-inspired gradient
-            using var brush = new LinearGradientBrush(
-                new Rectangle(0, 0, 32, 32),
-                Color.FromArgb(138, 43, 226), // Purple
-                Color.FromArgb(0, 122, 204),   // Blue
-                45f);
-            
-            graphics.FillEllipse(brush, 2, 2, 28, 28);
-            
-            // Draw white "A" for Agent
-            using var font = new Font("Arial", 16, FontStyle.Bold);
-            using var textBrush = new SolidBrush(Color.White);
-            var text = "A";
-            var textSize = graphics.MeasureString(text, font);
-            var textX = (32 - textSize.Width) / 2;
-            var textY = (32 - textSize.Height) / 2;
-            graphics.DrawString(text, font, textBrush, textX, textY);
+            // Load and draw the app_icon.ico as base
+            try
+            {
+                var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "res", "app_icon.ico");
+                if (File.Exists(iconPath))
+                {
+                    using var baseIcon = new Icon(iconPath, 32, 32);
+                    using var baseIconBitmap = baseIcon.ToBitmap();
+                    graphics.DrawImage(baseIconBitmap, 0, 0, 32, 32);
+                }
+                else
+                {
+                    Logger.LogWarning($"app_icon.ico not found at {iconPath}, using fallback");
+                    // Fallback: Draw base circle with GitHub Copilot-inspired gradient
+                    using var brush = new LinearGradientBrush(
+                        new Rectangle(0, 0, 32, 32),
+                        Color.FromArgb(138, 43, 226), // Purple
+                        Color.FromArgb(0, 122, 204),   // Blue
+                        45f);
+                    graphics.FillEllipse(brush, 2, 2, 28, 28);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Failed to load app_icon.ico for default icon", ex);
+                // Fallback: Draw base circle
+                using var brush = new LinearGradientBrush(
+                    new Rectangle(0, 0, 32, 32),
+                    Color.FromArgb(138, 43, 226), // Purple
+                    Color.FromArgb(0, 122, 204),   // Blue
+                    45f);
+                graphics.FillEllipse(brush, 2, 2, 28, 28);
+            }
             
             var hIcon = bitmap.GetHicon();
             var icon = Icon.FromHandle(hIcon);

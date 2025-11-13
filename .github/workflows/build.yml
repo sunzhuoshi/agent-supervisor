@@ -6,8 +6,12 @@ on:
   pull_request:
     branches: [ main ]
 
+# Concurrency configuration:
+# - For pull requests: Each PR gets its own group (using PR number), allowing multiple PRs to run in parallel
+# - For branch pushes: Uses the branch ref, ensuring only one build runs per branch at a time
+# - cancel-in-progress: Cancels old runs when new commits are pushed to the same PR or branch
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:

@@ -166,7 +166,7 @@ namespace AgentSupervisor
                     var totalPendingCount = await _gitHubService!.GetPendingReviewCountAsync();
                     if (_mainWindow != null && !_mainWindow.IsDisposed)
                     {
-                        _mainWindow.Invoke(() => _badgeManager!.UpdateBadgeCount(totalPendingCount));
+                        _mainWindow.Invoke(() => _badgeManager!.UpdateBadgeCount(newReviewCount));
                     }
 
                     if (newReviewCount > 0)

@@ -104,9 +104,9 @@ namespace AgentSupervisor
             // Draw badge overlay in top-right corner
             if (count > 0)
             {
-                var badgeSize = 16;
-                var badgeX = 32 - badgeSize - 1;
-                var badgeY = 1;
+                var badgeSize = 22;
+                var badgeX = 32 - badgeSize;
+                var badgeY = 0;
                 
                 // Draw red circle for badge
                 using var badgeBrush = new SolidBrush(Color.FromArgb(255, 50, 50)); // Red
@@ -118,7 +118,7 @@ namespace AgentSupervisor
                 
                 // Draw count number
                 var countText = count > 99 ? "99+" : count.ToString();
-                using var badgeFont = new Font("Arial", count > 9 ? 7 : 9, FontStyle.Bold);
+                using var badgeFont = new Font("Arial", count > 9 ? 9 : 11, FontStyle.Bold);
                 using var badgeTextBrush = new SolidBrush(Color.White);
                 var countSize = graphics.MeasureString(countText, badgeFont);
                 var countX = badgeX + (badgeSize - countSize.Width) / 2;

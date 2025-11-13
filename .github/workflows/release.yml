@@ -1,0 +1,100 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+    
+    - name: Extract version from tag
+      id: get_version
+      shell: pwsh
+      run: |
+        $tag = "${{ github.ref_name }}"
+        if ($tag -match '^v(\d+\.\d+\.\d+)$') {
+          $version = $matches[1]
+          Write-Output "version=$version" >> $env:GITHUB_OUTPUT
+          Write-Output "Extracted version: $version"
+        } else {
+          Write-Error "Invalid tag format. Expected format: v1.0.0"
+          exit 1
+        }
+    
+    - name: Verify version in source
+      shell: pwsh
+      run: |
+        $tagVersion = "${{ steps.get_version.outputs.version }}"
+        [xml]$csproj = Get-Content AgentSupervisor.csproj
+        $sourceVersion = $csproj.Project.PropertyGroup.Version
+        
+        Write-Output "Tag version: $tagVersion"
+        Write-Output "Source version: $sourceVersion"
+        
+        if ($tagVersion -ne $sourceVersion) {
+          Write-Error "Version mismatch! Tag version ($tagVersion) does not match source version ($sourceVersion)"
+          exit 1
+        }
+        
+        Write-Output "Version verification passed!"
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+    
+    - name: Check for vulnerabilities
+      run: dotnet list package --vulnerable --include-transitive
+    
+    - name: Prepare release artifacts
+      shell: pwsh
+      run: |
+        $artifactsPath = "release-artifacts"
+        New-Item -ItemType Directory -Path $artifactsPath -Force
+        
+        # Copy the main executable and required files
+        $buildPath = "bin/Release/net8.0-windows"
+        
+        # Copy executable (will be .exe on Windows)
+        if (Test-Path "$buildPath/AgentSupervisor.exe") {
+          Copy-Item "$buildPath/AgentSupervisor.exe" -Destination $artifactsPath
+        }
+        
+        # Copy all required runtime files
+        Copy-Item "$buildPath/AgentSupervisor.dll" -Destination $artifactsPath
+        Copy-Item "$buildPath/AgentSupervisor.deps.json" -Destination $artifactsPath
+        Copy-Item "$buildPath/AgentSupervisor.runtimeconfig.json" -Destination $artifactsPath
+        Copy-Item "$buildPath/Octokit.dll" -Destination $artifactsPath
+        
+        # Copy documentation
+        Copy-Item "README.md" -Destination $artifactsPath
+        Copy-Item "LICENSE" -Destination $artifactsPath
+        
+        # Create a zip archive
+        $zipName = "AgentSupervisor-${{ steps.get_version.outputs.version }}-windows.zip"
+        Compress-Archive -Path "$artifactsPath/*" -DestinationPath $zipName
+        
+        Write-Output "Created release artifact: $zipName"
+    
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: AgentSupervisor-${{ steps.get_version.outputs.version }}-windows.zip
+        generate_release_notes: true
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

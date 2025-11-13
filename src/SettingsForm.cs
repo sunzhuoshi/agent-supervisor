@@ -11,6 +11,7 @@ namespace AgentSupervisor
         private NumericUpDown _maxHistoryNumeric = null!;
         private CheckBox _useProxyCheckBox = null!;
         private TextBox _proxyUrlTextBox = null!;
+        private CheckBox _enableNotificationsCheckBox = null!;
         private Button _saveButton = null!;
         private Button _cancelButton = null!;
 
@@ -24,7 +25,7 @@ namespace AgentSupervisor
         private void InitializeComponents()
         {
             this.Text = "Agent Supervisor - Settings";
-            this.Size = new System.Drawing.Size(500, 400);
+            this.Size = new System.Drawing.Size(500, 450);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -101,11 +102,20 @@ namespace AgentSupervisor
             };
             this.Controls.Add(_maxHistoryNumeric);
 
+            // Enable Desktop Notifications CheckBox
+            _enableNotificationsCheckBox = new CheckBox
+            {
+                Text = "Enable Desktop Notifications",
+                Location = new System.Drawing.Point(20, 178),
+                Size = new System.Drawing.Size(250, 20)
+            };
+            this.Controls.Add(_enableNotificationsCheckBox);
+
             // Proxy Group
             var proxyGroup = new GroupBox
             {
                 Text = "Proxy Settings",
-                Location = new System.Drawing.Point(20, 180),
+                Location = new System.Drawing.Point(20, 210),
                 Size = new System.Drawing.Size(450, 100)
             };
             this.Controls.Add(proxyGroup);
@@ -145,7 +155,7 @@ namespace AgentSupervisor
             _saveButton = new Button
             {
                 Text = "Save",
-                Location = new System.Drawing.Point(290, 320),
+                Location = new System.Drawing.Point(290, 370),
                 Size = new System.Drawing.Size(85, 30),
                 DialogResult = DialogResult.OK
             };
@@ -156,7 +166,7 @@ namespace AgentSupervisor
             _cancelButton = new Button
             {
                 Text = "Cancel",
-                Location = new System.Drawing.Point(385, 320),
+                Location = new System.Drawing.Point(385, 370),
                 Size = new System.Drawing.Size(85, 30),
                 DialogResult = DialogResult.Cancel
             };
@@ -171,6 +181,7 @@ namespace AgentSupervisor
             _tokenTextBox.Text = _configuration.PersonalAccessToken;
             _intervalNumeric.Value = _configuration.PollingIntervalSeconds;
             _maxHistoryNumeric.Value = _configuration.MaxHistoryEntries;
+            _enableNotificationsCheckBox.Checked = _configuration.EnableDesktopNotifications;
             _useProxyCheckBox.Checked = _configuration.UseProxy;
             _proxyUrlTextBox.Text = _configuration.ProxyUrl;
             _proxyUrlTextBox.Enabled = _configuration.UseProxy;
@@ -197,6 +208,7 @@ namespace AgentSupervisor
             _configuration.PersonalAccessToken = _tokenTextBox.Text.Trim();
             _configuration.PollingIntervalSeconds = (int)_intervalNumeric.Value;
             _configuration.MaxHistoryEntries = (int)_maxHistoryNumeric.Value;
+            _configuration.EnableDesktopNotifications = _enableNotificationsCheckBox.Checked;
             _configuration.UseProxy = _useProxyCheckBox.Checked;
             _configuration.ProxyUrl = _proxyUrlTextBox.Text.Trim();
             _configuration.Save();

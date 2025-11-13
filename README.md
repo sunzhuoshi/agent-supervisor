@@ -1,5 +1,9 @@
 # Agent Supervisor
 
+[![Latest Release](https://img.shields.io/github/v/release/sunzhuoshi/agent-supervisor?label=version)](https://github.com/sunzhuoshi/agent-supervisor/releases/latest)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/sunzhuoshi/agent-supervisor/build.yml?branch=main)](https://github.com/sunzhuoshi/agent-supervisor/actions)
+[![License](https://img.shields.io/github/license/sunzhuoshi/agent-supervisor)](LICENSE)
+
 A Windows system tray application that helps improve GitHub Copilot agents workflows by monitoring pull request reviews and sending desktop notifications.
 
 ## Features
@@ -185,6 +189,8 @@ Releases are automatically created when a version tag is pushed to the repositor
 4. Creates a GitHub release with auto-generated release notes
 5. Uploads a zip file containing the application and dependencies
 
+For detailed information about versioning strategy and release process, see **[VERSIONING.md](VERSIONING.md)**.
+
 ### Creating a Release
 
 To create a new release:
@@ -210,3 +216,5 @@ To create a new release:
    ```
 
 The release workflow will automatically run and create a GitHub release with the build artifacts.
+
+See **[VERSIONING.md](VERSIONING.md)** for version numbering rules and guidelines.

@@ -33,10 +33,14 @@ namespace AgentSupervisor
             this.Controls.Add(appNameLabel);
 
             // Version Label
-            var version = Assembly.GetExecutingAssembly().GetName().Version;
+            var assembly = Assembly.GetExecutingAssembly();
+            var infoVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+            var version = assembly.GetName().Version;
+            var versionText = !string.IsNullOrEmpty(infoVersion) ? infoVersion : version?.ToString() ?? "Unknown";
+            
             var versionLabel = new Label
             {
-                Text = $"Version {version?.Major}.{version?.Minor}.{version?.Build}",
+                Text = $"Version {versionText}",
                 Location = new Point(20, 55),
                 Size = new Size(410, 20),
                 TextAlign = ContentAlignment.MiddleCenter

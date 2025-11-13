@@ -8,12 +8,39 @@ namespace AgentSupervisor
 {
     class Program
     {
+        private static Mutex? _mutex;
+        private const string MutexName = "AgentSupervisor_SingleInstance_Mutex";
+
         [STAThread]
         static void Main(string[] args)
         {
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new BotApplicationContext());
+            // Check for single instance
+            _mutex = new Mutex(true, MutexName, out bool createdNew);
+            
+            if (!createdNew)
+            {
+                // Another instance is already running
+                Logger.LogWarning("Another instance of Agent Supervisor is already running");
+                MessageBox.Show(
+                    "Agent Supervisor is already running.\n\nPlease check the system tray for the application icon.",
+                    "Agent Supervisor Already Running",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                return;
+            }
+
+            try
+            {
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+                Application.Run(new BotApplicationContext());
+            }
+            finally
+            {
+                // Release the mutex when the application exits
+                _mutex?.ReleaseMutex();
+                _mutex?.Dispose();
+            }
         }
     }
 

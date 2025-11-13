@@ -14,6 +14,7 @@ namespace AgentSupervisor
         private readonly Action _onSettingsClick;
         private readonly Action _onExitClick;
         private readonly Action<string> _onOpenUrlClick;
+        private readonly Action? _onRefreshBadge;
         private Icon? _customIcon;
 
         public SystemTrayManager(
@@ -21,7 +22,8 @@ namespace AgentSupervisor
             ReviewRequestService reviewRequestService,
             Action onSettingsClick,
             Action onExitClick,
-            Action<string> onOpenUrlClick)
+            Action<string> onOpenUrlClick,
+            Action? onRefreshBadge = null)
         {
             Logger.LogInfo("Initializing SystemTrayManager");
             
@@ -30,6 +32,7 @@ namespace AgentSupervisor
             _onSettingsClick = onSettingsClick;
             _onExitClick = onExitClick;
             _onOpenUrlClick = onOpenUrlClick;
+            _onRefreshBadge = onRefreshBadge;
 
             // Create custom icon
             _customIcon = CreateCustomIcon();
@@ -66,7 +69,7 @@ namespace AgentSupervisor
         {
             var menu = new ContextMenuStrip();
 
-            var recentItem = new ToolStripMenuItem("PR Review Requests by Copilots");
+            var recentItem = new ToolStripMenuItem("Review Requests by Copilots");
             recentItem.Click += (s, e) => ShowReviewRequests();
             menu.Items.Add(recentItem);
 
@@ -110,7 +113,8 @@ namespace AgentSupervisor
             var form = new ReviewRequestsForm(
                 _reviewRequestService,
                 _onOpenUrlClick,
-                () => _reviewRequestService.MarkAllAsRead());
+                () => _reviewRequestService.MarkAllAsRead(),
+                _onRefreshBadge);
             form.ShowDialog();
         }
 

@@ -72,7 +72,7 @@ dotnet build --configuration Release
 
 4. **Using the Application**:
    - **Right-click the tray icon** to access the menu:
-     - "PR Review Requests by Copilots" - View all review requests with new/read status
+     - "Review Requests by Copilots" - View all review requests with new/read status
      - "Settings" - Change your configuration
      - "About" - View application information
      - "Exit" - Close the application
@@ -165,7 +165,7 @@ AgentSupervisor/
 ### No notifications appear
 - Check that you're actually requested as a reviewer on open PRs
 - Verify the polling interval - it may not have checked yet
-- Right-click tray icon → PR Review Requests by Copilots to see all requests
+- Right-click tray icon → Review Requests by Copilots to see all requests
 - Check that Windows notifications are enabled for the application
 
 ### Can't find the system tray icon

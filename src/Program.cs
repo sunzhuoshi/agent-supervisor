@@ -98,7 +98,8 @@ namespace AgentSupervisor
                 _reviewRequestService,
                 OnSettingsClick,
                 OnExitClick,
-                OnOpenUrlClick);
+                OnOpenUrlClick,
+                RefreshTaskbarBadge);
 
             var proxyUrl = _config.UseProxy ? _config.ProxyUrl : null;
             _gitHubService = new GitHubService(_config.PersonalAccessToken, proxyUrl, _reviewRequestService);
@@ -251,6 +252,27 @@ namespace AgentSupervisor
                 Logger.LogError($"Error opening URL: {url}", ex);
                 MessageBox.Show($"Error opening browser: {ex.Message}", "Error", 
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private async void RefreshTaskbarBadge()
+        {
+            try
+            {
+                // Get the current pending review count from GitHub
+                var totalPendingCount = await _gitHubService!.GetPendingReviewCountAsync();
+                
+                // Update the taskbar badge on the UI thread
+                if (_mainWindow != null && !_mainWindow.IsDisposed)
+                {
+                    _mainWindow.Invoke(() => _badgeManager!.UpdateBadgeCount(totalPendingCount));
+                }
+                
+                Logger.LogInfo($"Taskbar badge refreshed: {totalPendingCount} pending review(s)");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Error refreshing taskbar badge", ex);
             }
         }
     }

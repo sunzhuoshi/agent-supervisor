@@ -10,6 +10,7 @@ namespace AgentSupervisor
         private readonly ReviewRequestService _reviewRequestService;
         private readonly Action<string> _onOpenUrlClick;
         private readonly Action _onMarkAllAsRead;
+        private readonly Action? _onRefreshBadge;
         private ListBox _listBox = null!;
         private Button _markAllReadButton = null!;
         private Label _statusLabel = null!;
@@ -17,11 +18,13 @@ namespace AgentSupervisor
         public ReviewRequestsForm(
             ReviewRequestService reviewRequestService,
             Action<string> onOpenUrlClick,
-            Action onMarkAllAsRead)
+            Action onMarkAllAsRead,
+            Action? onRefreshBadge = null)
         {
             _reviewRequestService = reviewRequestService;
             _onOpenUrlClick = onOpenUrlClick;
             _onMarkAllAsRead = onMarkAllAsRead;
+            _onRefreshBadge = onRefreshBadge;
 
             InitializeComponent();
             LoadRequests();
@@ -30,7 +33,7 @@ namespace AgentSupervisor
         private void InitializeComponent()
         {
             // Form settings
-            Text = "PR Review Requests by Copilots";
+            Text = "Review Requests by Copilots";
             Size = new Size(600, 500);
             StartPosition = FormStartPosition.CenterScreen;
             MinimumSize = new Size(500, 400);
@@ -195,6 +198,9 @@ namespace AgentSupervisor
                 
                 // Refresh the display
                 LoadRequests();
+                
+                // Refresh taskbar badge
+                _onRefreshBadge?.Invoke();
             }
         }
 
@@ -202,6 +208,9 @@ namespace AgentSupervisor
         {
             _onMarkAllAsRead();
             LoadRequests();
+            
+            // Refresh taskbar badge
+            _onRefreshBadge?.Invoke();
         }
     }
 }

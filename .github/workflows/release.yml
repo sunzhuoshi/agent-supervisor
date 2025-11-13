@@ -5,6 +5,13 @@ on:
     tags:
       - 'v*.*.*'
 
+# Concurrency configuration:
+# - Ensures only one release build runs at a time per tag
+# - Prevents race conditions if multiple tags are pushed simultaneously
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: windows-latest

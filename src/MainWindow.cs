@@ -20,7 +20,7 @@ namespace AgentSupervisor
             // Load and set the application icon
             try
             {
-                var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app_icon.ico");
+                var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "res", "app_icon.ico");
                 if (File.Exists(iconPath))
                 {
                     Icon = new Icon(iconPath);

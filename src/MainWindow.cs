@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 
 namespace AgentSupervisor
@@ -15,6 +16,20 @@ namespace AgentSupervisor
             StartPosition = FormStartPosition.Manual;
             Location = new Point(-10000, -10000); // Position off-screen
             Size = new Size(0, 0);
+            
+            // Load and set the application icon
+            try
+            {
+                var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "res", "app_icon.ico");
+                if (File.Exists(iconPath))
+                {
+                    Icon = new Icon(iconPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Failed to load application icon", ex);
+            }
             
             // Prevent the window from being shown
             WindowState = FormWindowState.Minimized;

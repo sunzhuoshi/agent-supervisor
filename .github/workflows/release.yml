@@ -25,10 +25,27 @@ jobs:
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
 
-    - name: Update version in AgentSupervisor.csproj
+    - name: Validate and update version in AgentSupervisor.csproj
       run: |
-        VERSION="${{ inputs.version }}"
-        sed -i "s|<Version>.*</Version>|<Version>${VERSION}</Version>|" \
+        NEW_VERSION="${{ inputs.version }}"
+        OLD_VERSION=$(grep -oP '<Version>\K[^<]+' AgentSupervisor.csproj)
+
+        echo "Current version: $OLD_VERSION"
+        echo "New version: $NEW_VERSION"
+
+        # Function to compare semantic versions
+        version_gt() {
+          test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"
+        }
+
+        if ! version_gt "$NEW_VERSION" "$OLD_VERSION"; then
+          echo "Error: New version ($NEW_VERSION) must be greater than" \
+            "current version ($OLD_VERSION)"
+          exit 1
+        fi
+
+        echo "Version validation passed. Updating version..."
+        sed -i "s|<Version>.*</Version>|<Version>${NEW_VERSION}</Version>|" \
           AgentSupervisor.csproj
 
     - name: Commit and push changes

@@ -31,11 +31,5 @@ namespace AgentSupervisor
             
             Logger.LogInfo("MainWindow created for taskbar presence");
         }
-        
-        protected override void SetVisibleCore(bool value)
-        {
-            // Keep the window invisible but in the taskbar
-            base.SetVisibleCore(false);
-        }
     }
 }

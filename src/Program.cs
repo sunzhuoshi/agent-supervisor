@@ -60,6 +60,8 @@ namespace AgentSupervisor
             
             // Create main window for taskbar presence
             _mainWindow = new MainWindow();
+            // Required to be shown in task bar
+            _mainWindow.Show();
             _badgeManager = new TaskbarBadgeManager(_mainWindow);
             
             _systemTrayManager = new SystemTrayManager(

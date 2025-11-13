@@ -25,6 +25,8 @@ namespace AgentSupervisor
         private Configuration? _config;
         private CancellationTokenSource? _cts;
         private Task? _monitoringTask;
+        private MainWindow? _mainWindow;
+        private TaskbarBadgeManager? _badgeManager;
 
         public BotApplicationContext()
         {
@@ -55,6 +57,13 @@ namespace AgentSupervisor
 
             // Initialize services
             _notificationHistory = new NotificationHistory(_config.MaxHistoryEntries);
+            
+            // Create main window for taskbar presence
+            _mainWindow = new MainWindow();
+            // Required to be shown in task bar
+            _mainWindow.Show();
+            _badgeManager = new TaskbarBadgeManager(_mainWindow);
+            
             _systemTrayManager = new SystemTrayManager(
                 _notificationHistory,
                 OnSettingsClick,
@@ -94,6 +103,7 @@ namespace AgentSupervisor
                 try
                 {
                     var reviews = await _gitHubService!.GetPendingReviewsAsync();
+                    var newReviewCount = 0;
                     
                     foreach (var review in reviews)
                     {
@@ -116,17 +126,25 @@ namespace AgentSupervisor
                             };
                             
                             _notificationHistory.Add(entry);
+                            newReviewCount++;
                             Logger.LogInfo($"Notification shown for review: {entry.Repository} PR#{entry.PullRequestNumber}");
                         }
                     }
 
-                    if (reviews.Count > 0)
+                    // Update taskbar badge with total pending review count
+                    var totalPendingCount = await _gitHubService!.GetPendingReviewCountAsync();
+                    if (_mainWindow != null && !_mainWindow.IsDisposed)
                     {
-                        _systemTrayManager!.UpdateStatus($"Found {reviews.Count} new review(s)");
+                        _mainWindow.Invoke(() => _badgeManager!.UpdateBadgeCount(totalPendingCount));
+                    }
+
+                    if (newReviewCount > 0)
+                    {
+                        _systemTrayManager!.UpdateStatus($"{totalPendingCount} pending review(s) - {newReviewCount} new");
                     }
                     else
                     {
-                        _systemTrayManager!.UpdateStatus("Monitoring... (No new reviews)");
+                        _systemTrayManager!.UpdateStatus($"{totalPendingCount} pending review(s)");
                     }
                 }
                 catch (Exception ex)
@@ -181,6 +199,8 @@ namespace AgentSupervisor
             _cts?.Cancel();
             _monitoringTask?.Wait(TimeSpan.FromSeconds(5));
             _systemTrayManager?.Dispose();
+            _badgeManager?.Dispose();
+            _mainWindow?.Dispose();
             Application.Exit();
         }
 

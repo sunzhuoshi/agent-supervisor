@@ -1,10 +1,10 @@
-name: Create Release
+name: Manual Release
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version number (e.g., 1.2.3)'
+        description: 'Version number (e.g., 1.2.3) - See VERSIONING.md'
         required: true
         type: string
 

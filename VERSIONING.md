@@ -128,9 +128,9 @@ CI builds automatically use build metadata to identify each build:
 - **Automated Format**: The build workflow automatically sets the version to `1.0.0+ci.123` where `123` is the GitHub Actions run number
 - **Artifact Naming**: Build artifacts are named like `AgentSupervisor-1.0.0+ci.123`
 - **Version Properties**: 
-  - `InformationalVersion` is set to `1.0.0+ci.123` (includes build metadata)
-  - `FileVersion` and `AssemblyVersion` remain as `1.0.0` (production version, no build metadata)
-  - This ensures Windows file properties show the clean production version while detailed build info is available programmatically
+  - `InformationalVersion` is set to `1.0.0+ci.123` (includes build metadata in SemVer format)
+  - `FileVersion` and `AssemblyVersion` are set to `1.0.0.123` (includes build number in numeric format)
+  - This ensures build metadata is available in all version properties while maintaining compatibility with .NET version formats
 
 Additional build metadata formats that can be used:
   - `1.0.0+build.123` - includes build/run number

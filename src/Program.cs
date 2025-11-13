@@ -48,6 +48,7 @@ namespace AgentSupervisor
     {
         private GitHubService? _gitHubService;
         private NotificationHistory? _notificationHistory;
+        private ReviewRequestService? _reviewRequestService;
         private SystemTrayManager? _systemTrayManager;
         private Configuration? _config;
         private CancellationTokenSource? _cts;
@@ -84,6 +85,7 @@ namespace AgentSupervisor
 
             // Initialize services
             _notificationHistory = new NotificationHistory(_config.MaxHistoryEntries);
+            _reviewRequestService = new ReviewRequestService();
             
             // Create main window for taskbar presence
             _mainWindow = new MainWindow();
@@ -93,12 +95,13 @@ namespace AgentSupervisor
             
             _systemTrayManager = new SystemTrayManager(
                 _notificationHistory,
+                _reviewRequestService,
                 OnSettingsClick,
                 OnExitClick,
                 OnOpenUrlClick);
 
             var proxyUrl = _config.UseProxy ? _config.ProxyUrl : null;
-            _gitHubService = new GitHubService(_config.PersonalAccessToken, proxyUrl);
+            _gitHubService = new GitHubService(_config.PersonalAccessToken, proxyUrl, _reviewRequestService);
 
             // Verify GitHub connection
             _systemTrayManager.UpdateStatus("Connecting to GitHub...");
@@ -211,8 +214,9 @@ namespace AgentSupervisor
             _monitoringTask?.Wait(TimeSpan.FromSeconds(5));
 
             var proxyUrl = _config!.UseProxy ? _config.ProxyUrl : null;
-            _gitHubService = new GitHubService(_config!.PersonalAccessToken, proxyUrl);
+            _gitHubService = new GitHubService(_config!.PersonalAccessToken, proxyUrl, _reviewRequestService);
             _notificationHistory = new NotificationHistory(_config.MaxHistoryEntries);
+            _reviewRequestService = new ReviewRequestService();
 
             _cts = new CancellationTokenSource();
             _monitoringTask = Task.Run(() => MonitorReviews(_cts.Token));

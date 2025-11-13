@@ -114,12 +114,12 @@ Version history is tracked through:
 
 ## Decision: Build/Revision Version
 
-The fourth version component (build/revision number) is **not used** in this project because:
+The fourth version component (build/revision number) is **not used for release versions**, but **is used for CI builds**:
 
-1. **Semantic Versioning** uses three components (MAJOR.MINOR.PATCH)
-2. **Simplicity**: Three components are sufficient for clear versioning
+1. **Release Versions**: Follow Semantic Versioning and use three components (MAJOR.MINOR.PATCH)
+2. **Simplicity**: Three components are sufficient for clear release versioning
 3. **Git Commits**: Detailed change tracking is handled by git commit SHAs
-4. **Automated Builds**: CI/CD builds are identified by workflow run numbers, not version numbers
+4. **CI/CD Builds**: Automated CI builds use a four-component version (MAJOR.MINOR.PATCH.BUILD), where BUILD is the workflow run number, to uniquely identify build artifacts
 
 ### CI Build Version Examples
 

@@ -4,6 +4,7 @@ A Windows system tray application that helps improve GitHub Copilot agents workf
 
 ## Features
 
+- **Auto-Update**: Automatically checks for new releases from GitHub and prompts to upgrade with one click
 - **Taskbar Badge Overlay**: Shows the number of pending PR review requests on the taskbar icon
 - **System Tray Application**: Runs in background with system tray icon
 - **Monitor PR Reviews**: Automatically monitors pull request reviews assigned to the current user
@@ -67,10 +68,29 @@ dotnet build --configuration Release
      - "Recent Notifications" - View the last 10 notifications
      - "Settings" - Change your configuration
      - "About" - View application information
+     - "Check for Updates" - Manually check for application updates
      - "Exit" - Close the application
    - **Double-click the tray icon** - View recent notifications
    - **Click a balloon notification** - Opens the PR in your browser
    - **Check the taskbar badge** - See how many reviews are pending at a glance
+
+## Auto-Update
+
+The application automatically checks for updates from GitHub releases:
+
+- **Automatic Check**: On startup, the app checks for new releases (can be disabled in config)
+- **Manual Check**: Right-click the tray icon and select "Check for Updates"
+- **Update Notification**: A balloon notification appears when a new version is available
+- **One-Click Update**: Click "Yes" to download and install the update automatically
+- **Data Preservation**: Your configuration and notification history are preserved during the update
+- **Automatic Restart**: The application restarts automatically after the update is installed
+
+The update process:
+1. Downloads the latest release from GitHub
+2. Backs up your configuration files (`config.json`, `notification_history.json`, `review_requests.json`)
+3. Extracts and installs the new version
+4. Restores your configuration files
+5. Restarts the application
 
 ## Configuration
 
@@ -80,11 +100,19 @@ Configuration is stored in `config.json` in the application directory:
 {
   "PersonalAccessToken": "your_github_token_here",
   "PollingIntervalSeconds": 60,
-  "MaxHistoryEntries": 100
+  "MaxHistoryEntries": 100,
+  "CheckForUpdatesOnStartup": true,
+  "LastUpdateCheck": null
 }
 ```
 
 You can edit this file manually or use the Settings UI (right-click tray icon → Settings).
+
+- `PersonalAccessToken`: Your GitHub Personal Access Token
+- `PollingIntervalSeconds`: How often to check for new PR reviews (default: 60)
+- `MaxHistoryEntries`: Maximum number of notifications to keep in history (default: 100)
+- `CheckForUpdatesOnStartup`: Whether to check for updates when the app starts (default: true)
+- `LastUpdateCheck`: Timestamp of the last update check (automatically managed)
 
 ## How It Works
 
@@ -94,13 +122,15 @@ You can edit this file manually or use the Settings UI (right-click tray icon �
 4. **Balloon Notifications**: When a new PR review is detected, a Windows balloon tip notification appears
 5. **Notification History**: All notifications are saved to `notification_history.json`
 6. **Click to Open**: Click on a notification to open the PR in your default browser
+7. **Auto-Update**: Checks for new releases on startup and notifies when updates are available
 
 ## Files Created
 
 - `config.json` - Configuration file (contains your PAT, keep it secure!)
 - `notification_history.json` - Notification history
+- `review_requests.json` - Tracking of review requests to avoid duplicate notifications
 
-Both files are excluded from git via `.gitignore`.
+All files are excluded from git via `.gitignore`.
 
 ## Project Structure
 
@@ -115,6 +145,7 @@ AgentSupervisor/
 │   ├── AboutForm.cs             # About dialog
 │   ├── SystemTrayManager.cs     # System tray icon and notifications
 │   ├── GitHubService.cs         # GitHub API integration
+│   ├── UpdateService.cs         # Auto-update functionality
 │   ├── NotificationHistory.cs   # Persistent notification storage
 │   ├── Configuration.cs         # Configuration management
 │   └── Models/

@@ -4,10 +4,11 @@ on:
   push:
     tags:
       - 'v*.*.*'
+      - 'v*.*.*-*'
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g., 1.0.0 without v prefix)'
+        description: 'Release version (e.g., 1.0.0 or 1.0.0-beta.1 without v prefix)'
         required: true
         type: string
 
@@ -41,25 +42,31 @@ jobs:
           $version = "${{ github.event.inputs.version }}"
           Write-Output "Manual release version: $version"
           
-          # Validate version format (MAJOR.MINOR.PATCH)
-          if ($version -notmatch '^\d+\.\d+\.\d+$') {
-            Write-Error "Invalid version format. Expected format: X.Y.Z (e.g., 1.0.0)"
+          # Validate version format (Semantic Versioning 2.0.0)
+          # Format: MAJOR.MINOR.PATCH[-PRERELEASE][+BUILD]
+          if ($version -notmatch '^\d+\.\d+\.\d+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$') {
+            Write-Error "Invalid version format. Expected Semantic Versioning format (e.g., 1.0.0, 1.0.0-beta.1, 1.0.0-rc.1)"
             exit 1
           }
         } else {
           # Extract version from tag
           $tag = "${{ github.ref_name }}"
-          if ($tag -match '^v(\d+\.\d+\.\d+)$') {
+          if ($tag -match '^v(\d+\.\d+\.\d+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?)$') {
             $version = $matches[1]
             Write-Output "Tag version: $version"
           } else {
-            Write-Error "Invalid tag format. Expected format: v1.0.0"
+            Write-Error "Invalid tag format. Expected format: v1.0.0 or v1.0.0-beta.1"
             exit 1
           }
         }
         
+        # Detect if this is a pre-release version
+        $isPrerelease = $version -match '-'
+        
         Write-Output "version=$version" >> $env:GITHUB_OUTPUT
+        Write-Output "is_prerelease=$isPrerelease" >> $env:GITHUB_OUTPUT
         Write-Output "Using version: $version"
+        Write-Output "Pre-release: $isPrerelease"
     
     - name: Verify version in source
       shell: pwsh
@@ -147,6 +154,6 @@ jobs:
         files: AgentSupervisor-${{ steps.get_version.outputs.version }}-windows.zip
         generate_release_notes: true
         draft: false
-        prerelease: false
+        prerelease: ${{ steps.get_version.outputs.is_prerelease }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

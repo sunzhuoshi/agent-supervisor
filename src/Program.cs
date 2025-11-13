@@ -48,6 +48,7 @@ namespace AgentSupervisor
     {
         private GitHubService? _gitHubService;
         private NotificationHistory? _notificationHistory;
+        private ReviewRequestService? _reviewRequestService;
         private SystemTrayManager? _systemTrayManager;
         private Configuration? _config;
         private CancellationTokenSource? _cts;
@@ -84,6 +85,7 @@ namespace AgentSupervisor
 
             // Initialize services
             _notificationHistory = new NotificationHistory(_config.MaxHistoryEntries);
+            _reviewRequestService = new ReviewRequestService();
             
             // Create main window for taskbar presence
             _mainWindow = new MainWindow();
@@ -93,12 +95,14 @@ namespace AgentSupervisor
             
             _systemTrayManager = new SystemTrayManager(
                 _notificationHistory,
+                _reviewRequestService,
                 OnSettingsClick,
                 OnExitClick,
-                OnOpenUrlClick);
+                OnOpenUrlClick,
+                RefreshTaskbarBadge);
 
             var proxyUrl = _config.UseProxy ? _config.ProxyUrl : null;
-            _gitHubService = new GitHubService(_config.PersonalAccessToken, proxyUrl);
+            _gitHubService = new GitHubService(_config.PersonalAccessToken, proxyUrl, _reviewRequestService);
 
             // Verify GitHub connection
             _systemTrayManager.UpdateStatus("Connecting to GitHub...");
@@ -162,7 +166,7 @@ namespace AgentSupervisor
                     var totalPendingCount = await _gitHubService!.GetPendingReviewCountAsync();
                     if (_mainWindow != null && !_mainWindow.IsDisposed)
                     {
-                        _mainWindow.Invoke(() => _badgeManager!.UpdateBadgeCount(totalPendingCount));
+                        _mainWindow.Invoke(() => _badgeManager!.UpdateBadgeCount(newReviewCount));
                     }
 
                     if (newReviewCount > 0)
@@ -211,8 +215,9 @@ namespace AgentSupervisor
             _monitoringTask?.Wait(TimeSpan.FromSeconds(5));
 
             var proxyUrl = _config!.UseProxy ? _config.ProxyUrl : null;
-            _gitHubService = new GitHubService(_config!.PersonalAccessToken, proxyUrl);
+            _gitHubService = new GitHubService(_config!.PersonalAccessToken, proxyUrl, _reviewRequestService);
             _notificationHistory = new NotificationHistory(_config.MaxHistoryEntries);
+            _reviewRequestService = new ReviewRequestService();
 
             _cts = new CancellationTokenSource();
             _monitoringTask = Task.Run(() => MonitorReviews(_cts.Token));
@@ -247,6 +252,27 @@ namespace AgentSupervisor
                 Logger.LogError($"Error opening URL: {url}", ex);
                 MessageBox.Show($"Error opening browser: {ex.Message}", "Error", 
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private async void RefreshTaskbarBadge()
+        {
+            try
+            {
+                // Get the current pending review count from GitHub
+                var totalPendingCount = await _gitHubService!.GetPendingReviewCountAsync();
+                
+                // Update the taskbar badge on the UI thread
+                if (_mainWindow != null && !_mainWindow.IsDisposed)
+                {
+                    _mainWindow.Invoke(() => _badgeManager!.UpdateBadgeCount(totalPendingCount));
+                }
+                
+                Logger.LogInfo($"Taskbar badge refreshed: {totalPendingCount} pending review(s)");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Error refreshing taskbar badge", ex);
             }
         }
     }

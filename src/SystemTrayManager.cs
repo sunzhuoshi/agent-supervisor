@@ -11,23 +11,29 @@ namespace AgentSupervisor
         private readonly NotifyIcon _notifyIcon;
         private readonly ContextMenuStrip _contextMenu;
         private readonly NotificationHistory _notificationHistory;
+        private readonly ReviewRequestService _reviewRequestService;
         private readonly Action _onSettingsClick;
         private readonly Action _onExitClick;
         private readonly Action<string> _onOpenUrlClick;
+        private readonly Action? _onRefreshBadge;
         private Icon? _customIcon;
 
         public SystemTrayManager(
             NotificationHistory notificationHistory,
+            ReviewRequestService reviewRequestService,
             Action onSettingsClick,
             Action onExitClick,
-            Action<string> onOpenUrlClick)
+            Action<string> onOpenUrlClick,
+            Action? onRefreshBadge = null)
         {
             Logger.LogInfo("Initializing SystemTrayManager");
             
             _notificationHistory = notificationHistory;
+            _reviewRequestService = reviewRequestService;
             _onSettingsClick = onSettingsClick;
             _onExitClick = onExitClick;
             _onOpenUrlClick = onOpenUrlClick;
+            _onRefreshBadge = onRefreshBadge;
 
             // Create custom icon
             _customIcon = CreateCustomIcon();
@@ -49,7 +55,7 @@ namespace AgentSupervisor
                 Text = "Agent Supervisor"
             };
             icon.ContextMenuStrip = _contextMenu;
-            icon.DoubleClick += (s, e) => ShowRecentNotifications();
+            icon.DoubleClick += (s, e) => ShowReviewRequests();
             
             // Ensure icon is shown (workaround for Windows 11 issues)
             icon.Visible = false;
@@ -64,8 +70,8 @@ namespace AgentSupervisor
         {
             var menu = new ContextMenuStrip();
 
-            var recentItem = new ToolStripMenuItem("Recent Notifications");
-            recentItem.Click += (s, e) => ShowRecentNotifications();
+            var recentItem = new ToolStripMenuItem("Review Requests by Copilots");
+            recentItem.Click += (s, e) => ShowReviewRequests();
             menu.Items.Add(recentItem);
 
             menu.Items.Add(new ToolStripSeparator());
@@ -103,32 +109,14 @@ namespace AgentSupervisor
             };
         }
 
-        private void ShowRecentNotifications()
+        private void ShowReviewRequests()
         {
-            var recent = _notificationHistory.GetRecent(10);
-            
-            if (recent.Count == 0)
-            {
-                MessageBox.Show("No recent notifications.", "Recent Notifications", 
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            var message = "Recent Notifications:\n\n";
-            foreach (var entry in recent)
-            {
-                message += $"• {entry.Repository} PR#{entry.PullRequestNumber}\n";
-                message += $"  {entry.State} by {entry.Reviewer}\n";
-                message += $"  {entry.NotifiedAt:MM/dd HH:mm}\n\n";
-            }
-
-            var result = MessageBox.Show(message, "Recent Notifications", 
-                MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
-            
-            if (result == DialogResult.OK && recent.Count > 0)
-            {
-                _onOpenUrlClick(recent[0].HtmlUrl);
-            }
+            var form = new ReviewRequestsForm(
+                _reviewRequestService,
+                _onOpenUrlClick,
+                () => _reviewRequestService.MarkAllAsRead(),
+                _onRefreshBadge);
+            form.ShowDialog();
         }
 
         private void ShowAbout()

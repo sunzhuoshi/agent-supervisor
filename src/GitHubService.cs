@@ -9,8 +9,9 @@ namespace AgentSupervisor
         private readonly HttpClient _httpClient;
         private readonly string _username;
         private readonly ReviewRequestHistory _reviewRequestHistory;
+        private readonly ReviewRequestService? _reviewRequestService;
 
-        public GitHubService(string personalAccessToken, string? proxyUrl = null)
+        public GitHubService(string personalAccessToken, string? proxyUrl = null, ReviewRequestService? reviewRequestService = null)
         {
             var handler = new HttpClientHandler();
             
@@ -40,6 +41,7 @@ namespace AgentSupervisor
 
             _username = string.Empty;
             _reviewRequestHistory = new ReviewRequestHistory();
+            _reviewRequestService = reviewRequestService;
             Logger.LogInfo("GitHubService initialized");
         }
 
@@ -153,9 +155,32 @@ namespace AgentSupervisor
                             ? DateTime.Parse(created.GetString() ?? DateTime.UtcNow.ToString())
                             : DateTime.UtcNow;
                         
+                        // Get PR author info if available
+                        var authorLogin = "Unknown";
+                        if (prDoc.RootElement.TryGetProperty("user", out var userElement))
+                        {
+                            authorLogin = userElement.GetProperty("login").GetString() ?? "Unknown";
+                        }
+                        
                         // Create unique identifier for this review request
                         var requestId = $"{repoFullName}#{prNumber}";
                         currentRequestIds.Add(requestId);
+                        
+                        // Add to ReviewRequestService if available
+                        if (_reviewRequestService != null)
+                        {
+                            var entry = new ReviewRequestEntry
+                            {
+                                Id = requestId,
+                                Repository = repoFullName,
+                                PullRequestNumber = prNumber,
+                                HtmlUrl = htmlUrl,
+                                Title = title,
+                                Author = authorLogin,
+                                CreatedAt = createdAt
+                            };
+                            _reviewRequestService.AddOrUpdate(entry);
+                        }
                         
                         // Check if this is a new review request
                         if (!_reviewRequestHistory.HasBeenSeen(requestId))
@@ -172,17 +197,15 @@ namespace AgentSupervisor
                                 PullRequestNumber = prNumber
                             };
                             
-                            // Get PR author info if available
-                            if (prDoc.RootElement.TryGetProperty("user", out var userElement))
+                            // Set PR author info
+                            review.User = new User
                             {
-                                review.User = new User
-                                {
-                                    Login = userElement.GetProperty("login").GetString() ?? "",
-                                    HtmlUrl = userElement.TryGetProperty("html_url", out var userHtmlUrl)
-                                        ? userHtmlUrl.GetString() ?? ""
-                                        : ""
-                                };
-                            }
+                                Login = authorLogin,
+                                HtmlUrl = prDoc.RootElement.TryGetProperty("user", out var uElem) && 
+                                         uElem.TryGetProperty("html_url", out var userHtmlUrl)
+                                    ? userHtmlUrl.GetString() ?? ""
+                                    : ""
+                            };
                             
                             reviews.Add(review);
                             Logger.LogInfo($"New review request found: {repoFullName} PR#{prNumber}");
@@ -196,6 +219,12 @@ namespace AgentSupervisor
 
                 // Save all current request IDs to persistent storage
                 _reviewRequestHistory.MarkMultipleAsSeen(currentRequestIds);
+                
+                // Remove stale requests from ReviewRequestService
+                if (_reviewRequestService != null)
+                {
+                    _reviewRequestService.RemoveStaleRequests(currentRequestIds);
+                }
                 
                 Logger.LogInfo($"Fetched {reviews.Count} new review requests");
             }

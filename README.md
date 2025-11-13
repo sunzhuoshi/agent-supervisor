@@ -74,39 +74,23 @@ dotnet build --configuration Release
 
 ## Configuration
 
-Configuration is stored in `config.json` in the application directory:
+Configuration is stored in the Windows Registry under `HKEY_CURRENT_USER\Software\AgentSupervisor`:
 
-```json
-{
-  "PersonalAccessToken": "your_github_token_here",
-  "PollingIntervalSeconds": 60,
-  "MaxHistoryEntries": 100
-}
-```
+| Setting | Registry Value | Default |
+|---------|---------------|---------|
+| GitHub Personal Access Token | PersonalAccessToken | (empty) |
+| Polling Interval (seconds) | PollingIntervalSeconds | 60 |
+| Max History Entries | MaxHistoryEntries | 100 |
+| Proxy URL | ProxyUrl | (empty) |
+| Use Proxy | UseProxy | 0 (disabled) |
 
-You can edit this file manually or use the Settings UI (right-click tray icon → Settings).
+You can configure settings using the Settings UI (right-click tray icon → Settings).
 
-### Sharing Configuration Across Releases
-
-Agent Supervisor supports exporting and importing configuration, making it easy to share settings across different releases or builds:
-
-1. **Export Configuration**:
-   - Open Settings (right-click tray icon → Settings)
-   - Click the "Export..." button
-   - Choose whether to include your Personal Access Token (for security, you may want to exclude it)
-   - Save the configuration file to your desired location
-
-2. **Import Configuration**:
-   - Open Settings on your new installation or build
-   - Click the "Import..." button
-   - Select your previously exported configuration file
-   - Review the imported settings and click "Save" to apply them
-
-This feature is particularly useful when:
-- Testing a new CI build without reconfiguring
-- Setting up multiple machines with the same settings
-- Backing up your configuration before updating
-- Sharing non-sensitive settings with team members (export without token)
+**Benefits of Registry Storage:**
+- Configuration persists across different versions of the application
+- No need to manually reconfigure when testing new builds
+- Settings survive application reinstalls (unless uninstalled via Windows Settings)
+- Standard Windows approach for application settings
 
 ## How It Works
 
@@ -119,10 +103,10 @@ This feature is particularly useful when:
 
 ## Files Created
 
-- `config.json` - Configuration file (contains your PAT, keep it secure!)
 - `notification_history.json` - Notification history
 
-Both files are excluded from git via `.gitignore`.
+This file is excluded from git via `.gitignore`.
+
 
 ## Project Structure
 

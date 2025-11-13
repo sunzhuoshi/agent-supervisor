@@ -1,4 +1,4 @@
-using System.Text.Json;
+using Microsoft.Win32;
 
 namespace AgentSupervisor
 {
@@ -10,24 +10,30 @@ namespace AgentSupervisor
         public string ProxyUrl { get; set; } = string.Empty;
         public bool UseProxy { get; set; } = false;
 
-        private const string ConfigFileName = "config.json";
+        private const string RegistryKeyPath = @"Software\AgentSupervisor";
 
         public static Configuration Load()
         {
-            if (File.Exists(ConfigFileName))
+            try
             {
-                try
+                using var key = Registry.CurrentUser.OpenSubKey(RegistryKeyPath);
+                if (key != null)
                 {
-                    var json = File.ReadAllText(ConfigFileName);
-                    var config = JsonSerializer.Deserialize<Configuration>(json);
-                    Logger.LogInfo("Configuration loaded successfully");
-                    return config ?? new Configuration();
+                    var config = new Configuration
+                    {
+                        PersonalAccessToken = key.GetValue("PersonalAccessToken") as string ?? string.Empty,
+                        PollingIntervalSeconds = (int)(key.GetValue("PollingIntervalSeconds") ?? 60),
+                        MaxHistoryEntries = (int)(key.GetValue("MaxHistoryEntries") ?? 100),
+                        ProxyUrl = key.GetValue("ProxyUrl") as string ?? string.Empty,
+                        UseProxy = ((int)(key.GetValue("UseProxy") ?? 0)) != 0
+                    };
+                    Logger.LogInfo("Configuration loaded successfully from Registry");
+                    return config;
                 }
-                catch (Exception ex)
-                {
-                    Logger.LogError("Failed to load configuration", ex);
-                    // Return default configuration on error
-                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Failed to load configuration from Registry", ex);
             }
 
             return new Configuration();
@@ -37,61 +43,21 @@ namespace AgentSupervisor
         {
             try
             {
-                var options = new JsonSerializerOptions { WriteIndented = true };
-                var json = JsonSerializer.Serialize(this, options);
-                File.WriteAllText(ConfigFileName, json);
-                Logger.LogInfo("Configuration saved successfully");
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError("Failed to save configuration", ex);
-                // Silent fail - error will be shown in UI if needed
-            }
-        }
-
-        public void ExportTo(string filePath, bool includeToken = true)
-        {
-            try
-            {
-                var configToExport = includeToken ? this : new Configuration
+                using var key = Registry.CurrentUser.CreateSubKey(RegistryKeyPath);
+                if (key != null)
                 {
-                    PollingIntervalSeconds = this.PollingIntervalSeconds,
-                    MaxHistoryEntries = this.MaxHistoryEntries,
-                    ProxyUrl = this.ProxyUrl,
-                    UseProxy = this.UseProxy,
-                    PersonalAccessToken = string.Empty
-                };
-
-                var options = new JsonSerializerOptions { WriteIndented = true };
-                var json = JsonSerializer.Serialize(configToExport, options);
-                File.WriteAllText(filePath, json);
-                Logger.LogInfo($"Configuration exported successfully to {filePath}");
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError($"Failed to export configuration to {filePath}", ex);
-                throw;
-            }
-        }
-
-        public static Configuration ImportFrom(string filePath)
-        {
-            try
-            {
-                if (!File.Exists(filePath))
-                {
-                    throw new FileNotFoundException($"Configuration file not found: {filePath}");
+                    key.SetValue("PersonalAccessToken", PersonalAccessToken);
+                    key.SetValue("PollingIntervalSeconds", PollingIntervalSeconds, RegistryValueKind.DWord);
+                    key.SetValue("MaxHistoryEntries", MaxHistoryEntries, RegistryValueKind.DWord);
+                    key.SetValue("ProxyUrl", ProxyUrl);
+                    key.SetValue("UseProxy", UseProxy ? 1 : 0, RegistryValueKind.DWord);
+                    Logger.LogInfo("Configuration saved successfully to Registry");
                 }
-
-                var json = File.ReadAllText(filePath);
-                var config = JsonSerializer.Deserialize<Configuration>(json);
-                Logger.LogInfo($"Configuration imported successfully from {filePath}");
-                return config ?? new Configuration();
             }
             catch (Exception ex)
             {
-                Logger.LogError($"Failed to import configuration from {filePath}", ex);
-                throw;
+                Logger.LogError("Failed to save configuration to Registry", ex);
+                // Silent fail - error will be shown in UI if needed
             }
         }
     }

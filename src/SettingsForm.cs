@@ -13,8 +13,6 @@ namespace AgentSupervisor
         private TextBox _proxyUrlTextBox = null!;
         private Button _saveButton = null!;
         private Button _cancelButton = null!;
-        private Button _exportButton = null!;
-        private Button _importButton = null!;
 
         public SettingsForm(Configuration configuration)
         {
@@ -143,26 +141,6 @@ namespace AgentSupervisor
             };
             proxyGroup.Controls.Add(_proxyUrlTextBox);
 
-            // Export Button
-            _exportButton = new Button
-            {
-                Text = "Export...",
-                Location = new System.Drawing.Point(20, 320),
-                Size = new System.Drawing.Size(85, 30)
-            };
-            _exportButton.Click += ExportButton_Click;
-            this.Controls.Add(_exportButton);
-
-            // Import Button
-            _importButton = new Button
-            {
-                Text = "Import...",
-                Location = new System.Drawing.Point(115, 320),
-                Size = new System.Drawing.Size(85, 30)
-            };
-            _importButton.Click += ImportButton_Click;
-            this.Controls.Add(_importButton);
-
             // Save Button
             _saveButton = new Button
             {
@@ -225,94 +203,6 @@ namespace AgentSupervisor
 
             MessageBox.Show("Settings saved successfully.", "Success", 
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-
-        private void ExportButton_Click(object? sender, EventArgs e)
-        {
-            using var saveDialog = new SaveFileDialog
-            {
-                Title = "Export Configuration",
-                Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
-                DefaultExt = "json",
-                FileName = "agent-supervisor-config.json"
-            };
-
-            if (saveDialog.ShowDialog() == DialogResult.OK)
-            {
-                try
-                {
-                    var result = MessageBox.Show(
-                        "Do you want to include the GitHub Personal Access Token in the export?\n\n" +
-                        "Warning: The token will be stored in plain text in the exported file.",
-                        "Include Token?",
-                        MessageBoxButtons.YesNoCancel,
-                        MessageBoxIcon.Question);
-
-                    if (result == DialogResult.Cancel)
-                    {
-                        return;
-                    }
-
-                    bool includeToken = result == DialogResult.Yes;
-                    _configuration.ExportTo(saveDialog.FileName, includeToken);
-
-                    MessageBox.Show(
-                        $"Configuration exported successfully to:\n{saveDialog.FileName}",
-                        "Export Success",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Information);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(
-                        $"Failed to export configuration:\n{ex.Message}",
-                        "Export Error",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Error);
-                }
-            }
-        }
-
-        private void ImportButton_Click(object? sender, EventArgs e)
-        {
-            using var openDialog = new OpenFileDialog
-            {
-                Title = "Import Configuration",
-                Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
-                DefaultExt = "json"
-            };
-
-            if (openDialog.ShowDialog() == DialogResult.OK)
-            {
-                try
-                {
-                    var importedConfig = Configuration.ImportFrom(openDialog.FileName);
-
-                    // Update UI with imported values
-                    if (!string.IsNullOrWhiteSpace(importedConfig.PersonalAccessToken))
-                    {
-                        _tokenTextBox.Text = importedConfig.PersonalAccessToken;
-                    }
-                    _intervalNumeric.Value = importedConfig.PollingIntervalSeconds;
-                    _maxHistoryNumeric.Value = importedConfig.MaxHistoryEntries;
-                    _useProxyCheckBox.Checked = importedConfig.UseProxy;
-                    _proxyUrlTextBox.Text = importedConfig.ProxyUrl;
-
-                    MessageBox.Show(
-                        "Configuration imported successfully.\n\nPlease review the settings and click Save to apply them.",
-                        "Import Success",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Information);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(
-                        $"Failed to import configuration:\n{ex.Message}",
-                        "Import Error",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Error);
-                }
-            }
         }
     }
 }

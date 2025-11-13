@@ -60,7 +60,13 @@ namespace AgentSupervisor
             };
             _listBox.DrawItem += ListBox_DrawItem;
             _listBox.DoubleClick += ListBox_DoubleClick;
-            Controls.Add(_listBox);
+            var listBoxPanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                Padding = new Padding(0, _statusLabel.Height, 0, 0)
+            };
+            listBoxPanel.Controls.Add(_listBox);    
+            Controls.Add(listBoxPanel);
 
             // Button panel at bottom
             var buttonPanel = new Panel

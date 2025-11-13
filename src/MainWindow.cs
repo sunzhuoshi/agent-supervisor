@@ -7,7 +7,13 @@ namespace AgentSupervisor
 {
     public class MainWindow : Form
     {
-        public MainWindow()
+        private readonly ContextMenuStrip? _contextMenu;
+
+        public MainWindow(
+            Action? onRecentNotificationsClick = null,
+            Action? onSettingsClick = null,
+            Action? onAboutClick = null,
+            Action? onExitClick = null)
         {
             // Create a minimized, invisible window that appears in the taskbar
             Text = "Agent Supervisor";
@@ -31,6 +37,19 @@ namespace AgentSupervisor
                 Logger.LogError("Failed to load application icon", ex);
             }
             
+            // Create context menu for taskbar icon
+            if (onRecentNotificationsClick != null && onSettingsClick != null && 
+                onAboutClick != null && onExitClick != null)
+            {
+                _contextMenu = CreateContextMenu(
+                    onRecentNotificationsClick,
+                    onSettingsClick,
+                    onAboutClick,
+                    onExitClick);
+                ContextMenuStrip = _contextMenu;
+                Logger.LogInfo("MainWindow context menu created");
+            }
+            
             // Prevent the window from being shown
             WindowState = FormWindowState.Minimized;
             
@@ -45,6 +64,46 @@ namespace AgentSupervisor
             };
             
             Logger.LogInfo("MainWindow created for taskbar presence");
+        }
+
+        private ContextMenuStrip CreateContextMenu(
+            Action onRecentNotificationsClick,
+            Action onSettingsClick,
+            Action onAboutClick,
+            Action onExitClick)
+        {
+            var menu = new ContextMenuStrip();
+
+            var recentItem = new ToolStripMenuItem("Recent Notifications");
+            recentItem.Click += (s, e) => onRecentNotificationsClick();
+            menu.Items.Add(recentItem);
+
+            menu.Items.Add(new ToolStripSeparator());
+
+            var settingsItem = new ToolStripMenuItem("Settings");
+            settingsItem.Click += (s, e) => onSettingsClick();
+            menu.Items.Add(settingsItem);
+
+            var aboutItem = new ToolStripMenuItem("About");
+            aboutItem.Click += (s, e) => onAboutClick();
+            menu.Items.Add(aboutItem);
+
+            menu.Items.Add(new ToolStripSeparator());
+
+            var exitItem = new ToolStripMenuItem("Exit");
+            exitItem.Click += (s, e) => onExitClick();
+            menu.Items.Add(exitItem);
+
+            return menu;
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _contextMenu?.Dispose();
+            }
+            base.Dispose(disposing);
         }
     }
 }

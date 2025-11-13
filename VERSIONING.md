@@ -123,10 +123,13 @@ The fourth version component (build/revision number) is **not used** in this pro
 
 ### CI Build Version Examples
 
-While the project uses three-component versions (e.g., `1.0.0`), CI builds can be identified using:
+CI builds automatically use build metadata to identify each build:
 
-- **GitHub Actions Run ID**: Build artifacts are named like `AgentSupervisor-Release` with workflow run `#123`
-- **Build Metadata (optional)**: If needed, build metadata can be appended using a plus sign without affecting version precedence:
+- **Automated Format**: The build workflow automatically sets the version to `1.0.0+ci.123` where `123` is the GitHub Actions run number
+- **Artifact Naming**: Build artifacts are named like `AgentSupervisor-1.0.0+ci.123`
+- **InformationalVersion**: The version is set using the `InformationalVersion` MSBuild property
+
+Additional build metadata formats that can be used:
   - `1.0.0+build.123` - includes build/run number
   - `1.0.0+20231113.1` - includes date and build count
   - `1.0.0+sha.a1b2c3d` - includes git commit SHA

@@ -22,11 +22,22 @@ jobs:
       with:
         dotnet-version: '8.0.x'
     
+    - name: Set build version
+      id: set_version
+      shell: pwsh
+      run: |
+        [xml]$csproj = Get-Content AgentSupervisor.csproj
+        $baseVersion = $csproj.Project.PropertyGroup.Version
+        $buildVersion = "$baseVersion+ci.${{ github.run_number }}"
+        Write-Output "version=$buildVersion" >> $env:GITHUB_OUTPUT
+        Write-Output "base_version=$baseVersion" >> $env:GITHUB_OUTPUT
+        Write-Output "Build version: $buildVersion"
+    
     - name: Restore dependencies
       run: dotnet restore
     
     - name: Build
-      run: dotnet build --no-restore --configuration Release
+      run: dotnet build --no-restore --configuration Release /p:InformationalVersion="${{ steps.set_version.outputs.version }}"
     
     - name: Check for vulnerabilities
       run: dotnet list package --vulnerable --include-transitive
@@ -34,6 +45,6 @@ jobs:
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: AgentSupervisor-Release
+        name: AgentSupervisor-${{ steps.set_version.outputs.version }}
         path: bin/Release/net8.0-windows/
         if-no-files-found: error

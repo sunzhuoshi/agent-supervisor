@@ -88,9 +88,22 @@ The application automatically checks for updates from GitHub releases:
 The update process:
 1. Downloads the latest release from GitHub
 2. Backs up your configuration files (`config.json`, `notification_history.json`, `review_requests.json`)
-3. Extracts and installs the new version
-4. Restores your configuration files
-5. Restarts the application
+3. **Backs up old version files to `rollback/` directory for rollback capability**
+4. Extracts and installs the new version
+5. Restores your configuration files
+6. Restarts the application
+
+### Rollback to Previous Version
+
+If you encounter issues with a new version, you can manually rollback:
+
+1. Close Agent Supervisor
+2. Navigate to the `rollback/` folder in the application directory
+3. Find the folder for your previous version (e.g., `version_1.0.0_20250113_095830`)
+4. Copy all files from that folder back to the application directory
+5. Restart Agent Supervisor
+
+The rollback directory keeps backups of previous versions, allowing you to restore if needed.
 
 ## Configuration
 

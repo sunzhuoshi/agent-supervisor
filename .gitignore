@@ -107,6 +107,7 @@ _ReSharper*/
 notification_history.json
 config.json
 review_requests.json
+rollback/
 
 # Log files
 *.log

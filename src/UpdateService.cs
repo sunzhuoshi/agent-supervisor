@@ -177,6 +177,11 @@ namespace AgentSupervisor
                 var currentDirectory = AppDomain.CurrentDomain.BaseDirectory;
                 var updateScriptPath = Path.Combine(tempDir, "update.bat");
                 
+                // Create rollback directory for old version files
+                var rollbackDir = Path.Combine(currentDirectory, "rollback");
+                var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                var versionRollbackDir = Path.Combine(rollbackDir, $"version_{_currentVersion}_{timestamp}");
+                
                 // Backup config.json before update
                 var configPath = Path.Combine(currentDirectory, "config.json");
                 var configBackupPath = Path.Combine(tempDir, "config.json.backup");
@@ -209,12 +214,20 @@ namespace AgentSupervisor
 
                 // Create update script that will:
                 // 1. Wait for the application to close
-                // 2. Copy new files to application directory
-                // 3. Restore config.json, notification_history.json, and review_requests.json
-                // 4. Restart the application
+                // 2. Backup old version files to rollback directory
+                // 3. Copy new files to application directory
+                // 4. Restore config.json, notification_history.json, and review_requests.json
+                // 5. Restart the application
                 var updateScript = $@"@echo off
 echo Waiting for Agent Supervisor to close...
 timeout /t 2 /nobreak >nul
+
+echo Creating rollback backup of old version...
+if not exist ""{rollbackDir}"" mkdir ""{rollbackDir}""
+if not exist ""{versionRollbackDir}"" mkdir ""{versionRollbackDir}""
+
+echo Backing up old version files...
+xcopy /E /I /Y /EXCLUDE:""{Path.Combine(tempDir, "exclude.txt")}"" ""{currentDirectory}*"" ""{versionRollbackDir}""
 
 echo Installing update...
 xcopy /E /I /Y ""{extractPath}\*"" ""{currentDirectory}""
@@ -234,14 +247,23 @@ if exist ""{reviewRequestsBackupPath}"" (
     copy /Y ""{reviewRequestsBackupPath}"" ""{reviewRequestsPath}""
 )
 
-echo Cleaning up...
-timeout /t 1 /nobreak >nul
+echo.
+echo ============================================================
+echo Rollback Information:
+echo Old version backed up to: {versionRollbackDir}
+echo To rollback, close the app and copy files from this folder
+echo back to the application directory.
+echo ============================================================
+echo.
+
+echo Cleaning up temporary update files...
+timeout /t 2 /nobreak >nul
 
 echo Starting Agent Supervisor...
 start """" ""{Path.Combine(currentDirectory, "AgentSupervisor.exe")}""
 
 echo Update completed successfully!
-timeout /t 2 /nobreak >nul
+timeout /t 3 /nobreak >nul
 
 echo Cleaning up temporary files...
 rd /s /q ""{tempDir}""
@@ -249,6 +271,16 @@ rd /s /q ""{tempDir}""
 
                 File.WriteAllText(updateScriptPath, updateScript);
                 Logger.LogInfo($"Update script created: {updateScriptPath}");
+
+                // Create exclude list for backup to avoid backing up user data and rollback folders
+                var excludeListPath = Path.Combine(tempDir, "exclude.txt");
+                var excludeList = @"config.json
+notification_history.json
+review_requests.json
+rollback\
+";
+                File.WriteAllText(excludeListPath, excludeList);
+                Logger.LogInfo($"Exclude list created: {excludeListPath}");
 
                 // Start the update script
                 var startInfo = new ProcessStartInfo

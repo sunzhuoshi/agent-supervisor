@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.0.0 without v prefix)'
+        required: true
+        type: string
 
 # Concurrency configuration:
 # - Ensures only one release build runs at a time per tag
@@ -26,19 +32,34 @@ jobs:
       with:
         dotnet-version: '8.0.x'
     
-    - name: Extract version from tag
+    - name: Extract version from tag or input
       id: get_version
       shell: pwsh
       run: |
-        $tag = "${{ github.ref_name }}"
-        if ($tag -match '^v(\d+\.\d+\.\d+)$') {
-          $version = $matches[1]
-          Write-Output "version=$version" >> $env:GITHUB_OUTPUT
-          Write-Output "Extracted version: $version"
+        # Check if this is a manual workflow dispatch
+        if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+          $version = "${{ github.event.inputs.version }}"
+          Write-Output "Manual release version: $version"
+          
+          # Validate version format (MAJOR.MINOR.PATCH)
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+            Write-Error "Invalid version format. Expected format: X.Y.Z (e.g., 1.0.0)"
+            exit 1
+          }
         } else {
-          Write-Error "Invalid tag format. Expected format: v1.0.0"
-          exit 1
+          # Extract version from tag
+          $tag = "${{ github.ref_name }}"
+          if ($tag -match '^v(\d+\.\d+\.\d+)$') {
+            $version = $matches[1]
+            Write-Output "Tag version: $version"
+          } else {
+            Write-Error "Invalid tag format. Expected format: v1.0.0"
+            exit 1
+          }
         }
+        
+        Write-Output "version=$version" >> $env:GITHUB_OUTPUT
+        Write-Output "Using version: $version"
     
     - name: Verify version in source
       shell: pwsh
@@ -56,6 +77,29 @@ jobs:
         }
         
         Write-Output "Version verification passed!"
+    
+    - name: Create and push tag for manual release
+      if: github.event_name == 'workflow_dispatch'
+      shell: pwsh
+      run: |
+        $version = "${{ steps.get_version.outputs.version }}"
+        $tag = "v$version"
+        
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        
+        # Check if tag already exists
+        $existingTag = git tag -l $tag
+        if ($existingTag) {
+          Write-Error "Tag $tag already exists. Cannot create a release for an existing version."
+          exit 1
+        }
+        
+        # Create and push the tag
+        git tag -a $tag -m "Release $version"
+        git push origin $tag
+        
+        Write-Output "Created and pushed tag: $tag"
     
     - name: Restore dependencies
       run: dotnet restore
@@ -99,6 +143,7 @@ jobs:
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
+        tag_name: v${{ steps.get_version.outputs.version }}
         files: AgentSupervisor-${{ steps.get_version.outputs.version }}-windows.zip
         generate_release_notes: true
         draft: false

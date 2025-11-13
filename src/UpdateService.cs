@@ -187,10 +187,30 @@ namespace AgentSupervisor
                     Logger.LogInfo($"Config backed up to: {configBackupPath}");
                 }
 
+                // Backup notification_history.json before update
+                var historyPath = Path.Combine(currentDirectory, "notification_history.json");
+                var historyBackupPath = Path.Combine(tempDir, "notification_history.json.backup");
+                
+                if (File.Exists(historyPath))
+                {
+                    File.Copy(historyPath, historyBackupPath, true);
+                    Logger.LogInfo($"Notification history backed up to: {historyBackupPath}");
+                }
+
+                // Backup review_requests.json before update
+                var reviewRequestsPath = Path.Combine(currentDirectory, "review_requests.json");
+                var reviewRequestsBackupPath = Path.Combine(tempDir, "review_requests.json.backup");
+                
+                if (File.Exists(reviewRequestsPath))
+                {
+                    File.Copy(reviewRequestsPath, reviewRequestsBackupPath, true);
+                    Logger.LogInfo($"Review requests history backed up to: {reviewRequestsBackupPath}");
+                }
+
                 // Create update script that will:
                 // 1. Wait for the application to close
                 // 2. Copy new files to application directory
-                // 3. Restore config.json
+                // 3. Restore config.json, notification_history.json, and review_requests.json
                 // 4. Restart the application
                 var updateScript = $@"@echo off
 echo Waiting for Agent Supervisor to close...
@@ -202,6 +222,16 @@ xcopy /E /I /Y ""{extractPath}\*"" ""{currentDirectory}""
 echo Restoring configuration...
 if exist ""{configBackupPath}"" (
     copy /Y ""{configBackupPath}"" ""{configPath}""
+)
+
+echo Restoring notification history...
+if exist ""{historyBackupPath}"" (
+    copy /Y ""{historyBackupPath}"" ""{historyPath}""
+)
+
+echo Restoring review requests history...
+if exist ""{reviewRequestsBackupPath}"" (
+    copy /Y ""{reviewRequestsBackupPath}"" ""{reviewRequestsPath}""
 )
 
 echo Cleaning up...

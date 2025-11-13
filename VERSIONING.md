@@ -121,7 +121,18 @@ The fourth version component (build/revision number) is **not used** in this pro
 3. **Git Commits**: Detailed change tracking is handled by git commit SHAs
 4. **Automated Builds**: CI/CD builds are identified by workflow run numbers, not version numbers
 
-If needed in the future, build metadata can be appended using a plus sign (e.g., `1.0.0+20231113.1`) without affecting version precedence.
+### CI Build Version Examples
+
+While the project uses three-component versions (e.g., `1.0.0`), CI builds can be identified using:
+
+- **GitHub Actions Run ID**: Build artifacts are named like `AgentSupervisor-Release` with workflow run `#123`
+- **Build Metadata (optional)**: If needed, build metadata can be appended using a plus sign without affecting version precedence:
+  - `1.0.0+build.123` - includes build/run number
+  - `1.0.0+20231113.1` - includes date and build count
+  - `1.0.0+sha.a1b2c3d` - includes git commit SHA
+  - `1.0.0+ci.456.a1b2c3d` - combines run number and commit SHA
+
+**Note**: Build metadata after the `+` sign is for informational purposes only and does not affect version precedence in Semantic Versioning.
 
 ## Guidelines for Contributors
 

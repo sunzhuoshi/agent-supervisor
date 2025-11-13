@@ -87,6 +87,7 @@ The version is maintained in `AgentSupervisor.csproj`:
   <Version>1.0.0</Version>
   <AssemblyVersion>1.0.0</AssemblyVersion>
   <FileVersion>1.0.0</FileVersion>
+  <InformationalVersion>1.0.0</InformationalVersion>
 </PropertyGroup>
 ```
 

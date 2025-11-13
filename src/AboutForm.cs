@@ -66,7 +66,7 @@ namespace AgentSupervisor
             // GitHub Link Label
             var githubLinkLabel = new LinkLabel
             {
-                Text = "github.com/sunzhuoshi/AgentSupervisor",
+                Text = "github.com/sunzhuoshi/agent-supervisor",
                 Location = new Point(20, 170),
                 Size = new Size(410, 20),
                 TextAlign = ContentAlignment.MiddleCenter
@@ -77,7 +77,7 @@ namespace AgentSupervisor
                 {
                     System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                     {
-                        FileName = "https://github.com/sunzhuoshi/AgentSupervisor",
+                        FileName = "https://github.com/sunzhuoshi/agent-supervisor",
                         UseShellExecute = true
                     });
                 }

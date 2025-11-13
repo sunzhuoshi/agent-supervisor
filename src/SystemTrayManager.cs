@@ -13,13 +13,15 @@ namespace AgentSupervisor
         private readonly Action _onSettingsClick;
         private readonly Action _onExitClick;
         private readonly Action<string> _onOpenUrlClick;
+        private readonly Action _onCheckForUpdatesClick;
         private Icon? _customIcon;
 
         public SystemTrayManager(
             NotificationHistory notificationHistory,
             Action onSettingsClick,
             Action onExitClick,
-            Action<string> onOpenUrlClick)
+            Action<string> onOpenUrlClick,
+            Action onCheckForUpdatesClick)
         {
             Logger.LogInfo("Initializing SystemTrayManager");
             
@@ -27,6 +29,7 @@ namespace AgentSupervisor
             _onSettingsClick = onSettingsClick;
             _onExitClick = onExitClick;
             _onOpenUrlClick = onOpenUrlClick;
+            _onCheckForUpdatesClick = onCheckForUpdatesClick;
 
             // Create custom icon
             _customIcon = CreateCustomIcon();
@@ -76,6 +79,12 @@ namespace AgentSupervisor
             var aboutItem = new ToolStripMenuItem("About");
             aboutItem.Click += (s, e) => ShowAbout();
             menu.Items.Add(aboutItem);
+
+            menu.Items.Add(new ToolStripSeparator());
+
+            var checkUpdatesItem = new ToolStripMenuItem("Check for Updates");
+            checkUpdatesItem.Click += (s, e) => _onCheckForUpdatesClick();
+            menu.Items.Add(checkUpdatesItem);
 
             menu.Items.Add(new ToolStripSeparator());
 
@@ -139,6 +148,22 @@ namespace AgentSupervisor
         public void UpdateStatus(string status)
         {
             _notifyIcon.Text = $"Agent Supervisor\n{status}";
+        }
+
+        public void ShowUpdateNotification(UpdateInfo updateInfo)
+        {
+            var title = "Update Available";
+            var message = $"Version {updateInfo.Version} is now available!\n" +
+                         $"Published: {updateInfo.PublishedAt:MMM dd, yyyy}";
+
+            _notifyIcon.ShowBalloonTip(5000, title, message, ToolTipIcon.Info);
+            
+            // Store the release URL for the balloon click event
+            var tempUrl = updateInfo.ReleaseUrl;
+            _notifyIcon.BalloonTipClicked += (s, e) =>
+            {
+                _onOpenUrlClick(tempUrl);
+            };
         }
 
         private Icon CreateCustomIcon()

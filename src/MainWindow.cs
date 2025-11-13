@@ -11,7 +11,7 @@ namespace AgentSupervisor
             // Create a minimized, invisible window that appears in the taskbar
             Text = "Agent Supervisor";
             ShowInTaskbar = true;
-            FormBorderStyle = FormBorderStyle.FixedToolWindow;
+            FormBorderStyle = FormBorderStyle.Fixed3D;
             StartPosition = FormStartPosition.Manual;
             Location = new Point(-10000, -10000); // Position off-screen
             Size = new Size(0, 0);

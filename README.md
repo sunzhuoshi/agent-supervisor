@@ -86,6 +86,28 @@ Configuration is stored in `config.json` in the application directory:
 
 You can edit this file manually or use the Settings UI (right-click tray icon → Settings).
 
+### Sharing Configuration Across Releases
+
+Agent Supervisor supports exporting and importing configuration, making it easy to share settings across different releases or builds:
+
+1. **Export Configuration**:
+   - Open Settings (right-click tray icon → Settings)
+   - Click the "Export..." button
+   - Choose whether to include your Personal Access Token (for security, you may want to exclude it)
+   - Save the configuration file to your desired location
+
+2. **Import Configuration**:
+   - Open Settings on your new installation or build
+   - Click the "Import..." button
+   - Select your previously exported configuration file
+   - Review the imported settings and click "Save" to apply them
+
+This feature is particularly useful when:
+- Testing a new CI build without reconfiguring
+- Setting up multiple machines with the same settings
+- Backing up your configuration before updating
+- Sharing non-sensitive settings with team members (export without token)
+
 ## How It Works
 
 1. **Background Monitoring**: The application runs in the background, checking GitHub every N seconds

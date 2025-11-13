@@ -48,5 +48,51 @@ namespace AgentSupervisor
                 // Silent fail - error will be shown in UI if needed
             }
         }
+
+        public void ExportTo(string filePath, bool includeToken = true)
+        {
+            try
+            {
+                var configToExport = includeToken ? this : new Configuration
+                {
+                    PollingIntervalSeconds = this.PollingIntervalSeconds,
+                    MaxHistoryEntries = this.MaxHistoryEntries,
+                    ProxyUrl = this.ProxyUrl,
+                    UseProxy = this.UseProxy,
+                    PersonalAccessToken = string.Empty
+                };
+
+                var options = new JsonSerializerOptions { WriteIndented = true };
+                var json = JsonSerializer.Serialize(configToExport, options);
+                File.WriteAllText(filePath, json);
+                Logger.LogInfo($"Configuration exported successfully to {filePath}");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Failed to export configuration to {filePath}", ex);
+                throw;
+            }
+        }
+
+        public static Configuration ImportFrom(string filePath)
+        {
+            try
+            {
+                if (!File.Exists(filePath))
+                {
+                    throw new FileNotFoundException($"Configuration file not found: {filePath}");
+                }
+
+                var json = File.ReadAllText(filePath);
+                var config = JsonSerializer.Deserialize<Configuration>(json);
+                Logger.LogInfo($"Configuration imported successfully from {filePath}");
+                return config ?? new Configuration();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Failed to import configuration from {filePath}", ex);
+                throw;
+            }
+        }
     }
 }

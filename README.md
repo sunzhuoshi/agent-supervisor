@@ -12,6 +12,10 @@ A Windows system tray application that helps improve GitHub Copilot agents workf
 - **System Tray Application**: Runs in background with system tray icon
 - **Monitor PR Reviews**: Automatically monitors pull request reviews assigned to the current user
 - **Desktop Notifications**: Displays Windows balloon tip notifications when new reviews are detected
+- **PR Review Requests Tracking**: View all review requests with new/read status in a dedicated dialog
+- **Mark as Read**: Double-click review requests to open them and automatically mark as read
+- **Bulk Mark as Read**: Button to mark all review requests as read at once
+- **Persistent Storage**: Review requests are saved and restored between application restarts
 - **Settings UI**: Easy-to-use GUI for configuring GitHub Personal Access Token and polling interval
 - **Configurable Polling**: Poll GitHub API periodically with configurable interval (default: 60 seconds)
 - **Notification History**: Maintains a persistent history of all notifications
@@ -68,11 +72,12 @@ dotnet build --configuration Release
 
 4. **Using the Application**:
    - **Right-click the tray icon** to access the menu:
-     - "Recent Notifications" - View the last 10 notifications
+     - "PR Review Requests by Copilots" - View all review requests with new/read status
      - "Settings" - Change your configuration
      - "About" - View application information
      - "Exit" - Close the application
-   - **Double-click the tray icon** - View recent notifications
+   - **Double-click the tray icon** - View PR review requests
+   - **Double-click a review request** - Opens the PR in your browser and marks it as read
    - **Click a balloon notification** - Opens the PR in your browser
    - **Check the taskbar badge** - See how many reviews are pending at a glance
 
@@ -102,14 +107,17 @@ You can configure settings using the Settings UI (right-click tray icon → Sett
 2. **Taskbar Badge**: Shows a number bubble on the taskbar icon indicating pending review requests
 3. **System Tray**: Displays an icon in the Windows notification area
 4. **Balloon Notifications**: When a new PR review is detected, a Windows balloon tip notification appears
-5. **Notification History**: All notifications are saved to `notification_history.json`
-6. **Click to Open**: Click on a notification to open the PR in your default browser
+5. **Review Request Tracking**: All review requests are saved to `review_request_details.json` with new/read status
+6. **Notification History**: All notifications are saved to `notification_history.json`
+7. **Click to Open**: Click on a notification or double-click a review request to open the PR in your default browser
 
 ## Files Created
 
 - `notification_history.json` - Notification history
+- `review_request_details.json` - PR review requests with new/read status
+- `review_requests.json` - Review request ID tracking
 
-This file is excluded from git via `.gitignore`.
+These files are excluded from git via `.gitignore`.
 
 
 ## Project Structure
@@ -157,7 +165,7 @@ AgentSupervisor/
 ### No notifications appear
 - Check that you're actually requested as a reviewer on open PRs
 - Verify the polling interval - it may not have checked yet
-- Right-click tray icon → Recent Notifications to see history
+- Right-click tray icon → PR Review Requests by Copilots to see all requests
 - Check that Windows notifications are enabled for the application
 
 ### Can't find the system tray icon

@@ -123,22 +123,18 @@ The fourth version component (build/revision number) is **not used** in this pro
 
 ### CI Build Version Examples
 
-CI builds automatically use build metadata to identify each build:
+CI builds automatically use a four-component numeric version to identify each build:
 
-- **Automated Format**: The build workflow automatically sets the version to `1.0.0+ci.123` where `123` is the GitHub Actions run number
-- **Artifact Naming**: Build artifacts are named like `AgentSupervisor-1.0.0+ci.123`
-- **Version Properties**: 
-  - `InformationalVersion` is set to `1.0.0+ci.123` (includes build metadata in SemVer format)
-  - `FileVersion` and `AssemblyVersion` are set to `1.0.0.123` (includes build number in numeric format)
-  - This ensures build metadata is available in all version properties while maintaining compatibility with .NET version formats
+- **Automated Format**: The build workflow automatically sets the version to `1.0.0.123` where `123` is the GitHub Actions run number
+- **Artifact Naming**: Build artifacts are named like `AgentSupervisor-1.0.0.123`
+- **Version Properties**: All version properties (`InformationalVersion`, `FileVersion`, and `AssemblyVersion`) are set to `1.0.0.123` (numeric format with build number)
+- **Format**: `MAJOR.MINOR.PATCH.BUILD` where BUILD is the CI run number
 
-Additional build metadata formats that can be used:
-  - `1.0.0+build.123` - includes build/run number
-  - `1.0.0+20231113.1` - includes date and build count
-  - `1.0.0+sha.a1b2c3d` - includes git commit SHA
-  - `1.0.0+ci.456.a1b2c3d` - combines run number and commit SHA
-
-**Note**: Build metadata after the `+` sign is for informational purposes only and does not affect version precedence in Semantic Versioning.
+This four-component version format:
+- Ensures all builds have unique version numbers
+- Is compatible with .NET version requirements
+- Clearly identifies the CI build that produced the artifact
+- Maintains consistency across all version properties
 
 ## Guidelines for Contributors
 

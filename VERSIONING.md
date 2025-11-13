@@ -95,13 +95,32 @@ All three version properties should be kept in sync.
 
 ## Release Process
 
+There are two ways to create a release:
+
+### Option 1: Manual Workflow Dispatch (Recommended)
+
+1. **Update Version**: Modify version numbers in `AgentSupervisor.csproj`
+2. **Commit Changes**: Commit the version change with message `"Bump version to X.Y.Z"`
+3. **Push Changes**: Push the commit to the repository
+4. **Trigger Release**: 
+   - Go to GitHub Actions → Release workflow
+   - Click "Run workflow"
+   - Enter the version number (e.g., `1.0.0` without `v` prefix)
+   - The workflow will automatically create and push the tag
+
+### Option 2: Push Git Tag
+
 1. **Update Version**: Modify version numbers in `AgentSupervisor.csproj`
 2. **Commit Changes**: Commit the version change with message `"Bump version to X.Y.Z"`
 3. **Create Tag**: Create a git tag `vX.Y.Z` matching the version
 4. **Push Tag**: Push the tag to trigger automated release workflow
 
+### What the Workflow Does
+
 The GitHub Actions workflow will:
+- Validate version format (MAJOR.MINOR.PATCH)
 - Verify tag version matches source version
+- Create git tag (for manual workflow dispatch)
 - Build the application
 - Check for security vulnerabilities
 - Create GitHub release with artifacts

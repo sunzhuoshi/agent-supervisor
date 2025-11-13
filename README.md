@@ -199,7 +199,42 @@ For detailed information about versioning strategy and release process, see **[V
 
 ### Creating a Release
 
-To create a new release:
+There are two ways to create a new release:
+
+#### Option 1: Manual Workflow (Recommended)
+
+The easiest way to create a release is using the manual workflow dispatch:
+
+1. Update the version in `AgentSupervisor.csproj`:
+   ```xml
+   <Version>1.0.0</Version>
+   <AssemblyVersion>1.0.0</AssemblyVersion>
+   <FileVersion>1.0.0</FileVersion>
+   ```
+
+2. Commit and push the version change:
+   ```bash
+   git add AgentSupervisor.csproj
+   git commit -m "Bump version to 1.0.0"
+   git push
+   ```
+
+3. Trigger the release manually via GitHub Actions:
+   - Go to the [Actions tab](../../actions/workflows/release.yml) in the GitHub repository
+   - Click on "Release" workflow
+   - Click "Run workflow" button
+   - Enter the version number (e.g., `1.0.0`) without the `v` prefix
+   - Click "Run workflow"
+
+The workflow will:
+- Validate the version format (MAJOR.MINOR.PATCH)
+- Verify that the version matches the version in `AgentSupervisor.csproj`
+- Create and push the corresponding git tag (e.g., `v1.0.0`)
+- Build the application and create the GitHub release
+
+#### Option 2: Push Git Tag
+
+Alternatively, you can create a release by pushing a git tag:
 
 1. Update the version in `AgentSupervisor.csproj`:
    ```xml

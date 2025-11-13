@@ -7,6 +7,9 @@ namespace AgentSupervisor
 {
     public class MainWindow : Form
     {
+        private const int WM_SYSCOMMAND = 0x0112;
+        private const int SC_CONTEXTMENU = 0xF093;
+        
         private readonly ContextMenuStrip? _contextMenu;
 
         public MainWindow(
@@ -46,7 +49,6 @@ namespace AgentSupervisor
                     onSettingsClick,
                     onAboutClick,
                     onExitClick);
-                ContextMenuStrip = _contextMenu;
                 Logger.LogInfo("MainWindow context menu created");
             }
             
@@ -64,6 +66,22 @@ namespace AgentSupervisor
             };
             
             Logger.LogInfo("MainWindow created for taskbar presence");
+        }
+
+        protected override void WndProc(ref Message m)
+        {
+            // Handle right-click on taskbar icon
+            if (m.Msg == WM_SYSCOMMAND && ((int)m.WParam & 0xFFF0) == SC_CONTEXTMENU)
+            {
+                if (_contextMenu != null)
+                {
+                    // Show context menu at cursor position
+                    _contextMenu.Show(Cursor.Position);
+                    return;
+                }
+            }
+            
+            base.WndProc(ref m);
         }
 
         private ContextMenuStrip CreateContextMenu(

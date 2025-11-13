@@ -9,7 +9,7 @@ namespace AgentSupervisor
         public int MaxHistoryEntries { get; set; } = 100;
         public string ProxyUrl { get; set; } = string.Empty;
         public bool UseProxy { get; set; } = false;
-        public bool EnableDesktopNotifications { get; set; } = false;
+        public bool EnableDesktopNotifications { get; set; } = true;
 
         private const string RegistryKeyPath = @"Software\AgentSupervisor";
 
@@ -27,7 +27,7 @@ namespace AgentSupervisor
                         MaxHistoryEntries = (int)(key.GetValue("MaxHistoryEntries") ?? 100),
                         ProxyUrl = key.GetValue("ProxyUrl") as string ?? string.Empty,
                         UseProxy = ((int)(key.GetValue("UseProxy") ?? 0)) != 0,
-                        EnableDesktopNotifications = ((int)(key.GetValue("EnableDesktopNotifications") ?? 0)) != 0
+                        EnableDesktopNotifications = ((int)(key.GetValue("EnableDesktopNotifications") ?? 1)) != 0
                     };
                     Logger.LogInfo("Configuration loaded successfully from Registry");
                     return config;

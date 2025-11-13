@@ -90,7 +90,7 @@ Configuration is stored in the Windows Registry under `HKEY_CURRENT_USER\Softwar
 | GitHub Personal Access Token | PersonalAccessToken | (empty) |
 | Polling Interval (seconds) | PollingIntervalSeconds | 60 |
 | Max History Entries | MaxHistoryEntries | 100 |
-| Enable Desktop Notifications | EnableDesktopNotifications | 0 (disabled) |
+| Enable Desktop Notifications | EnableDesktopNotifications | 1 (enabled) |
 | Proxy URL | ProxyUrl | (empty) |
 | Use Proxy | UseProxy | 0 (disabled) |
 

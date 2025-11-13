@@ -9,6 +9,8 @@ namespace AgentSupervisor
         public int MaxHistoryEntries { get; set; } = 100;
         public string ProxyUrl { get; set; } = string.Empty;
         public bool UseProxy { get; set; } = false;
+        public DateTime? LastUpdateCheck { get; set; } = null;
+        public bool CheckForUpdatesOnStartup { get; set; } = true;
 
         private const string ConfigFileName = "config.json";
 

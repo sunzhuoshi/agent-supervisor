@@ -83,15 +83,24 @@ namespace AgentSupervisor
                 }
             }
 
-            // Initialize services
+            // Initialize services (ReviewRequestService without badge callback first)
             _notificationHistory = new NotificationHistory(_config.MaxHistoryEntries);
-            _reviewRequestService = new ReviewRequestService();
             
             // Create main window for taskbar presence
             _mainWindow = new MainWindow();
             // Required to be shown in task bar
             _mainWindow.Show();
             _badgeManager = new TaskbarBadgeManager(_mainWindow);
+            
+            // Initialize ReviewRequestService with badge update callback
+            _reviewRequestService = new ReviewRequestService(() => 
+            {
+                var unreadCount = _reviewRequestService?.GetNewCount() ?? 0;
+                if (_mainWindow != null && !_mainWindow.IsDisposed)
+                {
+                    _mainWindow.Invoke(() => _badgeManager?.UpdateBadgeCount(unreadCount));
+                }
+            });
             
             _systemTrayManager = new SystemTrayManager(
                 _notificationHistory,
@@ -228,9 +237,16 @@ namespace AgentSupervisor
             _monitoringTask?.Wait(TimeSpan.FromSeconds(5));
 
             var proxyUrl = _config!.UseProxy ? _config.ProxyUrl : null;
-            _gitHubService = new GitHubService(_config!.PersonalAccessToken, proxyUrl, _reviewRequestService);
             _notificationHistory = new NotificationHistory(_config.MaxHistoryEntries);
-            _reviewRequestService = new ReviewRequestService();
+            _reviewRequestService = new ReviewRequestService(() => 
+            {
+                var unreadCount = _reviewRequestService?.GetNewCount() ?? 0;
+                if (_mainWindow != null && !_mainWindow.IsDisposed)
+                {
+                    _mainWindow.Invoke(() => _badgeManager?.UpdateBadgeCount(unreadCount));
+                }
+            });
+            _gitHubService = new GitHubService(_config!.PersonalAccessToken, proxyUrl, _reviewRequestService);
 
             _cts = new CancellationTokenSource();
             _monitoringTask = Task.Run(() => MonitorReviews(_cts.Token));

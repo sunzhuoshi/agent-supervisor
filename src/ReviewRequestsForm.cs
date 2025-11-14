@@ -14,6 +14,7 @@ namespace AgentSupervisor
         private ListBox _listBox = null!;
         private Button _markAllReadButton = null!;
         private Label _statusLabel = null!;
+        private ContextMenuStrip _contextMenu = null!;
 
         public ReviewRequestsForm(
             ReviewRequestService reviewRequestService,
@@ -50,6 +51,17 @@ namespace AgentSupervisor
             };
             Controls.Add(_statusLabel);
 
+            // Context menu for list items
+            _contextMenu = new ContextMenuStrip();
+            
+            var openMenuItem = new ToolStripMenuItem("Open");
+            openMenuItem.Click += ContextMenu_Open_Click;
+            _contextMenu.Items.Add(openMenuItem);
+            
+            var markAsReadMenuItem = new ToolStripMenuItem("Mark as read");
+            markAsReadMenuItem.Click += ContextMenu_MarkAsRead_Click;
+            _contextMenu.Items.Add(markAsReadMenuItem);
+
             // ListBox for review requests
             _listBox = new ListBox
             {
@@ -57,7 +69,8 @@ namespace AgentSupervisor
                 DrawMode = DrawMode.OwnerDrawFixed,
                 ItemHeight = 60,
                 Font = new Font(Font.FontFamily, 9),
-                SelectionMode = SelectionMode.One
+                SelectionMode = SelectionMode.One,
+                ContextMenuStrip = _contextMenu
             };
             _listBox.DrawItem += ListBox_DrawItem;
             _listBox.DoubleClick += ListBox_DoubleClick;
@@ -218,6 +231,39 @@ namespace AgentSupervisor
             
             // Refresh taskbar badge
             _onRefreshBadge?.Invoke();
+        }
+
+        private void ContextMenu_Open_Click(object? sender, EventArgs e)
+        {
+            if (_listBox.SelectedItem is ReviewRequestEntry request)
+            {
+                // Mark as read
+                _reviewRequestService.MarkAsRead(request.Id);
+                
+                // Open URL
+                _onOpenUrlClick(request.HtmlUrl);
+                
+                // Refresh the display
+                LoadRequests();
+                
+                // Refresh taskbar badge
+                _onRefreshBadge?.Invoke();
+            }
+        }
+
+        private void ContextMenu_MarkAsRead_Click(object? sender, EventArgs e)
+        {
+            if (_listBox.SelectedItem is ReviewRequestEntry request)
+            {
+                // Mark as read
+                _reviewRequestService.MarkAsRead(request.Id);
+                
+                // Refresh the display
+                LoadRequests();
+                
+                // Refresh taskbar badge
+                _onRefreshBadge?.Invoke();
+            }
         }
     }
 }

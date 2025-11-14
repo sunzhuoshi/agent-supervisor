@@ -71,7 +71,7 @@ namespace AgentSupervisor
             }
         }
 
-        public void MarkAsRead(string requestId)
+        public bool MarkAsRead(string requestId)
         {
             lock (_lockObject)
             {
@@ -80,11 +80,13 @@ namespace AgentSupervisor
                 {
                     request.IsNew = false;
                     Save();
+                    return true;
                 }
+                return false;
             }
         }
 
-        public void MarkAllAsRead()
+        public bool MarkAllAsRead()
         {
             lock (_lockObject)
             {
@@ -101,6 +103,7 @@ namespace AgentSupervisor
                 {
                     Save();
                 }
+                return changed;
             }
         }
 

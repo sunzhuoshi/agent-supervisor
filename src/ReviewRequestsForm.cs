@@ -9,7 +9,7 @@ namespace AgentSupervisor
     {
         private readonly ReviewRequestService _reviewRequestService;
         private readonly Action<string> _onOpenUrlClick;
-        private readonly Action _onMarkAllAsRead;
+        private readonly Func<bool> _onMarkAllAsRead;
         private readonly Action? _onRefreshBadge;
         private ListBox _listBox = null!;
         private Button _markAllReadButton = null!;
@@ -18,7 +18,7 @@ namespace AgentSupervisor
         public ReviewRequestsForm(
             ReviewRequestService reviewRequestService,
             Action<string> onOpenUrlClick,
-            Action onMarkAllAsRead,
+            Func<bool> onMarkAllAsRead,
             Action? onRefreshBadge = null)
         {
             _reviewRequestService = reviewRequestService;
@@ -197,8 +197,8 @@ namespace AgentSupervisor
         {
             if (_listBox.SelectedItem is ReviewRequestEntry request)
             {
-                // Mark as read
-                _reviewRequestService.MarkAsRead(request.Id);
+                // Mark as read and check if status changed
+                bool statusChanged = _reviewRequestService.MarkAsRead(request.Id);
                 
                 // Open URL
                 _onOpenUrlClick(request.HtmlUrl);
@@ -206,18 +206,24 @@ namespace AgentSupervisor
                 // Refresh the display
                 LoadRequests();
                 
-                // Refresh taskbar badge
-                _onRefreshBadge?.Invoke();
+                // Refresh taskbar badge only if status changed
+                if (statusChanged)
+                {
+                    _onRefreshBadge?.Invoke();
+                }
             }
         }
 
         private void MarkAllReadButton_Click(object? sender, EventArgs e)
         {
-            _onMarkAllAsRead();
+            bool statusChanged = _onMarkAllAsRead();
             LoadRequests();
             
-            // Refresh taskbar badge
-            _onRefreshBadge?.Invoke();
+            // Refresh taskbar badge only if status changed
+            if (statusChanged)
+            {
+                _onRefreshBadge?.Invoke();
+            }
         }
     }
 }

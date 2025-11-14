@@ -190,7 +190,7 @@ namespace AgentSupervisor
                         _mainWindow.Invoke(() => _badgeManager!.UpdateBadgeCount(unreadCount));
                     }
 
-                    var totalPendingCount = await _gitHubService!.GetPendingReviewCountAsync();
+                    var totalPendingCount = _reviewRequestService!.GetTotalCount();
                     if (newReviewCount > 0)
                     {
                         _systemTrayManager!.UpdateStatus($"{totalPendingCount} pending review(s) - {unreadCount} unread");

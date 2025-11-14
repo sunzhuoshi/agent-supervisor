@@ -235,53 +235,6 @@ namespace AgentSupervisor
 
             return reviews;
         }
-
-        public async Task<int> GetPendingReviewCountAsync()
-        {
-            try
-            {
-                Logger.LogInfo("Fetching pending review count");
-                var username = await GetCurrentUserAsync();
-                if (string.IsNullOrEmpty(username))
-                {
-                    Logger.LogWarning("Unable to get current username for count");
-                    return 0;
-                }
-
-                // Get count of all pull requests where the user is requested as a reviewer
-                var searchUrl = $"https://api.github.com/search/issues?q=type:pr+review-requested:{username}+state:open&per_page=1";
-                Logger.LogInfo($"HTTP GET {searchUrl}");
-                
-                var startTime = DateTime.UtcNow;
-                var response = await _httpClient.GetAsync(searchUrl);
-                var elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
-                
-                Logger.LogInfo($"HTTP Response: {(int)response.StatusCode} {response.StatusCode} | {elapsed:F0}ms | {searchUrl}");
-                
-                if (!response.IsSuccessStatusCode)
-                {
-                    Logger.LogError($"Error fetching PR count: {response.StatusCode}");
-                    return 0;
-                }
-
-                var json = await response.Content.ReadAsStringAsync();
-                using var doc = JsonDocument.Parse(json);
-                
-                if (doc.RootElement.TryGetProperty("total_count", out var totalCount))
-                {
-                    var count = totalCount.GetInt32();
-                    Logger.LogInfo($"Total pending review count: {count}");
-                    return count;
-                }
-
-                return 0;
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError("Error fetching pending review count", ex);
-                return 0;
-            }
-        }
     }
 }
 

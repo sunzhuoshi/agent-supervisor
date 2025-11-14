@@ -124,6 +124,14 @@ namespace AgentSupervisor
             }
         }
 
+        public int GetTotalCount()
+        {
+            lock (_lockObject)
+            {
+                return _requests.Count;
+            }
+        }
+
         public void RemoveStaleRequests(List<string> currentRequestIds)
         {
             lock (_lockObject)

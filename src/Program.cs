@@ -86,8 +86,12 @@ namespace AgentSupervisor
             // Initialize services (ReviewRequestService without badge callback first)
             _notificationHistory = new NotificationHistory(_config.MaxHistoryEntries);
             
-            // Create main window for taskbar presence
-            _mainWindow = new MainWindow();
+            // Create main window for taskbar presence with context menu
+            _mainWindow = new MainWindow(
+                OnRecentNotificationsClick,
+                OnSettingsClick,
+                OnAboutClick,
+                OnExitClick);
             // Required to be shown in task bar
             _mainWindow.Show();
             _badgeManager = new TaskbarBadgeManager(_mainWindow);
@@ -228,6 +232,40 @@ namespace AgentSupervisor
                 // Restart monitoring with new settings
                 RestartMonitoring();
             }
+        }
+
+        private void OnRecentNotificationsClick()
+        {
+            var recent = _notificationHistory!.GetRecent(10);
+            
+            if (recent.Count == 0)
+            {
+                MessageBox.Show("No recent notifications.", "Recent Notifications", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var message = "Recent Notifications:\n\n";
+            foreach (var entry in recent)
+            {
+                message += $"• {entry.Repository} PR#{entry.PullRequestNumber}\n";
+                message += $"  {entry.State} by {entry.Reviewer}\n";
+                message += $"  {entry.NotifiedAt:MM/dd HH:mm}\n\n";
+            }
+
+            var result = MessageBox.Show(message, "Recent Notifications", 
+                MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
+            
+            if (result == DialogResult.OK && recent.Count > 0)
+            {
+                OnOpenUrlClick(recent[0].HtmlUrl);
+            }
+        }
+
+        private void OnAboutClick()
+        {
+            var aboutForm = new AboutForm();
+            aboutForm.ShowDialog();
         }
 
         private void RestartMonitoring()

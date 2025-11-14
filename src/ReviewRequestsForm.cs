@@ -14,6 +14,7 @@ namespace AgentSupervisor
         private ListBox _listBox = null!;
         private Button _markAllReadButton = null!;
         private Label _statusLabel = null!;
+        private static int _savedScrollPosition = 0;
 
         public ReviewRequestsForm(
             ReviewRequestService reviewRequestService,
@@ -28,6 +29,9 @@ namespace AgentSupervisor
 
             InitializeComponent();
             LoadRequests();
+            
+            // Hook FormClosing event to save scroll position
+            FormClosing += (s, e) => SaveScrollPosition();
         }
 
         private void InitializeComponent()
@@ -113,6 +117,23 @@ namespace AgentSupervisor
             }
 
             UpdateStatus();
+            RestoreScrollPosition();
+        }
+
+        private void SaveScrollPosition()
+        {
+            if (_listBox.Items.Count > 0)
+            {
+                _savedScrollPosition = _listBox.TopIndex;
+            }
+        }
+
+        private void RestoreScrollPosition()
+        {
+            if (_listBox.Items.Count > 0 && _savedScrollPosition < _listBox.Items.Count)
+            {
+                _listBox.TopIndex = _savedScrollPosition;
+            }
         }
 
         private void UpdateStatus()

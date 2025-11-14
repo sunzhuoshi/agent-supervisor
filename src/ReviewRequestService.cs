@@ -141,6 +141,7 @@ namespace AgentSupervisor
                 if (_requests.Count != initialCount)
                 {
                     Save();
+                    _onBadgeUpdateNeeded?.Invoke();
                 }
             }
         }

@@ -255,11 +255,27 @@ namespace AgentSupervisor
         {
             if (_listBox.SelectedItem is ReviewRequestEntry request)
             {
+                // Save scroll position
+                var topIndex = _listBox.TopIndex;
+                var selectedIndex = _listBox.SelectedIndex;
+                
                 // Mark as read
                 _reviewRequestService.MarkAsRead(request.Id);
                 
                 // Refresh the display
                 LoadRequests();
+                
+                // Restore scroll position
+                if (topIndex < _listBox.Items.Count)
+                {
+                    _listBox.TopIndex = topIndex;
+                }
+                
+                // Restore selection if the item still exists
+                if (selectedIndex < _listBox.Items.Count)
+                {
+                    _listBox.SelectedIndex = selectedIndex;
+                }
                 
                 // Refresh taskbar badge
                 _onRefreshBadge?.Invoke();

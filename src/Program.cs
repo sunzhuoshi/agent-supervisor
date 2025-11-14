@@ -141,7 +141,11 @@ namespace AgentSupervisor
                         // Check if already notified
                         if (!_notificationHistory!.HasBeenNotified(review.Id))
                         {
-                            _systemTrayManager!.ShowNotification(review);
+                            // Show desktop notification only if enabled in settings
+                            if (_config!.EnableDesktopNotifications)
+                            {
+                                _systemTrayManager!.ShowNotification(review);
+                            }
                             
                             var entry = new Models.NotificationEntry
                             {
@@ -158,7 +162,15 @@ namespace AgentSupervisor
                             
                             _notificationHistory.Add(entry);
                             newReviewCount++;
-                            Logger.LogInfo($"Notification shown for review: {entry.Repository} PR#{entry.PullRequestNumber}");
+                            
+                            if (_config!.EnableDesktopNotifications)
+                            {
+                                Logger.LogInfo($"Desktop notification shown for review: {entry.Repository} PR#{entry.PullRequestNumber}");
+                            }
+                            else
+                            {
+                                Logger.LogInfo($"New review detected (notification disabled): {entry.Repository} PR#{entry.PullRequestNumber}");
+                            }
                         }
                     }
 

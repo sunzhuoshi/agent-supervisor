@@ -8,10 +8,12 @@ namespace AgentSupervisor
         private const string RequestsFileName = "review_request_details.json";
         private readonly List<ReviewRequestEntry> _requests;
         private readonly object _lockObject = new object();
+        private readonly Action? _onBadgeUpdateNeeded;
 
-        public ReviewRequestService()
+        public ReviewRequestService(Action? onBadgeUpdateNeeded = null)
         {
             _requests = Load();
+            _onBadgeUpdateNeeded = onBadgeUpdateNeeded;
         }
 
         private List<ReviewRequestEntry> Load()
@@ -71,7 +73,7 @@ namespace AgentSupervisor
             }
         }
 
-        public bool MarkAsRead(string requestId)
+        public void MarkAsRead(string requestId)
         {
             lock (_lockObject)
             {
@@ -80,13 +82,12 @@ namespace AgentSupervisor
                 {
                     request.IsNew = false;
                     Save();
-                    return true;
+                    _onBadgeUpdateNeeded?.Invoke();
                 }
-                return false;
             }
         }
 
-        public bool MarkAllAsRead()
+        public void MarkAllAsRead()
         {
             lock (_lockObject)
             {
@@ -102,8 +103,8 @@ namespace AgentSupervisor
                 if (changed)
                 {
                     Save();
+                    _onBadgeUpdateNeeded?.Invoke();
                 }
-                return changed;
             }
         }
 

@@ -155,6 +155,62 @@ namespace AgentSupervisor
             UpdateStatus();
         }
 
+        private void RefreshChangedItems(string? specificItemId = null)
+        {
+            // Get current requests from the service
+            var currentRequests = _reviewRequestService.GetAll();
+            var currentRequestsDict = currentRequests.ToDictionary(r => r.Id);
+            
+            // Track which items need to be refreshed
+            var itemsToRefresh = new List<int>();
+            
+            // Check each item in the list box
+            for (int i = 0; i < _listBox.Items.Count; i++)
+            {
+                if (_listBox.Items[i] is ReviewRequestEntry listItem)
+                {
+                    // If the item exists in the current requests
+                    if (currentRequestsDict.TryGetValue(listItem.Id, out var currentItem))
+                    {
+                        bool shouldRefresh = false;
+                        
+                        // If a specific item ID was provided, check if this is that item
+                        if (specificItemId != null && listItem.Id == specificItemId)
+                        {
+                            shouldRefresh = true;
+                        }
+                        // Otherwise, check if IsNew status changed (for service updates)
+                        else if (specificItemId == null && listItem.IsNew != currentItem.IsNew)
+                        {
+                            shouldRefresh = true;
+                        }
+                        
+                        if (shouldRefresh)
+                        {
+                            // Update the item in place with current data
+                            _listBox.Items[i] = currentItem;
+                            itemsToRefresh.Add(i);
+                        }
+                    }
+                }
+            }
+            
+            // If there are items to refresh, invalidate only those items
+            if (itemsToRefresh.Count > 0)
+            {
+                foreach (var index in itemsToRefresh)
+                {
+                    // Invalidate the specific item region
+                    _listBox.Invalidate(_listBox.GetItemRectangle(index));
+                }
+                // Force immediate redraw of invalidated regions
+                _listBox.Update();
+            }
+            
+            // Always update status when called
+            UpdateStatus();
+        }
+
         private void OnFormClosing(object? sender, FormClosingEventArgs e)
         {
             // Only cancel and minimize for user-initiated closes
@@ -182,7 +238,21 @@ namespace AgentSupervisor
             // Only refresh the list if the window is visible and not minimized
             if (WindowState != FormWindowState.Minimized && Visible)
             {
-                LoadRequests();
+                // Check if we can do a partial refresh (items haven't changed, only IsNew status)
+                var currentRequests = _reviewRequestService.GetAll();
+                var currentIds = currentRequests.Select(r => r.Id).ToList();
+                var listBoxIds = _listBox.Items.Cast<ReviewRequestEntry>().Select(r => r.Id).ToList();
+                
+                // If the IDs match, we can do a selective refresh
+                if (currentIds.SequenceEqual(listBoxIds))
+                {
+                    RefreshChangedItems();
+                }
+                else
+                {
+                    // Items were added or removed, do a full refresh
+                    LoadRequests();
+                }
             }
         }
 
@@ -275,7 +345,7 @@ namespace AgentSupervisor
         private void MarkAllReadButton_Click(object? sender, EventArgs e)
         {
             _onMarkAllAsRead();
-            LoadRequests();
+            RefreshChangedItems();
         }
 
         private void ContextMenu_Open_Click(object? sender, EventArgs e)
@@ -294,35 +364,19 @@ namespace AgentSupervisor
             // Open URL
             _onOpenUrlClick(request.HtmlUrl);
             
-            // Refresh the display
-            LoadRequests();
+            // Refresh only the specific changed item
+            RefreshChangedItems(request.Id);
         }
 
         private void ContextMenu_MarkAsRead_Click(object? sender, EventArgs e)
         {
             if (_listBox.SelectedItem is ReviewRequestEntry request)
             {
-                // Save scroll position
-                var topIndex = _listBox.TopIndex;
-                var selectedIndex = _listBox.SelectedIndex;
-                
                 // Mark as read
                 _reviewRequestService.MarkAsRead(request.Id);
                 
-                // Refresh the display
-                LoadRequests();
-                
-                // Restore scroll position
-                if (topIndex < _listBox.Items.Count)
-                {
-                    _listBox.TopIndex = topIndex;
-                }
-                
-                // Restore selection if the item still exists
-                if (selectedIndex < _listBox.Items.Count)
-                {
-                    _listBox.SelectedIndex = selectedIndex;
-                }
+                // Refresh only the specific changed item
+                RefreshChangedItems(request.Id);
             }
         }
     }

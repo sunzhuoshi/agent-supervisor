@@ -80,17 +80,16 @@ namespace AgentSupervisor
 
             menu.Items.Add(new ToolStripSeparator());
 
-            // Add CI-only menu item for data collection
-            if (IsRunningInCI())
-            {
-                var collectDataItem = new ToolStripMenuItem("Collect Data");
-                collectDataItem.Click += (s, e) => CollectData();
-                menu.Items.Add(collectDataItem);
-                
-                menu.Items.Add(new ToolStripSeparator());
-                
-                Logger.LogInfo("CI environment detected - 'Collect Data' menu item added");
-            }
+#if ENABLE_CI_FEATURES
+            // CI-only menu item for data collection
+            var collectDataItem = new ToolStripMenuItem("Collect Data");
+            collectDataItem.Click += (s, e) => CollectData();
+            menu.Items.Add(collectDataItem);
+            
+            menu.Items.Add(new ToolStripSeparator());
+            
+            Logger.LogInfo("CI features enabled - 'Collect Data' menu item added");
+#endif
 
             var settingsItem = new ToolStripMenuItem("Settings");
             settingsItem.Click += (s, e) => _onSettingsClick();
@@ -193,46 +192,16 @@ namespace AgentSupervisor
             }
         }
 
-        /// <summary>
-        /// Detects if the application is running in a CI environment
-        /// </summary>
-        private bool IsRunningInCI()
-        {
-            // Check common CI environment variables
-            var ciEnvVars = new[]
-            {
-                "CI",                    // Generic CI indicator
-                "GITHUB_ACTIONS",        // GitHub Actions
-                "JENKINS_HOME",          // Jenkins
-                "TRAVIS",                // Travis CI
-                "CIRCLECI",              // Circle CI
-                "GITLAB_CI",             // GitLab CI
-                "BUILDKITE",             // Buildkite
-                "TEAMCITY_VERSION",      // TeamCity
-                "TF_BUILD"               // Azure Pipelines
-            };
-
-            foreach (var envVar in ciEnvVars)
-            {
-                var value = Environment.GetEnvironmentVariable(envVar);
-                if (!string.IsNullOrEmpty(value))
-                {
-                    Logger.LogInfo($"CI environment detected: {envVar}={value}");
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
+#if ENABLE_CI_FEATURES
         /// <summary>
         /// Collects all review request data and saves it to a JSON file
+        /// This method is only available when ENABLE_CI_FEATURES is defined during compilation
         /// </summary>
         private void CollectData()
         {
             try
             {
-                Logger.LogInfo("Starting data collection (CI mode)");
+                Logger.LogInfo("Starting data collection (CI build)");
 
                 var reviewRequests = _reviewRequestService.GetAll();
                 var notificationHistory = _notificationHistory.GetRecent(1000); // Get up to 1000 entries
@@ -240,6 +209,7 @@ namespace AgentSupervisor
                 var collectedData = new
                 {
                     CollectedAt = DateTime.UtcNow,
+                    BuildConfiguration = "CI",
                     Environment = new
                     {
                         MachineName = Environment.MachineName,
@@ -285,6 +255,7 @@ namespace AgentSupervisor
                     MessageBoxIcon.Error);
             }
         }
+#endif
 
         public void Dispose()
         {

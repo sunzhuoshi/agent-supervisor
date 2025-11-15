@@ -2,29 +2,22 @@
 
 ## Overview
 
-The Agent Supervisor application includes a special menu item that is only available when running in CI (Continuous Integration) environments. This feature allows collecting all review request data and notification history at once for testing and analysis purposes.
+The Agent Supervisor application includes a special menu item that is only available in CI builds. This feature allows collecting all review request data and notification history at once for testing and analysis purposes.
 
 ## How It Works
 
-### CI Detection
+### Build-Time Configuration
 
-The application automatically detects CI environments by checking for common CI environment variables:
+This feature is controlled at **compile-time** using conditional compilation. The feature is enabled by defining the `ENABLE_CI_FEATURES` compilation symbol during the build process.
 
-- `CI` - Generic CI indicator
-- `GITHUB_ACTIONS` - GitHub Actions
-- `JENKINS_HOME` - Jenkins
-- `TRAVIS` - Travis CI
-- `CIRCLECI` - Circle CI
-- `GITLAB_CI` - GitLab CI
-- `BUILDKITE` - Buildkite
-- `TEAMCITY_VERSION` - TeamCity
-- `TF_BUILD` - Azure Pipelines
+**CI Builds**: Include the `ENABLE_CI_FEATURES` symbol → Data collection menu item is available
+**Release Builds**: Do not include the symbol → Data collection menu item is NOT available
 
-If any of these environment variables are set, the application recognizes it's running in a CI environment.
+This approach ensures that production/release builds never include the CI-specific features, providing a clean separation between testing and production functionality.
 
 ### Menu Item
 
-When running in CI, a "Collect Data" menu item appears in the system tray context menu:
+When the application is built with CI features enabled, a "Collect Data" menu item appears in the system tray context menu:
 
 ```
 ┌─────────────────────────────────┐
@@ -105,42 +98,40 @@ The JSON file contains:
 }
 ```
 
-## Testing in CI
+## Building with CI Features
 
-### GitHub Actions
+### GitHub Actions (Automated)
 
-To test this feature in GitHub Actions, you can add a workflow step:
+The CI build workflow (`.github/workflows/build.yml`) automatically enables CI features by including the compilation symbol:
 
 ```yaml
-- name: Test CI Data Collection
-  run: |
-    # Set CI environment variable (usually already set in GitHub Actions)
-    export CI=true
-    
-    # Run the application (this is just an example, actual usage depends on your setup)
-    # The "Collect Data" menu item will be available in the system tray
+- name: Build
+  run: dotnet build --no-restore --configuration Release /p:DefineConstants="ENABLE_CI_FEATURES" ...
 ```
+
+Builds from the CI workflow will include the "Collect Data" menu item.
 
 ### Local Testing
 
-To test the CI detection locally, set the CI environment variable:
+To build locally with CI features enabled:
 
-**Windows (PowerShell):**
-```powershell
-$env:CI = "true"
-.\AgentSupervisor.exe
-```
-
-**Windows (Command Prompt):**
-```cmd
-set CI=true
-AgentSupervisor.exe
-```
-
-**Linux/macOS:**
+**Command Line:**
 ```bash
-export CI=true
-./AgentSupervisor
+dotnet build --configuration Release /p:DefineConstants="ENABLE_CI_FEATURES"
+```
+
+**Or to run directly:**
+```bash
+dotnet run --configuration Release /p:DefineConstants="ENABLE_CI_FEATURES"
+```
+
+### Release Builds
+
+Release builds (`.github/workflows/release.yml`) do **not** include the `ENABLE_CI_FEATURES` symbol, ensuring that production releases never have the CI-specific menu item.
+
+To build a release version locally without CI features:
+```bash
+dotnet build --configuration Release
 ```
 
 ## Use Cases
@@ -158,9 +149,10 @@ This feature is useful for:
 - No sensitive credentials or tokens are included in the output
 - The JSON files are excluded from version control via `.gitignore`
 - Data is stored locally and not transmitted anywhere
+- The feature is completely absent from release builds (compile-time removal)
 
 ## Limitations
 
-- The menu item is **only** visible when running in a CI environment
-- For regular users, this feature is not available (by design)
+- The menu item is **only** visible in builds compiled with `ENABLE_CI_FEATURES` defined
+- For regular release builds, this feature is not available (by design)
 - The collected data reflects the state at the time of collection

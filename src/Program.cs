@@ -313,6 +313,14 @@ namespace AgentSupervisor
             // If form exists, refresh and show it
             if (_reviewRequestsForm != null && !_reviewRequestsForm.IsDisposed)
             {
+                // Skip showing if the form was minimized or hidden in the last second
+                var timeSinceMinimizedOrHidden = DateTime.Now - _reviewRequestsForm.LastMinimizedOrHiddenTime;
+                if (timeSinceMinimizedOrHidden.TotalSeconds < 1)
+                {
+                    Logger.LogInfo("Skipping show as form was minimized/hidden within the last second");
+                    return;
+                }
+                
                 if (_reviewRequestsForm.WindowState == FormWindowState.Minimized)
                 {
                     _reviewRequestsForm.WindowState = FormWindowState.Normal;

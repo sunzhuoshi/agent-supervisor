@@ -15,6 +15,9 @@ namespace AgentSupervisor
         private Button _markAllReadButton = null!;
         private Label _statusLabel = null!;
         private ContextMenuStrip _contextMenu = null!;
+        private DateTime _lastMinimizedOrHiddenTime = DateTime.MinValue;
+
+        public DateTime LastMinimizedOrHiddenTime => _lastMinimizedOrHiddenTime;
 
         public ReviewRequestsForm(
             ReviewRequestService reviewRequestService,
@@ -32,6 +35,9 @@ namespace AgentSupervisor
             
             // Override FormClosing to hide instead of close
             FormClosing += OnFormClosing;
+            
+            // Track when form is minimized
+            Resize += OnResize;
         }
 
         private void InitializeComponent()
@@ -146,7 +152,17 @@ namespace AgentSupervisor
             if (e.CloseReason == CloseReason.UserClosing)
             {
                 e.Cancel = true;
+                _lastMinimizedOrHiddenTime = DateTime.Now;
                 Hide();
+            }
+        }
+
+        private void OnResize(object? sender, EventArgs e)
+        {
+            // Track when the form is minimized
+            if (WindowState == FormWindowState.Minimized)
+            {
+                _lastMinimizedOrHiddenTime = DateTime.Now;
             }
         }
 

@@ -17,6 +17,7 @@ namespace AgentSupervisor
         private readonly Action<string> _onOpenUrlClick;
         private readonly Action? _onRefreshBadge;
         private Icon? _customIcon;
+        private ReviewRequestsForm? _reviewRequestsForm;
 
         public SystemTrayManager(
             NotificationHistory notificationHistory,
@@ -111,12 +112,25 @@ namespace AgentSupervisor
 
         private void ShowReviewRequests()
         {
-            var form = new ReviewRequestsForm(
+            // If form exists, refresh and show it
+            if (_reviewRequestsForm != null && !_reviewRequestsForm.IsDisposed)
+            {
+                if (_reviewRequestsForm.WindowState == FormWindowState.Minimized)
+                {
+                    _reviewRequestsForm.WindowState = FormWindowState.Normal;
+                }
+                _reviewRequestsForm.RefreshAndShow();
+                return;
+            }
+
+            // Create new form instance
+            _reviewRequestsForm = new ReviewRequestsForm(
                 _reviewRequestService,
                 _onOpenUrlClick,
                 () => _reviewRequestService.MarkAllAsRead(),
                 _onRefreshBadge);
-            form.ShowDialog();
+            
+            _reviewRequestsForm.Show();
         }
 
         private void ShowAbout()
@@ -179,6 +193,7 @@ namespace AgentSupervisor
 
         public void Dispose()
         {
+            _reviewRequestsForm?.Dispose();
             _notifyIcon?.Dispose();
             _contextMenu?.Dispose();
             _customIcon?.Dispose();

@@ -29,6 +29,9 @@ namespace AgentSupervisor
 
             InitializeComponent();
             LoadRequests();
+            
+            // Override FormClosing to hide instead of close
+            FormClosing += OnFormClosing;
         }
 
         private void InitializeComponent()
@@ -108,6 +111,7 @@ namespace AgentSupervisor
                 Height = 30,
                 DialogResult = DialogResult.OK
             };
+            closeButton.Click += CloseButton_Click;
             buttonPanel.Controls.Add(closeButton);
 
             Controls.Add(buttonPanel);
@@ -115,8 +119,15 @@ namespace AgentSupervisor
             AcceptButton = closeButton;
         }
 
+        private void CloseButton_Click(object? sender, EventArgs e)
+        {
+            Close();
+        }
+
         private void LoadRequests()
         {
+            var oldTopIndex = _listBox.Items.Count > 0 ? _listBox.TopIndex : 0;
+
             _listBox.Items.Clear();
             var requests = _reviewRequestService.GetAll();
             
@@ -125,7 +136,26 @@ namespace AgentSupervisor
                 _listBox.Items.Add(request);
             }
 
+            _listBox.TopIndex = oldTopIndex < _listBox.Items.Count ? oldTopIndex : 0;
             UpdateStatus();
+        }
+
+        private void OnFormClosing(object? sender, FormClosingEventArgs e)
+        {
+            // Only cancel and hide for user-initiated closes
+            if (e.CloseReason == CloseReason.UserClosing)
+            {
+                e.Cancel = true;
+                Hide();
+            }
+        }
+
+        public void RefreshAndShow()
+        {
+            LoadRequests();
+            Show();
+            BringToFront();
+            Activate();
         }
 
         private void UpdateStatus()

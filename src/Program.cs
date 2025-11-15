@@ -55,6 +55,7 @@ namespace AgentSupervisor
         private Task? _monitoringTask;
         private MainWindow? _mainWindow;
         private TaskbarBadgeManager? _badgeManager;
+        private ReviewRequestsForm? _reviewRequestsForm;
 
         public BotApplicationContext()
         {
@@ -97,7 +98,7 @@ namespace AgentSupervisor
             });
             
             // Create main window for taskbar presence with dependencies
-            _mainWindow = new MainWindow(_reviewRequestService, OnOpenUrlClick, RefreshTaskbarBadge);
+            _mainWindow = new MainWindow(ShowReviewRequestsForm);
             // Required to be shown in task bar
             _mainWindow.Show();
             _badgeManager = new TaskbarBadgeManager(_mainWindow);
@@ -108,7 +109,8 @@ namespace AgentSupervisor
                 OnSettingsClick,
                 OnExitClick,
                 OnOpenUrlClick,
-                RefreshTaskbarBadge);
+                RefreshTaskbarBadge,
+                ShowReviewRequestsForm);
 
             var proxyUrl = _config.UseProxy ? _config.ProxyUrl : null;
             _gitHubService = new GitHubService(_config.PersonalAccessToken, proxyUrl, _reviewRequestService);
@@ -261,6 +263,7 @@ namespace AgentSupervisor
             _monitoringTask?.Wait(TimeSpan.FromSeconds(5));
             _systemTrayManager?.Dispose();
             _badgeManager?.Dispose();
+            _reviewRequestsForm?.Dispose();
             _mainWindow?.Dispose();
             Application.Exit();
         }
@@ -303,6 +306,29 @@ namespace AgentSupervisor
             {
                 Logger.LogError("Error refreshing taskbar badge", ex);
             }
+        }
+
+        private void ShowReviewRequestsForm()
+        {
+            // If form exists, refresh and show it
+            if (_reviewRequestsForm != null && !_reviewRequestsForm.IsDisposed)
+            {
+                if (_reviewRequestsForm.WindowState == FormWindowState.Minimized)
+                {
+                    _reviewRequestsForm.WindowState = FormWindowState.Normal;
+                }
+                _reviewRequestsForm.RefreshAndShow();
+                return;
+            }
+
+            // Create new form instance
+            _reviewRequestsForm = new ReviewRequestsForm(
+                _reviewRequestService!,
+                OnOpenUrlClick,
+                () => _reviewRequestService!.MarkAllAsRead(),
+                RefreshTaskbarBadge);
+            
+            _reviewRequestsForm.Show();
         }
     }
 }

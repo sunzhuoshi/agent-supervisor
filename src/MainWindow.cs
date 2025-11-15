@@ -7,18 +7,11 @@ namespace AgentSupervisor
 {
     public class MainWindow : Form
     {
-        private readonly ReviewRequestService? _reviewRequestService;
-        private readonly Action<string>? _onOpenUrlClick;
-        private readonly Action? _onRefreshBadge;
+        private readonly Action _showReviewRequestsForm;
 
-        public MainWindow(
-            ReviewRequestService? reviewRequestService = null,
-            Action<string>? onOpenUrlClick = null,
-            Action? onRefreshBadge = null)
+        public MainWindow(Action showReviewRequestsForm)
         {
-            _reviewRequestService = reviewRequestService;
-            _onOpenUrlClick = onOpenUrlClick;
-            _onRefreshBadge = onRefreshBadge;
+            _showReviewRequestsForm = showReviewRequestsForm;
 
             // Create a minimized, invisible window that appears in the taskbar
             Text = "Agent Supervisor";
@@ -63,22 +56,7 @@ namespace AgentSupervisor
 
         private void MainWindow_Activated(object? sender, EventArgs e)
         {
-            if (_reviewRequestService != null && _onOpenUrlClick != null)
-            {
-                var reviewRequestService = _reviewRequestService;
-                var onOpenUrlClick = _onOpenUrlClick;
-                ShowReviewRequests(reviewRequestService, onOpenUrlClick);
-            }
-        }
-
-        private void ShowReviewRequests(ReviewRequestService reviewRequestService, Action<string> onOpenUrlClick)
-        {
-            var form = new ReviewRequestsForm(
-                reviewRequestService,
-                onOpenUrlClick,
-                () => reviewRequestService.MarkAllAsRead(),
-                _onRefreshBadge);
-            form.ShowDialog();
+            _showReviewRequestsForm();
         }
     }
 }

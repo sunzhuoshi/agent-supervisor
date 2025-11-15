@@ -135,6 +135,7 @@ namespace AgentSupervisor
                 _listBox.Items.Add(request);
             }
 
+            _listBox.TopIndex = _listBoxTopIndex;
             UpdateStatus();
         }
 
@@ -150,7 +151,6 @@ namespace AgentSupervisor
         {
             LoadRequests();
             Show();
-            _listBox.TopIndex = _listBoxTopIndex;
             BringToFront();
             Activate();
         }

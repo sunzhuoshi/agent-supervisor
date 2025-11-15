@@ -188,9 +188,11 @@ namespace AgentSupervisor
             {
                 foreach (var index in itemsToRefresh)
                 {
-                    // Force redraw of the specific item
+                    // Invalidate the specific item region
                     _listBox.Invalidate(_listBox.GetItemRectangle(index));
                 }
+                // Force immediate redraw of invalidated regions
+                _listBox.Update();
                 UpdateStatus();
             }
         }

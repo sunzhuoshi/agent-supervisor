@@ -19,6 +19,9 @@ namespace AgentSupervisor
         private readonly Action _showReviewRequestsForm;
 #if ENABLE_CI_FEATURES
         private readonly Action? _onTriggerCollection;
+        private readonly Configuration _config;
+        private readonly Action? _onConfigChanged;
+        private ToolStripMenuItem? _pauseCollectMenuItem;
 #endif
         private Icon? _customIcon;
         private AboutForm? _aboutForm;
@@ -33,6 +36,8 @@ namespace AgentSupervisor
             Action showReviewRequestsForm
 #if ENABLE_CI_FEATURES
             , Action? onTriggerCollection = null
+            , Configuration? config = null
+            , Action? onConfigChanged = null
 #endif
             )
         {
@@ -47,6 +52,8 @@ namespace AgentSupervisor
             _showReviewRequestsForm = showReviewRequestsForm;
 #if ENABLE_CI_FEATURES
             _onTriggerCollection = onTriggerCollection;
+            _config = config ?? new Configuration();
+            _onConfigChanged = onConfigChanged;
 #endif
 
             // Create custom icon
@@ -96,9 +103,14 @@ namespace AgentSupervisor
             collectDataItem.Click += (s, e) => CollectData();
             menu.Items.Add(collectDataItem);
             
+            // CI-only menu item for pausing collection
+            _pauseCollectMenuItem = new ToolStripMenuItem(GetPauseMenuText());
+            _pauseCollectMenuItem.Click += (s, e) => TogglePauseCollect();
+            menu.Items.Add(_pauseCollectMenuItem);
+            
             menu.Items.Add(new ToolStripSeparator());
             
-            Logger.LogInfo("CI features enabled - 'Collect Data' menu item added");
+            Logger.LogInfo("CI features enabled - 'Collect Data' and 'Pause Collect' menu items added");
 #endif
 
             var settingsItem = new ToolStripMenuItem("Settings");
@@ -241,6 +253,54 @@ namespace AgentSupervisor
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
             }
+        }
+
+        /// <summary>
+        /// Toggles the pause collection state
+        /// This method is only available when ENABLE_CI_FEATURES is defined during compilation
+        /// </summary>
+        private void TogglePauseCollect()
+        {
+            try
+            {
+                _config.PauseCollect = !_config.PauseCollect;
+                _config.Save();
+                
+                // Update menu item text
+                if (_pauseCollectMenuItem != null)
+                {
+                    _pauseCollectMenuItem.Text = GetPauseMenuText();
+                }
+                
+                // Notify the application of the configuration change
+                _onConfigChanged?.Invoke();
+                
+                var statusMessage = _config.PauseCollect ? "Data collection paused" : "Data collection resumed";
+                Logger.LogInfo($"Pause collection toggled: {statusMessage}");
+                
+                MessageBox.Show(
+                    statusMessage,
+                    "Collection Status",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Error toggling pause collection", ex);
+                MessageBox.Show(
+                    $"Error toggling pause collection:\n\n{ex.Message}",
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Gets the menu text for the pause collect menu item based on current state
+        /// </summary>
+        private string GetPauseMenuText()
+        {
+            return _config.PauseCollect ? "Resume Collect" : "Pause Collect";
         }
 #endif
 

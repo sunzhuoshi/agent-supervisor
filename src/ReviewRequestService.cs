@@ -10,7 +10,7 @@ namespace AgentSupervisor
         private readonly object _lockObject = new object();
         private readonly Action _onBadgeUpdateNeeded;
 
-        public ReviewRequestService(Action? onBadgeUpdateNeeded = null)
+        public ReviewRequestService(Action onBadgeUpdateNeeded)
         {
             _onBadgeUpdateNeeded = onBadgeUpdateNeeded;
             _requests = Load();

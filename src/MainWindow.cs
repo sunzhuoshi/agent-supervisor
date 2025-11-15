@@ -2,24 +2,34 @@ using System;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
+using AgentSupervisor.Models;
 
 namespace AgentSupervisor
 {
     public class MainWindow : Form
     {
-        private readonly Action _showReviewRequestsForm;
+        private readonly ReviewRequestService _reviewRequestService;
+        private readonly Action<string> _onOpenUrlClick;
+        private readonly Action _onMarkAllAsRead;
+        private readonly Action? _onRefreshBadge;
+        private ListBox _listBox = null!;
+        private Button _markAllReadButton = null!;
+        private Label _statusLabel = null!;
+        private ContextMenuStrip _contextMenu = null!;
 
-        public MainWindow(Action showReviewRequestsForm)
+        public MainWindow(
+            ReviewRequestService reviewRequestService,
+            Action<string> onOpenUrlClick,
+            Action onMarkAllAsRead,
+            Action onRefreshBadge)
         {
-            _showReviewRequestsForm = showReviewRequestsForm;
+            _reviewRequestService = reviewRequestService;
+            _onOpenUrlClick = onOpenUrlClick;
+            _onMarkAllAsRead = onMarkAllAsRead;
+            _onRefreshBadge = onRefreshBadge;
 
-            // Create a minimized, invisible window that appears in the taskbar
-            Text = "Agent Supervisor";
-            ShowInTaskbar = true;
-            FormBorderStyle = FormBorderStyle.Fixed3D;
-            StartPosition = FormStartPosition.Manual;
-            Location = new Point(-10000, -10000); // Position off-screen
-            Size = new Size(0, 0);
+            InitializeComponent();
+            LoadRequests();
             
             // Load and set the application icon
             try
@@ -35,28 +45,287 @@ namespace AgentSupervisor
                 Logger.LogError("Failed to load application icon", ex);
             }
             
-            // Prevent the window from being shown
+            // Prevent closing - minimize to taskbar instead
+            FormClosing += OnFormClosing;
+            
+            // Refresh list when form is activated/restored
+            Activated += OnFormActivated;
+            
+            // Start minimized
             WindowState = FormWindowState.Minimized;
             
-            // Add activated handler to open review requests form
-            Activated += MainWindow_Activated;
-            
-            // Prevent closing - hide instead
-            FormClosing += (s, e) =>
-            {
-                if (e.CloseReason == CloseReason.UserClosing)
-                {
-                    e.Cancel = true;
-                    Hide();
-                }
-            };
-            
-            Logger.LogInfo("MainWindow created for taskbar presence");
+            Logger.LogInfo("MainWindow created with review requests functionality");
         }
 
-        private void MainWindow_Activated(object? sender, EventArgs e)
+        private void InitializeComponent()
         {
-            _showReviewRequestsForm();
+            // Form settings
+            Text = "Agent Supervisor - Review Requests by Copilots";
+            Size = new Size(600, 500);
+            StartPosition = FormStartPosition.CenterScreen;
+            MinimumSize = new Size(500, 400);
+            ShowInTaskbar = true;
+            FormBorderStyle = FormBorderStyle.Sizable;
+
+            // Status label at top
+            _statusLabel = new Label
+            {
+                Dock = DockStyle.Top,
+                Height = 30,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Padding = new Padding(10, 5, 10, 5),
+                Font = new Font(Font.FontFamily, 9, FontStyle.Bold)
+            };
+            Controls.Add(_statusLabel);
+
+            // Context menu for list items
+            _contextMenu = new ContextMenuStrip();
+            
+            var openMenuItem = new ToolStripMenuItem("Open");
+            openMenuItem.Click += ContextMenu_Open_Click;
+            _contextMenu.Items.Add(openMenuItem);
+            
+            var markAsReadMenuItem = new ToolStripMenuItem("Mark as read");
+            markAsReadMenuItem.Click += ContextMenu_MarkAsRead_Click;
+            _contextMenu.Items.Add(markAsReadMenuItem);
+
+            // ListBox for review requests
+            _listBox = new ListBox
+            {
+                Dock = DockStyle.Fill,
+                DrawMode = DrawMode.OwnerDrawFixed,
+                ItemHeight = 60,
+                Font = new Font(Font.FontFamily, 9),
+                SelectionMode = SelectionMode.One,
+                ContextMenuStrip = _contextMenu
+            };
+            _listBox.DrawItem += ListBox_DrawItem;
+            _listBox.DoubleClick += ListBox_DoubleClick;
+            var listBoxPanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                Padding = new Padding(0, _statusLabel.Height, 0, 0)
+            };
+            listBoxPanel.Controls.Add(_listBox);    
+            Controls.Add(listBoxPanel);
+
+            // Button panel at bottom
+            var buttonPanel = new Panel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 50,
+                Padding = new Padding(10)
+            };
+
+            _markAllReadButton = new Button
+            {
+                Text = "Mark All as Read",
+                Dock = DockStyle.Left,
+                Width = 150,
+                Height = 30
+            };
+            _markAllReadButton.Click += MarkAllReadButton_Click;
+            buttonPanel.Controls.Add(_markAllReadButton);
+
+            Controls.Add(buttonPanel);
+        }
+
+        private void OnFormActivated(object? sender, EventArgs e)
+        {
+            // Refresh the list when the form is activated (e.g., restored from minimized)
+            if (WindowState != FormWindowState.Minimized)
+            {
+                LoadRequests();
+            }
+        }
+
+        private void LoadRequests()
+        {
+            var oldTopIndex = _listBox.Items.Count > 0 ? _listBox.TopIndex : 0;
+
+            _listBox.Items.Clear();
+            var requests = _reviewRequestService.GetAll();
+            
+            foreach (var request in requests)
+            {
+                _listBox.Items.Add(request);
+            }
+
+            _listBox.TopIndex = oldTopIndex < _listBox.Items.Count ? oldTopIndex : 0;
+            UpdateStatus();
+        }
+
+        private void OnFormClosing(object? sender, FormClosingEventArgs e)
+        {
+            // Only cancel and minimize for user-initiated closes
+            if (e.CloseReason == CloseReason.UserClosing)
+            {
+                e.Cancel = true;
+                WindowState = FormWindowState.Minimized;
+            }
+        }
+
+        public void RefreshAndShow()
+        {
+            LoadRequests();
+            if (WindowState == FormWindowState.Minimized)
+            {
+                WindowState = FormWindowState.Normal;
+            }
+            Show();
+            BringToFront();
+            Activate();
+        }
+
+        public void RefreshIfVisible()
+        {
+            // Only refresh the list if the window is visible and not minimized
+            if (WindowState != FormWindowState.Minimized && Visible)
+            {
+                LoadRequests();
+            }
+        }
+
+        private void UpdateStatus()
+        {
+            var newCount = _reviewRequestService.GetNewCount();
+            var totalCount = _listBox.Items.Count;
+
+            if (totalCount == 0)
+            {
+                _statusLabel.Text = "No review requests";
+                _markAllReadButton.Enabled = false;
+            }
+            else
+            {
+                _statusLabel.Text = $"Total: {totalCount} review request(s) | New: {newCount}";
+                _markAllReadButton.Enabled = newCount > 0;
+            }
+        }
+
+        private void ListBox_DrawItem(object? sender, DrawItemEventArgs e)
+        {
+            if (e.Index < 0 || e.Index >= _listBox.Items.Count || _listBox.Items[e.Index] is not ReviewRequestEntry request)
+                return;
+
+            // Background
+            var backgroundColor = e.State.HasFlag(DrawItemState.Selected)
+                ? SystemColors.Highlight
+                : (request.IsNew ? Color.FromArgb(255, 250, 220) : SystemColors.Window);
+            
+            using var backgroundBrush = new SolidBrush(backgroundColor);
+            e.Graphics.FillRectangle(backgroundBrush, e.Bounds);
+
+            // Text color
+            var textColor = e.State.HasFlag(DrawItemState.Selected)
+                ? SystemColors.HighlightText
+                : SystemColors.WindowText;
+
+            var x = e.Bounds.X + 10;
+            var y = e.Bounds.Y + 5;
+
+            // Draw "NEW" badge if applicable
+            if (request.IsNew)
+            {
+                using var newBadgeBrush = new SolidBrush(Color.FromArgb(220, 53, 69));
+                using var newBadgeFont = new Font(e.Font?.FontFamily ?? SystemFonts.DefaultFont.FontFamily, 7, FontStyle.Bold);
+                using var newBadgeTextBrush = new SolidBrush(Color.White);
+                
+                var badgeRect = new Rectangle(e.Bounds.Right - 60, y, 50, 18);
+                e.Graphics.FillRectangle(newBadgeBrush, badgeRect);
+                
+                var badgeText = "NEW";
+                var badgeTextSize = e.Graphics.MeasureString(badgeText, newBadgeFont);
+                var badgeTextX = badgeRect.X + (badgeRect.Width - badgeTextSize.Width) / 2;
+                var badgeTextY = badgeRect.Y + (badgeRect.Height - badgeTextSize.Height) / 2;
+                e.Graphics.DrawString(badgeText, newBadgeFont, newBadgeTextBrush, badgeTextX, badgeTextY);
+            }
+
+            // Draw repository and PR number
+            using var titleFont = new Font(e.Font?.FontFamily ?? SystemFonts.DefaultFont.FontFamily, 9, FontStyle.Bold);
+            using var textBrush = new SolidBrush(textColor);
+            var titleText = $"{request.Repository} PR#{request.PullRequestNumber}";
+            e.Graphics.DrawString(titleText, titleFont, textBrush, x, y);
+
+            // Draw title
+            y += 18;
+            var titleMaxWidth = e.Bounds.Width - 80;
+            var title = request.Title.Length > 60 ? request.Title.Substring(0, 60) + "..." : request.Title;
+            e.Graphics.DrawString(title, e.Font ?? SystemFonts.DefaultFont, textBrush, new RectangleF(x, y, titleMaxWidth, 30));
+
+            // Draw author and date
+            y += 18;
+            using var detailFont = new Font(e.Font?.FontFamily ?? SystemFonts.DefaultFont.FontFamily, 8);
+            using var detailBrush = new SolidBrush(e.State.HasFlag(DrawItemState.Selected) ? textColor : Color.Gray);
+            var detailText = $"by {request.Author} • {request.CreatedAt:MMM dd, yyyy HH:mm}";
+            e.Graphics.DrawString(detailText, detailFont, detailBrush, x, y);
+
+            // Draw focus rectangle
+            e.DrawFocusRectangle();
+        }
+
+        private void ListBox_DoubleClick(object? sender, EventArgs e)
+        {
+            if (_listBox.SelectedItem is ReviewRequestEntry request)
+            {
+                // Mark as read
+                _reviewRequestService.MarkAsRead(request.Id);
+                
+                // Open URL
+                _onOpenUrlClick(request.HtmlUrl);
+                
+                // Refresh the display
+                LoadRequests();
+            }
+        }
+
+        private void MarkAllReadButton_Click(object? sender, EventArgs e)
+        {
+            _onMarkAllAsRead();
+            LoadRequests();
+        }
+
+        private void ContextMenu_Open_Click(object? sender, EventArgs e)
+        {
+            if (_listBox.SelectedItem is ReviewRequestEntry request)
+            {
+                // Mark as read
+                _reviewRequestService.MarkAsRead(request.Id);
+                
+                // Open URL
+                _onOpenUrlClick(request.HtmlUrl);
+                
+                // Refresh the display
+                LoadRequests();
+            }
+        }
+
+        private void ContextMenu_MarkAsRead_Click(object? sender, EventArgs e)
+        {
+            if (_listBox.SelectedItem is ReviewRequestEntry request)
+            {
+                // Save scroll position
+                var topIndex = _listBox.TopIndex;
+                var selectedIndex = _listBox.SelectedIndex;
+                
+                // Mark as read
+                _reviewRequestService.MarkAsRead(request.Id);
+                
+                // Refresh the display
+                LoadRequests();
+                
+                // Restore scroll position
+                if (topIndex < _listBox.Items.Count)
+                {
+                    _listBox.TopIndex = topIndex;
+                }
+                
+                // Restore selection if the item still exists
+                if (selectedIndex < _listBox.Items.Count)
+                {
+                    _listBox.SelectedIndex = selectedIndex;
+                }
+            }
         }
     }
 }

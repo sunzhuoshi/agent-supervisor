@@ -149,7 +149,7 @@ namespace AgentSupervisor
                 {
 #if ENABLE_CI_FEATURES
                     // Check if collection is paused (CI builds only)
-                    if (_config!.PauseCollect)
+                    if (_config!.PauseCollection)
                     {
                         var currentUnreadCount = _reviewRequestService!.GetNewCount();
                         var currentTotalCount = _reviewRequestService!.GetTotalCount();
@@ -399,13 +399,13 @@ namespace AgentSupervisor
                 // Reload configuration from Registry to ensure we have the latest values
                 _config = Configuration.Load();
                 
-                Logger.LogInfo($"Configuration changed - PauseCollect: {_config.PauseCollect}");
+                Logger.LogInfo($"Configuration changed - PauseCollection: {_config.PauseCollection}");
                 
                 // Update status immediately to reflect the new state
                 var unreadCount = _reviewRequestService?.GetNewCount() ?? 0;
                 var totalPendingCount = _reviewRequestService?.GetTotalCount() ?? 0;
                 
-                if (_config.PauseCollect)
+                if (_config.PauseCollection)
                 {
                     _systemTrayManager?.UpdateStatus($"Paused - {totalPendingCount} pending review(s) - {unreadCount} unread");
                 }

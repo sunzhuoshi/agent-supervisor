@@ -21,7 +21,7 @@ namespace AgentSupervisor
         private readonly Action? _onTriggerCollection;
         private readonly Configuration _config;
         private readonly Action? _onConfigChanged;
-        private ToolStripMenuItem? _pauseCollectMenuItem;
+        private ToolStripMenuItem? _pauseCollectionMenuItem;
 #endif
         private Icon? _customIcon;
         private AboutForm? _aboutForm;
@@ -104,9 +104,9 @@ namespace AgentSupervisor
             menu.Items.Add(collectDataItem);
             
             // CI-only menu item for pausing collection
-            _pauseCollectMenuItem = new ToolStripMenuItem(GetPauseMenuText());
-            _pauseCollectMenuItem.Click += (s, e) => TogglePauseCollect();
-            menu.Items.Add(_pauseCollectMenuItem);
+            _pauseCollectionMenuItem = new ToolStripMenuItem(GetPauseMenuText());
+            _pauseCollectionMenuItem.Click += (s, e) => TogglePauseCollection();
+            menu.Items.Add(_pauseCollectionMenuItem);
             
             menu.Items.Add(new ToolStripSeparator());
             
@@ -259,23 +259,23 @@ namespace AgentSupervisor
         /// Toggles the pause collection state
         /// This method is only available when ENABLE_CI_FEATURES is defined during compilation
         /// </summary>
-        private void TogglePauseCollect()
+        private void TogglePauseCollection()
         {
             try
             {
-                _config.PauseCollect = !_config.PauseCollect;
+                _config.PauseCollection = !_config.PauseCollection;
                 _config.Save();
                 
                 // Update menu item text
-                if (_pauseCollectMenuItem != null)
+                if (_pauseCollectionMenuItem != null)
                 {
-                    _pauseCollectMenuItem.Text = GetPauseMenuText();
+                    _pauseCollectionMenuItem.Text = GetPauseMenuText();
                 }
                 
                 // Notify the application of the configuration change
                 _onConfigChanged?.Invoke();
                 
-                var statusMessage = _config.PauseCollect ? "Data collection paused" : "Data collection resumed";
+                var statusMessage = _config.PauseCollection ? "Data collection paused" : "Data collection resumed";
                 Logger.LogInfo($"Pause collection toggled: {statusMessage}");
                 
                 MessageBox.Show(
@@ -300,7 +300,7 @@ namespace AgentSupervisor
         /// </summary>
         private string GetPauseMenuText()
         {
-            return _config.PauseCollect ? "Resume Collection" : "Pause Collection";
+            return _config.PauseCollection ? "Resume Collection" : "Pause Collection";
         }
 #endif
 

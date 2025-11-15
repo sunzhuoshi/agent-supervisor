@@ -126,7 +126,7 @@ namespace AgentSupervisor
 
         private void LoadRequests()
         {
-            var oldTopIndex = _listBox.TopIndex;
+            var oldTopIndex = _listBox.Items.Count > 0 ? _listBox.TopIndex : 0;
 
             _listBox.Items.Clear();
             var requests = _reviewRequestService.GetAll();

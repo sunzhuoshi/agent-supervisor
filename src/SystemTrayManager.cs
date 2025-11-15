@@ -17,6 +17,9 @@ namespace AgentSupervisor
         private readonly Action<string> _onOpenUrlClick;
         private readonly Action? _onRefreshBadge;
         private readonly Action _showReviewRequestsForm;
+#if ENABLE_CI_FEATURES
+        private readonly Action? _onTriggerCollection;
+#endif
         private Icon? _customIcon;
         private AboutForm? _aboutForm;
 
@@ -27,7 +30,11 @@ namespace AgentSupervisor
             Action onExitClick,
             Action<string> onOpenUrlClick,
             Action? onRefreshBadge,
-            Action showReviewRequestsForm)
+            Action showReviewRequestsForm
+#if ENABLE_CI_FEATURES
+            , Action? onTriggerCollection = null
+#endif
+            )
         {
             Logger.LogInfo("Initializing SystemTrayManager");
             
@@ -38,6 +45,9 @@ namespace AgentSupervisor
             _onOpenUrlClick = onOpenUrlClick;
             _onRefreshBadge = onRefreshBadge;
             _showReviewRequestsForm = showReviewRequestsForm;
+#if ENABLE_CI_FEATURES
+            _onTriggerCollection = onTriggerCollection;
+#endif
 
             // Create custom icon
             _customIcon = CreateCustomIcon();
@@ -79,6 +89,17 @@ namespace AgentSupervisor
             menu.Items.Add(recentItem);
 
             menu.Items.Add(new ToolStripSeparator());
+
+#if ENABLE_CI_FEATURES
+            // CI-only menu item for data collection
+            var collectDataItem = new ToolStripMenuItem("Collect Data");
+            collectDataItem.Click += (s, e) => CollectData();
+            menu.Items.Add(collectDataItem);
+            
+            menu.Items.Add(new ToolStripSeparator());
+            
+            Logger.LogInfo("CI features enabled - 'Collect Data' menu item added");
+#endif
 
             var settingsItem = new ToolStripMenuItem("Settings");
             settingsItem.Click += (s, e) => _onSettingsClick();
@@ -180,6 +201,48 @@ namespace AgentSupervisor
                 return SystemIcons.Information;
             }
         }
+
+#if ENABLE_CI_FEATURES
+        /// <summary>
+        /// Triggers immediate collection of review requests from GitHub
+        /// This method is only available when ENABLE_CI_FEATURES is defined during compilation
+        /// </summary>
+        private void CollectData()
+        {
+            try
+            {
+                Logger.LogInfo("Triggering immediate data collection (CI build)");
+
+                if (_onTriggerCollection != null)
+                {
+                    _onTriggerCollection();
+                    MessageBox.Show(
+                        "Data collection triggered!\n\nThe application will now fetch the latest review requests from GitHub immediately.",
+                        "Collection Triggered",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
+                else
+                {
+                    Logger.LogWarning("Collection callback not configured");
+                    MessageBox.Show(
+                        "Data collection callback is not configured.",
+                        "Configuration Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Error triggering data collection", ex);
+                MessageBox.Show(
+                    $"Error triggering data collection:\n\n{ex.Message}",
+                    "Collection Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+#endif
 
         public void Dispose()
         {

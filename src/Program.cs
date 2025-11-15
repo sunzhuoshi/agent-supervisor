@@ -186,7 +186,11 @@ namespace AgentSupervisor
                     var unreadCount = _reviewRequestService!.GetNewCount();
                     if (_mainWindow != null && !_mainWindow.IsDisposed)
                     {
-                        _mainWindow.Invoke(() => _badgeManager!.UpdateBadgeCount(unreadCount));
+                        _mainWindow.Invoke(() => 
+                        {
+                            _badgeManager!.UpdateBadgeCount(unreadCount);
+                            _mainWindow.RefreshIfVisible();
+                        });
                     }
 
                     var totalPendingCount = _reviewRequestService!.GetTotalCount();

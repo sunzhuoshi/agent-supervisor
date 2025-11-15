@@ -45,8 +45,8 @@ namespace AgentSupervisor
             // Prevent the window from being shown
             WindowState = FormWindowState.Minimized;
             
-            // Add click handler to open review requests form
-            Click += MainWindow_Click;
+            // Add activated handler to open review requests form
+            Activated += MainWindow_Activated;
             
             // Prevent closing - hide instead
             FormClosing += (s, e) =>
@@ -61,7 +61,7 @@ namespace AgentSupervisor
             Logger.LogInfo("MainWindow created for taskbar presence");
         }
 
-        private void MainWindow_Click(object? sender, EventArgs e)
+        private void MainWindow_Activated(object? sender, EventArgs e)
         {
             if (_reviewRequestService != null && _onOpenUrlClick != null)
             {

@@ -110,6 +110,8 @@ namespace AgentSupervisor
                 ShowReviewRequestsForm
 #if ENABLE_CI_FEATURES
                 , TriggerImmediateCollection
+                , _config
+                , OnConfigChanged
 #endif
                 );
 
@@ -145,6 +147,30 @@ namespace AgentSupervisor
             {
                 try
                 {
+#if ENABLE_CI_FEATURES
+                    // Check if collection is paused (CI builds only)
+                    if (_config.PauseCollection)
+                    {
+                        var currentUnreadCount = _reviewRequestService!.GetNewCount();
+                        var currentTotalCount = _reviewRequestService!.GetTotalCount();
+                        _systemTrayManager!.UpdateStatus($"Paused - {currentTotalCount} pending review(s) - {currentUnreadCount} unread");
+                        Logger.LogInfo("Data collection is paused, skipping this cycle");
+                        
+                        // Still update the badge even when paused
+                        if (_mainWindow != null && !_mainWindow.IsDisposed)
+                        {
+                            _mainWindow.Invoke(() => 
+                            {
+                                _badgeManager!.UpdateBadgeCount(currentUnreadCount);
+                                _mainWindow.RefreshIfVisible();
+                            });
+                        }
+                        
+                        // Skip to the delay without collecting data
+                        await Task.Delay(TimeSpan.FromSeconds(_config.PollingIntervalSeconds), cancellationToken);
+                        continue;
+                    }
+#endif
                     var reviews = await _gitHubService!.GetPendingReviewsAsync();
                     var newReviewCount = 0;
                     
@@ -154,7 +180,7 @@ namespace AgentSupervisor
                         if (!_notificationHistory!.HasBeenNotified(review.Id))
                         {
                             // Show desktop notification only if enabled in settings
-                            if (_config!.EnableDesktopNotifications)
+                            if (_config.EnableDesktopNotifications)
                             {
                                 _systemTrayManager!.ShowNotification(review);
                             }
@@ -175,7 +201,7 @@ namespace AgentSupervisor
                             _notificationHistory.Add(entry);
                             newReviewCount++;
                             
-                            if (_config!.EnableDesktopNotifications)
+                            if (_config.EnableDesktopNotifications)
                             {
                                 Logger.LogInfo($"Desktop notification shown for review: {entry.Repository} PR#{entry.PullRequestNumber}");
                             }
@@ -208,7 +234,7 @@ namespace AgentSupervisor
 
                 try
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(_config!.PollingIntervalSeconds), cancellationToken);
+                    await Task.Delay(TimeSpan.FromSeconds(_config.PollingIntervalSeconds), cancellationToken);
                 }
                 catch (TaskCanceledException)
                 {
@@ -360,6 +386,37 @@ namespace AgentSupervisor
             {
                 Logger.LogError("Error during immediate collection", ex);
                 _systemTrayManager?.UpdateStatus($"Error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Called when configuration changes (e.g., when pause is toggled)
+        /// </summary>
+        private void OnConfigChanged()
+        {
+            try
+            {
+                // Reload configuration from Registry to ensure we have the latest values
+                _config = Configuration.Load();
+                
+                Logger.LogInfo($"Configuration changed - PauseCollection: {_config.PauseCollection}");
+                
+                // Update status immediately to reflect the new state
+                var unreadCount = _reviewRequestService?.GetNewCount() ?? 0;
+                var totalPendingCount = _reviewRequestService?.GetTotalCount() ?? 0;
+                
+                if (_config.PauseCollection)
+                {
+                    _systemTrayManager?.UpdateStatus($"Paused - {totalPendingCount} pending review(s) - {unreadCount} unread");
+                }
+                else
+                {
+                    _systemTrayManager?.UpdateStatus($"{totalPendingCount} pending review(s) - {unreadCount} unread");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Error handling configuration change", ex);
             }
         }
 #endif

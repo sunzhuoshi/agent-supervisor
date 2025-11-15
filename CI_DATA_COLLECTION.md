@@ -33,7 +33,7 @@ When the application is built with CI features enabled, additional menu items ap
 └─────────────────────────────────┘
 ```
 
-#### Collect Data
+#### Collect at Once
 
 When the "Collect at Once" menu item is clicked, the application:
 
@@ -103,7 +103,7 @@ dotnet build --configuration Release
 
 These CI features are useful for:
 
-1. **Immediate Data Refresh** (Collect Data): Force an immediate fetch of review requests without waiting for the scheduled polling interval
+1. **Immediate Data Refresh** (Collect at Once): Force an immediate fetch of review requests without waiting for the scheduled polling interval
 2. **Testing**: Verify that the GitHub API integration is working correctly during CI builds
 3. **Debugging**: Quickly check for new review requests during development and testing
 4. **CI/CD Pipeline Testing**: Validate that the application can successfully connect to GitHub and fetch data

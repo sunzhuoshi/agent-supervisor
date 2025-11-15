@@ -86,13 +86,7 @@ namespace AgentSupervisor
             // Initialize services (ReviewRequestService without badge callback first)
             _notificationHistory = new NotificationHistory(_config.MaxHistoryEntries);
             
-            // Create main window for taskbar presence
-            _mainWindow = new MainWindow();
-            // Required to be shown in task bar
-            _mainWindow.Show();
-            _badgeManager = new TaskbarBadgeManager(_mainWindow);
-            
-            // Initialize ReviewRequestService with badge update callback
+            // Initialize ReviewRequestService with badge update callback (will be set after MainWindow creation)
             _reviewRequestService = new ReviewRequestService(() => 
             {
                 var unreadCount = _reviewRequestService?.GetNewCount() ?? 0;
@@ -101,6 +95,12 @@ namespace AgentSupervisor
                     _mainWindow.Invoke(() => _badgeManager?.UpdateBadgeCount(unreadCount));
                 }
             });
+            
+            // Create main window for taskbar presence with dependencies
+            _mainWindow = new MainWindow(_reviewRequestService, OnOpenUrlClick, RefreshTaskbarBadge);
+            // Required to be shown in task bar
+            _mainWindow.Show();
+            _badgeManager = new TaskbarBadgeManager(_mainWindow);
             
             _systemTrayManager = new SystemTrayManager(
                 _notificationHistory,

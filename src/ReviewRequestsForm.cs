@@ -20,7 +20,7 @@ namespace AgentSupervisor
             ReviewRequestService reviewRequestService,
             Action<string> onOpenUrlClick,
             Action onMarkAllAsRead,
-            Action? onRefreshBadge = null)
+            Action onRefreshBadge)
         {
             _reviewRequestService = reviewRequestService;
             _onOpenUrlClick = onOpenUrlClick;
@@ -163,6 +163,7 @@ namespace AgentSupervisor
             var newCount = _reviewRequestService.GetNewCount();
             var totalCount = _listBox.Items.Count;
 
+             _onRefreshBadge.Invoke();
             if (totalCount == 0)
             {
                 _statusLabel.Text = "No review requests";

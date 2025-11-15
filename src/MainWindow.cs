@@ -48,6 +48,9 @@ namespace AgentSupervisor
             // Prevent closing - minimize to taskbar instead
             FormClosing += OnFormClosing;
             
+            // Refresh list when form is activated/restored
+            Activated += OnFormActivated;
+            
             // Start minimized
             WindowState = FormWindowState.Minimized;
             
@@ -124,22 +127,16 @@ namespace AgentSupervisor
             _markAllReadButton.Click += MarkAllReadButton_Click;
             buttonPanel.Controls.Add(_markAllReadButton);
 
-            var closeButton = new Button
-            {
-                Text = "Minimize",
-                Dock = DockStyle.Right,
-                Width = 100,
-                Height = 30
-            };
-            closeButton.Click += MinimizeButton_Click;
-            buttonPanel.Controls.Add(closeButton);
-
             Controls.Add(buttonPanel);
         }
 
-        private void MinimizeButton_Click(object? sender, EventArgs e)
+        private void OnFormActivated(object? sender, EventArgs e)
         {
-            WindowState = FormWindowState.Minimized;
+            // Refresh the list when the form is activated (e.g., restored from minimized)
+            if (WindowState != FormWindowState.Minimized)
+            {
+                LoadRequests();
+            }
         }
 
         private void LoadRequests()

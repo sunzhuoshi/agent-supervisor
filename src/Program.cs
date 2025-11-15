@@ -55,7 +55,6 @@ namespace AgentSupervisor
         private Task? _monitoringTask;
         private MainWindow? _mainWindow;
         private TaskbarBadgeManager? _badgeManager;
-        private ReviewRequestsForm? _reviewRequestsForm;
 
         public BotApplicationContext()
         {
@@ -97,8 +96,12 @@ namespace AgentSupervisor
                 }
             });
             
-            // Create main window for taskbar presence with dependencies
-            _mainWindow = new MainWindow(ShowReviewRequestsForm);
+            // Create main window with review requests functionality
+            _mainWindow = new MainWindow(
+                _reviewRequestService,
+                OnOpenUrlClick,
+                () => _reviewRequestService.MarkAllAsRead(),
+                RefreshTaskbarBadge);
             // Required to be shown in task bar
             _mainWindow.Show();
             _badgeManager = new TaskbarBadgeManager(_mainWindow);
@@ -263,7 +266,6 @@ namespace AgentSupervisor
             _monitoringTask?.Wait(TimeSpan.FromSeconds(5));
             _systemTrayManager?.Dispose();
             _badgeManager?.Dispose();
-            _reviewRequestsForm?.Dispose();
             _mainWindow?.Dispose();
             Application.Exit();
         }
@@ -310,25 +312,11 @@ namespace AgentSupervisor
 
         private void ShowReviewRequestsForm()
         {
-            // If form exists, refresh and show it
-            if (_reviewRequestsForm != null && !_reviewRequestsForm.IsDisposed)
+            // Show and restore the main window
+            if (_mainWindow != null && !_mainWindow.IsDisposed)
             {
-                if (_reviewRequestsForm.WindowState == FormWindowState.Minimized)
-                {
-                    _reviewRequestsForm.WindowState = FormWindowState.Normal;
-                }
-                _reviewRequestsForm.RefreshAndShow();
-                return;
+                _mainWindow.RefreshAndShow();
             }
-
-            // Create new form instance
-            _reviewRequestsForm = new ReviewRequestsForm(
-                _reviewRequestService!,
-                OnOpenUrlClick,
-                () => _reviewRequestService!.MarkAllAsRead(),
-                RefreshTaskbarBadge);
-            
-            _reviewRequestsForm.Show();
         }
     }
 }

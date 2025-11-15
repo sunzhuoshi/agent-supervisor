@@ -142,9 +142,12 @@ namespace AgentSupervisor
 
         private void OnFormClosing(object? sender, FormClosingEventArgs e)
         {
-            // Cancel the close and hide the form instead
-            e.Cancel = true;
-            Hide();
+            // Only cancel and hide for user-initiated closes
+            if (e.CloseReason == CloseReason.UserClosing)
+            {
+                e.Cancel = true;
+                Hide();
+            }
         }
 
         public void RefreshAndShow()

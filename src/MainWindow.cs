@@ -7,8 +7,19 @@ namespace AgentSupervisor
 {
     public class MainWindow : Form
     {
-        public MainWindow()
+        private readonly ReviewRequestService? _reviewRequestService;
+        private readonly Action<string>? _onOpenUrlClick;
+        private readonly Action? _onRefreshBadge;
+
+        public MainWindow(
+            ReviewRequestService? reviewRequestService = null,
+            Action<string>? onOpenUrlClick = null,
+            Action? onRefreshBadge = null)
         {
+            _reviewRequestService = reviewRequestService;
+            _onOpenUrlClick = onOpenUrlClick;
+            _onRefreshBadge = onRefreshBadge;
+
             // Create a minimized, invisible window that appears in the taskbar
             Text = "Agent Supervisor";
             ShowInTaskbar = true;
@@ -34,6 +45,9 @@ namespace AgentSupervisor
             // Prevent the window from being shown
             WindowState = FormWindowState.Minimized;
             
+            // Add activated handler to open review requests form
+            Activated += MainWindow_Activated;
+            
             // Prevent closing - hide instead
             FormClosing += (s, e) =>
             {
@@ -45,6 +59,26 @@ namespace AgentSupervisor
             };
             
             Logger.LogInfo("MainWindow created for taskbar presence");
+        }
+
+        private void MainWindow_Activated(object? sender, EventArgs e)
+        {
+            if (_reviewRequestService != null && _onOpenUrlClick != null)
+            {
+                var reviewRequestService = _reviewRequestService;
+                var onOpenUrlClick = _onOpenUrlClick;
+                ShowReviewRequests(reviewRequestService, onOpenUrlClick);
+            }
+        }
+
+        private void ShowReviewRequests(ReviewRequestService reviewRequestService, Action<string> onOpenUrlClick)
+        {
+            var form = new ReviewRequestsForm(
+                reviewRequestService,
+                onOpenUrlClick,
+                () => reviewRequestService.MarkAllAsRead(),
+                _onRefreshBadge);
+            form.ShowDialog();
         }
     }
 }

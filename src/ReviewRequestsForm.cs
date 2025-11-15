@@ -136,7 +136,7 @@ namespace AgentSupervisor
                 _listBox.Items.Add(request);
             }
 
-            _listBox.TopIndex = oldTopIndex<_listBox.Items.Count ? oldTopIndex : 0;
+            _listBox.TopIndex = oldTopIndex < _listBox.Items.Count ? oldTopIndex : 0;
             UpdateStatus();
         }
 

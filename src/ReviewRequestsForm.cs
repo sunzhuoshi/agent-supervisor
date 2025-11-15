@@ -14,7 +14,6 @@ namespace AgentSupervisor
         private ListBox _listBox = null!;
         private Button _markAllReadButton = null!;
         private Label _statusLabel = null!;
-        private static int _savedScrollPosition = 0;
         private ContextMenuStrip _contextMenu = null!;
 
         public ReviewRequestsForm(
@@ -130,30 +129,10 @@ namespace AgentSupervisor
             }
 
             UpdateStatus();
-            RestoreScrollPosition();
-        }
-
-        private void SaveScrollPosition()
-        {
-            if (_listBox.Items.Count > 0)
-            {
-                _savedScrollPosition = _listBox.TopIndex;
-            }
-        }
-
-        private void RestoreScrollPosition()
-        {
-            if (_listBox.Items.Count > 0 && _savedScrollPosition < _listBox.Items.Count)
-            {
-                _listBox.TopIndex = _savedScrollPosition;
-            }
         }
 
         private void OnFormClosing(object? sender, FormClosingEventArgs e)
         {
-            // Save scroll position before hiding
-            SaveScrollPosition();
-            
             // Cancel the close and hide the form instead
             e.Cancel = true;
             Hide();

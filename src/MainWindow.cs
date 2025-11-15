@@ -320,17 +320,17 @@ namespace AgentSupervisor
                 e.Graphics.DrawString(badgeText, newBadgeFont, newBadgeTextBrush, badgeTextX, badgeTextY);
             }
 
-            // Draw repository and PR number
+            // Draw title
             using var titleFont = new Font(e.Font?.FontFamily ?? SystemFonts.DefaultFont.FontFamily, 9, FontStyle.Bold);
             using var textBrush = new SolidBrush(textColor);
-            var titleText = $"{request.Repository} PR#{request.PullRequestNumber}";
-            e.Graphics.DrawString(titleText, titleFont, textBrush, x, y);
-
-            // Draw title
-            y += 18;
             var titleMaxWidth = e.Bounds.Width - 80;
             var title = request.Title.Length > 60 ? request.Title.Substring(0, 60) + "..." : request.Title;
-            e.Graphics.DrawString(title, e.Font ?? SystemFonts.DefaultFont, textBrush, new RectangleF(x, y, titleMaxWidth, 30));
+            e.Graphics.DrawString(title, titleFont, textBrush, new RectangleF(x, y, titleMaxWidth, 30));
+
+            // Draw repository and PR number
+            y += 18;
+            var repoText = $"{request.Repository} PR#{request.PullRequestNumber}";
+            e.Graphics.DrawString(repoText, e.Font ?? SystemFonts.DefaultFont, textBrush, x, y);
 
             // Draw author and date
             y += 18;

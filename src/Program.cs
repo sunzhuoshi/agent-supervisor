@@ -107,7 +107,11 @@ namespace AgentSupervisor
                 OnExitClick,
                 OnOpenUrlClick,
                 RefreshTaskbarBadge,
-                ShowReviewRequestsForm);
+                ShowReviewRequestsForm
+#if ENABLE_CI_FEATURES
+                , TriggerImmediateCollection
+#endif
+                );
 
             var proxyUrl = _config.UseProxy ? _config.ProxyUrl : null;
             _gitHubService = new GitHubService(_config.PersonalAccessToken, proxyUrl, _reviewRequestService);
@@ -317,6 +321,48 @@ namespace AgentSupervisor
                 });
             }
         }
+
+#if ENABLE_CI_FEATURES
+        private async void TriggerImmediateCollection()
+        {
+            try
+            {
+                Logger.LogInfo("Immediate collection triggered from menu");
+                
+                if (_gitHubService == null)
+                {
+                    Logger.LogError("GitHub service not initialized");
+                    return;
+                }
+
+                _systemTrayManager?.UpdateStatus("Collecting data...");
+                
+                // Trigger the review collection immediately
+                var reviews = await _gitHubService.GetPendingReviewsAsync();
+                
+                // Update the UI
+                var unreadCount = _reviewRequestService!.GetNewCount();
+                if (_mainWindow != null && !_mainWindow.IsDisposed)
+                {
+                    _mainWindow.Invoke(() => 
+                    {
+                        _badgeManager!.UpdateBadgeCount(unreadCount);
+                        _mainWindow.RefreshIfVisible();
+                    });
+                }
+
+                var totalPendingCount = _reviewRequestService!.GetTotalCount();
+                _systemTrayManager?.UpdateStatus($"{totalPendingCount} pending review(s) - {unreadCount} unread");
+                
+                Logger.LogInfo($"Immediate collection completed: {totalPendingCount} total, {unreadCount} unread");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Error during immediate collection", ex);
+                _systemTrayManager?.UpdateStatus($"Error: {ex.Message}");
+            }
+        }
+#endif
 
         private void ShowReviewRequestsForm()
         {

@@ -41,7 +41,7 @@ jobs:
       run: dotnet restore
     
     - name: Build
-      run: dotnet build --no-restore --configuration Release /p:InformationalVersion="${{ steps.set_version.outputs.version }}" /p:FileVersion="${{ steps.set_version.outputs.version }}" /p:AssemblyVersion="${{ steps.set_version.outputs.version }}"
+      run: dotnet build --no-restore --configuration Release /p:DefineConstants="ENABLE_CI_FEATURES" /p:InformationalVersion="${{ steps.set_version.outputs.version }}" /p:FileVersion="${{ steps.set_version.outputs.version }}" /p:AssemblyVersion="${{ steps.set_version.outputs.version }}"
     
     - name: Check for vulnerabilities
       run: dotnet list package --vulnerable --include-transitive

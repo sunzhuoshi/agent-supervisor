@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Agent Supervisor application includes a special menu item that is only available in CI builds. This feature allows collecting all review request data and notification history at once for testing and analysis purposes.
+The Agent Supervisor application includes a special menu item that is only available in CI builds. This feature allows triggering an immediate collection of review requests from GitHub, bypassing the normal scheduled polling interval.
 
 ## How It Works
 
@@ -36,67 +36,13 @@ When the application is built with CI features enabled, a "Collect Data" menu it
 
 When the "Collect Data" menu item is clicked, the application:
 
-1. Collects all review request data
-2. Collects notification history (up to 1000 entries)
-3. Gathers environment information
-4. Calculates statistics
-5. Saves everything to a JSON file with a timestamp
+1. **Immediately triggers** a collection of review requests from GitHub
+2. Bypasses the normal scheduled polling interval
+3. Updates the review request list and notification history
+4. Refreshes the taskbar badge count
+5. Updates the system tray status
 
-### Output File
-
-The collected data is saved to a file named:
-```
-ci_data_collection_YYYYMMDD_HHmmss.json
-```
-
-Example: `ci_data_collection_20250115_131600.json`
-
-### Output Format
-
-The JSON file contains:
-
-```json
-{
-  "CollectedAt": "2025-01-15T13:16:00.000Z",
-  "Environment": {
-    "MachineName": "github-runner-1",
-    "OSVersion": "Microsoft Windows NT 10.0.17763.0",
-    "RuntimeVersion": "8.0.0"
-  },
-  "ReviewRequests": [
-    {
-      "Id": "user/repo#123",
-      "Repository": "user/repo",
-      "PullRequestNumber": 123,
-      "HtmlUrl": "https://github.com/user/repo/pull/123",
-      "Title": "Fix issue #456",
-      "Author": "contributor",
-      "CreatedAt": "2025-01-15T12:00:00.000Z",
-      "IsNew": true,
-      "AddedAt": "2025-01-15T12:05:00.000Z"
-    }
-  ],
-  "NotificationHistory": [
-    {
-      "Id": 987654321,
-      "Repository": "user/repo",
-      "PullRequestNumber": 123,
-      "HtmlUrl": "https://github.com/user/repo/pull/123",
-      "Reviewer": "reviewer-name",
-      "State": "approved",
-      "Body": "LGTM!",
-      "Timestamp": "2025-01-15T12:10:00.000Z",
-      "NotifiedAt": "2025-01-15T12:10:05.000Z"
-    }
-  ],
-  "Statistics": {
-    "TotalReviewRequests": 5,
-    "NewReviewRequests": 3,
-    "ReadReviewRequests": 2,
-    "TotalNotifications": 10
-  }
-}
-```
+This is useful for testing and debugging scenarios where you need to see the latest data immediately without waiting for the next scheduled poll.
 
 ## Building with CI Features
 
@@ -138,21 +84,20 @@ dotnet build --configuration Release
 
 This feature is useful for:
 
-1. **Automated Testing**: Collect data during CI runs to verify the application is working correctly
-2. **Data Analysis**: Analyze review patterns and notification behavior
-3. **Debugging**: Capture application state during CI builds for troubleshooting
-4. **Metrics**: Gather statistics about review requests and notifications over time
+1. **Immediate Data Refresh**: Force an immediate fetch of review requests without waiting for the scheduled polling interval
+2. **Testing**: Verify that the GitHub API integration is working correctly during CI builds
+3. **Debugging**: Quickly check for new review requests during development and testing
+4. **CI/CD Pipeline Testing**: Validate that the application can successfully connect to GitHub and fetch data
 
 ## Privacy & Security
 
-- The collected data includes only information already visible in the application
-- No sensitive credentials or tokens are included in the output
-- The JSON files are excluded from version control via `.gitignore`
-- Data is stored locally and not transmitted anywhere
+- No data is saved to files or transmitted externally
+- The feature simply triggers the existing GitHub API polling operation
+- No sensitive credentials or tokens are exposed
 - The feature is completely absent from release builds (compile-time removal)
 
 ## Limitations
 
 - The menu item is **only** visible in builds compiled with `ENABLE_CI_FEATURES` defined
 - For regular release builds, this feature is not available (by design)
-- The collected data reflects the state at the time of collection
+- Triggering collection requires an active network connection to GitHub

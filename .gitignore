@@ -109,9 +109,6 @@ config.json
 review_requests.json
 review_request_details.json
 
-# CI data collection files
-ci_data_collection_*.json
-
 # Log files
 *.log
 *.log.*.bak

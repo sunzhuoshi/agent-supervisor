@@ -17,6 +17,9 @@ namespace AgentSupervisor
         private readonly Action<string> _onOpenUrlClick;
         private readonly Action? _onRefreshBadge;
         private readonly Action _showReviewRequestsForm;
+#if ENABLE_CI_FEATURES
+        private readonly Action? _onTriggerCollection;
+#endif
         private Icon? _customIcon;
         private AboutForm? _aboutForm;
 
@@ -27,7 +30,11 @@ namespace AgentSupervisor
             Action onExitClick,
             Action<string> onOpenUrlClick,
             Action? onRefreshBadge,
-            Action showReviewRequestsForm)
+            Action showReviewRequestsForm
+#if ENABLE_CI_FEATURES
+            , Action? onTriggerCollection = null
+#endif
+            )
         {
             Logger.LogInfo("Initializing SystemTrayManager");
             
@@ -38,6 +45,9 @@ namespace AgentSupervisor
             _onOpenUrlClick = onOpenUrlClick;
             _onRefreshBadge = onRefreshBadge;
             _showReviewRequestsForm = showReviewRequestsForm;
+#if ENABLE_CI_FEATURES
+            _onTriggerCollection = onTriggerCollection;
+#endif
 
             // Create custom icon
             _customIcon = CreateCustomIcon();
@@ -194,63 +204,40 @@ namespace AgentSupervisor
 
 #if ENABLE_CI_FEATURES
         /// <summary>
-        /// Collects all review request data and saves it to a JSON file
+        /// Triggers immediate collection of review requests from GitHub
         /// This method is only available when ENABLE_CI_FEATURES is defined during compilation
         /// </summary>
         private void CollectData()
         {
             try
             {
-                Logger.LogInfo("Starting data collection (CI build)");
+                Logger.LogInfo("Triggering immediate data collection (CI build)");
 
-                var reviewRequests = _reviewRequestService.GetAll();
-                var notificationHistory = _notificationHistory.GetRecent(1000); // Get up to 1000 entries
-                
-                var collectedData = new
+                if (_onTriggerCollection != null)
                 {
-                    CollectedAt = DateTime.UtcNow,
-                    BuildConfiguration = "CI",
-                    Environment = new
-                    {
-                        MachineName = Environment.MachineName,
-                        OSVersion = Environment.OSVersion.ToString(),
-                        RuntimeVersion = Environment.Version.ToString()
-                    },
-                    ReviewRequests = reviewRequests,
-                    NotificationHistory = notificationHistory,
-                    Statistics = new
-                    {
-                        TotalReviewRequests = reviewRequests.Count,
-                        NewReviewRequests = reviewRequests.Count(r => r.IsNew),
-                        ReadReviewRequests = reviewRequests.Count(r => !r.IsNew),
-                        TotalNotifications = notificationHistory.Count
-                    }
-                };
-
-                var fileName = $"ci_data_collection_{DateTime.UtcNow:yyyyMMdd_HHmmss}.json";
-                var json = System.Text.Json.JsonSerializer.Serialize(collectedData, new System.Text.Json.JsonSerializerOptions
+                    _onTriggerCollection();
+                    MessageBox.Show(
+                        "Data collection triggered!\n\nThe application will now fetch the latest review requests from GitHub immediately.",
+                        "Collection Triggered",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
+                else
                 {
-                    WriteIndented = true
-                });
-
-                File.WriteAllText(fileName, json);
-
-                Logger.LogInfo($"Data collection completed: {fileName}");
-                
-                MessageBox.Show(
-                    $"Data collection completed successfully!\n\nFile saved: {fileName}\n\n" +
-                    $"Review Requests: {collectedData.Statistics.TotalReviewRequests} (New: {collectedData.Statistics.NewReviewRequests})\n" +
-                    $"Notifications: {collectedData.Statistics.TotalNotifications}",
-                    "Data Collection Complete",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
+                    Logger.LogWarning("Collection callback not configured");
+                    MessageBox.Show(
+                        "Data collection callback is not configured.",
+                        "Configuration Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                }
             }
             catch (Exception ex)
             {
-                Logger.LogError("Error during data collection", ex);
+                Logger.LogError("Error triggering data collection", ex);
                 MessageBox.Show(
-                    $"Error during data collection:\n\n{ex.Message}",
-                    "Data Collection Error",
+                    $"Error triggering data collection:\n\n{ex.Message}",
+                    "Collection Error",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
             }

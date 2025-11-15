@@ -216,11 +216,6 @@ namespace AgentSupervisor
                 if (_onTriggerCollection != null)
                 {
                     _onTriggerCollection();
-                    MessageBox.Show(
-                        "Data collection triggered!\n\nThe application will now fetch the latest review requests from GitHub immediately.",
-                        "Collection Triggered",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Information);
                 }
                 else
                 {

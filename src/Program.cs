@@ -55,6 +55,8 @@ namespace AgentSupervisor
         private Task? _monitoringTask;
         private MainWindow? _mainWindow;
         private TaskbarBadgeManager? _badgeManager;
+        private ReviewRequestsForm? _reviewRequestsForm;
+        private SettingsForm? _settingsForm;
 
         public BotApplicationContext()
         {
@@ -231,8 +233,18 @@ namespace AgentSupervisor
 
         private void OnSettingsClick()
         {
-            var settingsForm = new SettingsForm(_config!);
-            if (settingsForm.ShowDialog() == DialogResult.OK)
+            // If form exists and is not disposed, bring it to front
+            if (_settingsForm != null && !_settingsForm.IsDisposed)
+            {
+                _settingsForm.Activate();
+                _settingsForm.BringToFront();
+                return;
+            }
+
+            // Create new form instance
+            _settingsForm = new SettingsForm(_config!);
+            _settingsForm.FormClosed += (s, e) => _settingsForm = null;
+            if (_settingsForm.ShowDialog() == DialogResult.OK)
             {
                 // Restart monitoring with new settings
                 RestartMonitoring();
@@ -274,6 +286,8 @@ namespace AgentSupervisor
             _monitoringTask?.Wait(TimeSpan.FromSeconds(5));
             _systemTrayManager?.Dispose();
             _badgeManager?.Dispose();
+            _reviewRequestsForm?.Dispose();
+            _settingsForm?.Dispose();
             _mainWindow?.Dispose();
             Application.Exit();
         }

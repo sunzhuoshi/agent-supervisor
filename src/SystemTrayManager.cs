@@ -16,8 +16,8 @@ namespace AgentSupervisor
         private readonly Action _onExitClick;
         private readonly Action<string> _onOpenUrlClick;
         private readonly Action? _onRefreshBadge;
+        private readonly Action _showReviewRequestsForm;
         private Icon? _customIcon;
-        private ReviewRequestsForm? _reviewRequestsForm;
 
         public SystemTrayManager(
             NotificationHistory notificationHistory,
@@ -25,7 +25,8 @@ namespace AgentSupervisor
             Action onSettingsClick,
             Action onExitClick,
             Action<string> onOpenUrlClick,
-            Action? onRefreshBadge = null)
+            Action? onRefreshBadge,
+            Action showReviewRequestsForm)
         {
             Logger.LogInfo("Initializing SystemTrayManager");
             
@@ -35,6 +36,7 @@ namespace AgentSupervisor
             _onExitClick = onExitClick;
             _onOpenUrlClick = onOpenUrlClick;
             _onRefreshBadge = onRefreshBadge;
+            _showReviewRequestsForm = showReviewRequestsForm;
 
             // Create custom icon
             _customIcon = CreateCustomIcon();
@@ -56,7 +58,7 @@ namespace AgentSupervisor
                 Text = "Agent Supervisor"
             };
             icon.ContextMenuStrip = _contextMenu;
-            icon.DoubleClick += (s, e) => ShowReviewRequests();
+            icon.DoubleClick += (s, e) => _showReviewRequestsForm();
             
             // Ensure icon is shown (workaround for Windows 11 issues)
             icon.Visible = false;
@@ -72,7 +74,7 @@ namespace AgentSupervisor
             var menu = new ContextMenuStrip();
 
             var recentItem = new ToolStripMenuItem("Review Requests by Copilots");
-            recentItem.Click += (s, e) => ShowReviewRequests();
+            recentItem.Click += (s, e) => _showReviewRequestsForm();
             menu.Items.Add(recentItem);
 
             menu.Items.Add(new ToolStripSeparator());
@@ -108,29 +110,6 @@ namespace AgentSupervisor
             {
                 _onOpenUrlClick(tempUrl);
             };
-        }
-
-        private void ShowReviewRequests()
-        {
-            // If form exists, refresh and show it
-            if (_reviewRequestsForm != null && !_reviewRequestsForm.IsDisposed)
-            {
-                if (_reviewRequestsForm.WindowState == FormWindowState.Minimized)
-                {
-                    _reviewRequestsForm.WindowState = FormWindowState.Normal;
-                }
-                _reviewRequestsForm.RefreshAndShow();
-                return;
-            }
-
-            // Create new form instance
-            _reviewRequestsForm = new ReviewRequestsForm(
-                _reviewRequestService,
-                _onOpenUrlClick,
-                () => _reviewRequestService.MarkAllAsRead(),
-                _onRefreshBadge);
-            
-            _reviewRequestsForm.Show();
         }
 
         private void ShowAbout()
@@ -193,7 +172,6 @@ namespace AgentSupervisor
 
         public void Dispose()
         {
-            _reviewRequestsForm?.Dispose();
             _notifyIcon?.Dispose();
             _contextMenu?.Dispose();
             _customIcon?.Dispose();

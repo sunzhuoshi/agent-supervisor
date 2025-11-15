@@ -23,7 +23,7 @@ When the application is built with CI features enabled, additional menu items ap
 ┌─────────────────────────────────┐
 │ Review Requests by Copilots     │
 ├─────────────────────────────────┤
-│ Collect at Onc        ← CI only │
+│ Collect at Once       ← CI only │
 │ Pause Collection      ← CI only │  
 ├─────────────────────────────────┤
 │ Settings                        │
@@ -45,12 +45,12 @@ When the "Collect at Once" menu item is clicked, the application:
 
 This is useful for testing and debugging scenarios where you need to see the latest data immediately without waiting for the next scheduled poll.
 
-#### Pause Collect
+#### Pause Collection
 
-The "Pause Collect" menu item allows you to pause and resume the automatic data collection from GitHub:
+The "Pause Collection" menu item allows you to pause and resume the automatic data collection from GitHub:
 
 - **Default State**: Not paused (collection is active)
-- **Menu Text**: Displays "Pause Collect" when collection is active, "Resume Collect" when paused
+- **Menu Text**: Displays "Pause Collection" when collection is active, "Resume Collection" when paused
 - **Behavior When Paused**:
   - Scheduled polling continues to run but skips data collection from GitHub
   - Taskbar badge count still updates based on existing data
@@ -107,7 +107,7 @@ These CI features are useful for:
 2. **Testing**: Verify that the GitHub API integration is working correctly during CI builds
 3. **Debugging**: Quickly check for new review requests during development and testing
 4. **CI/CD Pipeline Testing**: Validate that the application can successfully connect to GitHub and fetch data
-5. **Pause/Resume Collection** (Pause Collect): Temporarily stop data collection without closing the application or changing polling interval settings
+5. **Pause/Resume Collection** (Pause Collection): Temporarily stop data collection without closing the application or changing polling interval settings
 6. **API Rate Limit Management**: Pause collection when approaching GitHub API rate limits during testing
 7. **Development Workflows**: Pause automatic collection while making code changes or debugging
 

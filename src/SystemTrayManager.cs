@@ -110,7 +110,7 @@ namespace AgentSupervisor
             
             menu.Items.Add(new ToolStripSeparator());
             
-            Logger.LogInfo("CI features enabled - 'Collect at Once' and 'Pause Collect' menu items added");
+            Logger.LogInfo("CI features enabled - 'Collect at Once' and 'Pause Collection' menu items added");
 #endif
 
             var settingsItem = new ToolStripMenuItem("Settings");
@@ -296,11 +296,11 @@ namespace AgentSupervisor
         }
 
         /// <summary>
-        /// Gets the menu text for the pause collect menu item based on current state
+        /// Gets the menu text for the pause collection menu item based on current state
         /// </summary>
         private string GetPauseMenuText()
         {
-            return _config.PauseCollect ? "Resume Collect" : "Pause Collect";
+            return _config.PauseCollect ? "Resume Collection" : "Pause Collection";
         }
 #endif
 

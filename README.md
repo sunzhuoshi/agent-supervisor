@@ -93,7 +93,7 @@ Configuration is stored in the Windows Registry under `HKEY_CURRENT_USER\Softwar
 | Enable Desktop Notifications | EnableDesktopNotifications | 1 (enabled) |
 | Proxy URL | ProxyUrl | (empty) |
 | Use Proxy | UseProxy | 0 (disabled) |
-| Pause Collect (CI builds only) | PauseCollect | 0 (disabled) |
+| Pause Collection (CI builds only) | PauseCollect | 0 (disabled) |
 
 You can configure settings using the Settings UI (right-click tray icon → Settings).
 

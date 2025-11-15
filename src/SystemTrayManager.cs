@@ -80,6 +80,18 @@ namespace AgentSupervisor
 
             menu.Items.Add(new ToolStripSeparator());
 
+            // Add CI-only menu item for data collection
+            if (IsRunningInCI())
+            {
+                var collectDataItem = new ToolStripMenuItem("Collect Data");
+                collectDataItem.Click += (s, e) => CollectData();
+                menu.Items.Add(collectDataItem);
+                
+                menu.Items.Add(new ToolStripSeparator());
+                
+                Logger.LogInfo("CI environment detected - 'Collect Data' menu item added");
+            }
+
             var settingsItem = new ToolStripMenuItem("Settings");
             settingsItem.Click += (s, e) => _onSettingsClick();
             menu.Items.Add(settingsItem);
@@ -178,6 +190,99 @@ namespace AgentSupervisor
             {
                 Logger.LogError("Failed to create custom icon, using default", ex);
                 return SystemIcons.Information;
+            }
+        }
+
+        /// <summary>
+        /// Detects if the application is running in a CI environment
+        /// </summary>
+        private bool IsRunningInCI()
+        {
+            // Check common CI environment variables
+            var ciEnvVars = new[]
+            {
+                "CI",                    // Generic CI indicator
+                "GITHUB_ACTIONS",        // GitHub Actions
+                "JENKINS_HOME",          // Jenkins
+                "TRAVIS",                // Travis CI
+                "CIRCLECI",              // Circle CI
+                "GITLAB_CI",             // GitLab CI
+                "BUILDKITE",             // Buildkite
+                "TEAMCITY_VERSION",      // TeamCity
+                "TF_BUILD"               // Azure Pipelines
+            };
+
+            foreach (var envVar in ciEnvVars)
+            {
+                var value = Environment.GetEnvironmentVariable(envVar);
+                if (!string.IsNullOrEmpty(value))
+                {
+                    Logger.LogInfo($"CI environment detected: {envVar}={value}");
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Collects all review request data and saves it to a JSON file
+        /// </summary>
+        private void CollectData()
+        {
+            try
+            {
+                Logger.LogInfo("Starting data collection (CI mode)");
+
+                var reviewRequests = _reviewRequestService.GetAll();
+                var notificationHistory = _notificationHistory.GetRecent(1000); // Get up to 1000 entries
+                
+                var collectedData = new
+                {
+                    CollectedAt = DateTime.UtcNow,
+                    Environment = new
+                    {
+                        MachineName = Environment.MachineName,
+                        OSVersion = Environment.OSVersion.ToString(),
+                        RuntimeVersion = Environment.Version.ToString()
+                    },
+                    ReviewRequests = reviewRequests,
+                    NotificationHistory = notificationHistory,
+                    Statistics = new
+                    {
+                        TotalReviewRequests = reviewRequests.Count,
+                        NewReviewRequests = reviewRequests.Count(r => r.IsNew),
+                        ReadReviewRequests = reviewRequests.Count(r => !r.IsNew),
+                        TotalNotifications = notificationHistory.Count
+                    }
+                };
+
+                var fileName = $"ci_data_collection_{DateTime.UtcNow:yyyyMMdd_HHmmss}.json";
+                var json = System.Text.Json.JsonSerializer.Serialize(collectedData, new System.Text.Json.JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+
+                File.WriteAllText(fileName, json);
+
+                Logger.LogInfo($"Data collection completed: {fileName}");
+                
+                MessageBox.Show(
+                    $"Data collection completed successfully!\n\nFile saved: {fileName}\n\n" +
+                    $"Review Requests: {collectedData.Statistics.TotalReviewRequests} (New: {collectedData.Statistics.NewReviewRequests})\n" +
+                    $"Notifications: {collectedData.Statistics.TotalNotifications}",
+                    "Data Collection Complete",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Error during data collection", ex);
+                MessageBox.Show(
+                    $"Error during data collection:\n\n{ex.Message}",
+                    "Data Collection Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
             }
         }
 

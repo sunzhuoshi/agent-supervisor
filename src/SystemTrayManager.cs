@@ -18,6 +18,7 @@ namespace AgentSupervisor
         private readonly Action? _onRefreshBadge;
         private readonly Action _showReviewRequestsForm;
         private Icon? _customIcon;
+        private AboutForm? _aboutForm;
 
         public SystemTrayManager(
             NotificationHistory notificationHistory,
@@ -114,8 +115,18 @@ namespace AgentSupervisor
 
         private void ShowAbout()
         {
-            var aboutForm = new AboutForm();
-            aboutForm.ShowDialog();
+            // If form exists and is not disposed, bring it to front
+            if (_aboutForm != null && !_aboutForm.IsDisposed)
+            {
+                _aboutForm.Activate();
+                _aboutForm.BringToFront();
+                return;
+            }
+
+            // Create new form instance
+            _aboutForm = new AboutForm();
+            _aboutForm.FormClosed += (s, e) => _aboutForm = null;
+            _aboutForm.ShowDialog();
         }
 
         public void UpdateStatus(string status)
@@ -172,6 +183,7 @@ namespace AgentSupervisor
 
         public void Dispose()
         {
+            _aboutForm?.Dispose();
             _notifyIcon?.Dispose();
             _contextMenu?.Dispose();
             _customIcon?.Dispose();

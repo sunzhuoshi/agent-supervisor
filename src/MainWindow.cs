@@ -157,44 +157,12 @@ namespace AgentSupervisor
 
         private void RefreshChangedItems()
         {
-            // Get current requests from the service
-            var currentRequests = _reviewRequestService.GetAll();
-            var currentRequestsDict = currentRequests.ToDictionary(r => r.Id);
-            
-            // Track which items need to be refreshed
-            var itemsToRefresh = new List<int>();
-            
-            // Check each item in the list box
-            for (int i = 0; i < _listBox.Items.Count; i++)
-            {
-                if (_listBox.Items[i] is ReviewRequestEntry listItem)
-                {
-                    // If the item exists in the current requests
-                    if (currentRequestsDict.TryGetValue(listItem.Id, out var currentItem))
-                    {
-                        // Check if IsNew status changed
-                        if (listItem.IsNew != currentItem.IsNew)
-                        {
-                            // Update the item in place
-                            _listBox.Items[i] = currentItem;
-                            itemsToRefresh.Add(i);
-                        }
-                    }
-                }
-            }
-            
-            // If there are items to refresh, invalidate only those items
-            if (itemsToRefresh.Count > 0)
-            {
-                foreach (var index in itemsToRefresh)
-                {
-                    // Invalidate the specific item region
-                    _listBox.Invalidate(_listBox.GetItemRectangle(index));
-                }
-                // Force immediate redraw of invalidated regions
-                _listBox.Update();
-                UpdateStatus();
-            }
+            // Invalidate the entire listbox to refresh all items
+            // This ensures that items marked as read are refreshed immediately
+            // Note: We don't clear and reload items, just force a repaint
+            _listBox.Invalidate();
+            _listBox.Update();
+            UpdateStatus();
         }
 
         private void OnFormClosing(object? sender, FormClosingEventArgs e)

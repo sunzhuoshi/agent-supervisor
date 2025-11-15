@@ -88,18 +88,7 @@ namespace AgentSupervisor
             _notificationHistory = new NotificationHistory(_config.MaxHistoryEntries);
             
             // Initialize ReviewRequestService with badge update callback (will be set after MainWindow creation)
-            _reviewRequestService = new ReviewRequestService(() => 
-            {
-                var unreadCount = _reviewRequestService?.GetNewCount() ?? 0;
-                if (_mainWindow != null && !_mainWindow.IsDisposed)
-                {
-                    _mainWindow.Invoke(() => 
-                    {
-                        _badgeManager?.UpdateBadgeCount(unreadCount);
-                        _mainWindow.RefreshIfVisible();
-                    });
-                }
-            });
+            _reviewRequestService = new ReviewRequestService(UpdateBadgeAndRefreshIfVisible);
             
             // Create main window with review requests functionality
             _mainWindow = new MainWindow(
@@ -258,18 +247,7 @@ namespace AgentSupervisor
 
             var proxyUrl = _config!.UseProxy ? _config.ProxyUrl : null;
             _notificationHistory = new NotificationHistory(_config.MaxHistoryEntries);
-            _reviewRequestService = new ReviewRequestService(() => 
-            {
-                var unreadCount = _reviewRequestService?.GetNewCount() ?? 0;
-                if (_mainWindow != null && !_mainWindow.IsDisposed)
-                {
-                    _mainWindow.Invoke(() => 
-                    {
-                        _badgeManager?.UpdateBadgeCount(unreadCount);
-                        _mainWindow.RefreshIfVisible();
-                    });
-                }
-            });
+            _reviewRequestService = new ReviewRequestService(UpdateBadgeAndRefreshIfVisible);
             _gitHubService = new GitHubService(_config!.PersonalAccessToken, proxyUrl, _reviewRequestService);
 
             _cts = new CancellationTokenSource();
@@ -285,7 +263,6 @@ namespace AgentSupervisor
             _monitoringTask?.Wait(TimeSpan.FromSeconds(5));
             _systemTrayManager?.Dispose();
             _badgeManager?.Dispose();
-            _reviewRequestsForm?.Dispose();
             _settingsForm?.Dispose();
             _mainWindow?.Dispose();
             Application.Exit();
@@ -328,6 +305,19 @@ namespace AgentSupervisor
             catch (Exception ex)
             {
                 Logger.LogError("Error refreshing taskbar badge", ex);
+            }
+        }
+
+        private void UpdateBadgeAndRefreshIfVisible()
+        {
+            var unreadCount = _reviewRequestService?.GetNewCount() ?? 0;
+            if (_mainWindow != null && !_mainWindow.IsDisposed)
+            {
+                _mainWindow.Invoke(() => 
+                {
+                    _badgeManager?.UpdateBadgeCount(unreadCount);
+                    _mainWindow.RefreshIfVisible();
+                });
             }
         }
 

@@ -191,7 +191,6 @@ namespace AgentSupervisor
             var newCount = _reviewRequestService.GetNewCount();
             var totalCount = _listBox.Items.Count;
 
-            _onRefreshBadge?.Invoke();
             if (totalCount == 0)
             {
                 _statusLabel.Text = "No review requests";
@@ -277,9 +276,6 @@ namespace AgentSupervisor
                 
                 // Refresh the display
                 LoadRequests();
-                
-                // Refresh taskbar badge
-                _onRefreshBadge?.Invoke();
             }
         }
 
@@ -287,9 +283,6 @@ namespace AgentSupervisor
         {
             _onMarkAllAsRead();
             LoadRequests();
-            
-            // Refresh taskbar badge
-            _onRefreshBadge?.Invoke();
         }
 
         private void ContextMenu_Open_Click(object? sender, EventArgs e)
@@ -304,9 +297,6 @@ namespace AgentSupervisor
                 
                 // Refresh the display
                 LoadRequests();
-                
-                // Refresh taskbar badge
-                _onRefreshBadge?.Invoke();
             }
         }
 
@@ -335,9 +325,6 @@ namespace AgentSupervisor
                 {
                     _listBox.SelectedIndex = selectedIndex;
                 }
-                
-                // Refresh taskbar badge
-                _onRefreshBadge?.Invoke();
             }
         }
     }

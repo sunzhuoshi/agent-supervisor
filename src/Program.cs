@@ -313,7 +313,7 @@ namespace AgentSupervisor
             var unreadCount = _reviewRequestService?.GetNewCount() ?? 0;
             if (_mainWindow != null && !_mainWindow.IsDisposed)
             {
-                _mainWindow.Invoke(() => 
+                _mainWindow.BeginInvoke(() => 
                 {
                     _badgeManager?.UpdateBadgeCount(unreadCount);
                     _mainWindow.RefreshIfVisible();

@@ -92,13 +92,13 @@ namespace AgentSupervisor
 
 #if ENABLE_CI_FEATURES
             // CI-only menu item for data collection
-            var collectDataItem = new ToolStripMenuItem("Collect Data");
+            var collectDataItem = new ToolStripMenuItem("Collect at Once");
             collectDataItem.Click += (s, e) => CollectData();
             menu.Items.Add(collectDataItem);
             
             menu.Items.Add(new ToolStripSeparator());
             
-            Logger.LogInfo("CI features enabled - 'Collect Data' menu item added");
+            Logger.LogInfo("CI features enabled - 'Collect at Once' menu item added");
 #endif
 
             var settingsItem = new ToolStripMenuItem("Settings");

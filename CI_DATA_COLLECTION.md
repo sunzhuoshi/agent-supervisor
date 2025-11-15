@@ -17,13 +17,13 @@ This approach ensures that production/release builds never include the CI-specif
 
 ### Menu Item
 
-When the application is built with CI features enabled, a "Collect Data" menu item appears in the system tray context menu:
+When the application is built with CI features enabled, a "Collect at Once" menu item appears in the system tray context menu:
 
 ```
 ┌─────────────────────────────────┐
 │ Review Requests by Copilots     │
 ├─────────────────────────────────┤
-│ Collect Data          ← CI only │  
+│ Collect at Once       ← CI only │  
 ├─────────────────────────────────┤
 │ Settings                        │
 │ About                           │
@@ -34,7 +34,7 @@ When the application is built with CI features enabled, a "Collect Data" menu it
 
 ### Data Collection
 
-When the "Collect Data" menu item is clicked, the application:
+When the "Collect at Once" menu item is clicked, the application:
 
 1. **Immediately triggers** a collection of review requests from GitHub
 2. Bypasses the normal scheduled polling interval
@@ -55,7 +55,7 @@ The CI build workflow (`.github/workflows/build.yml`) automatically enables CI f
   run: dotnet build --no-restore --configuration Release /p:DefineConstants="ENABLE_CI_FEATURES" ...
 ```
 
-Builds from the CI workflow will include the "Collect Data" menu item.
+Builds from the CI workflow will include the "Collect at Once" menu item.
 
 ### Local Testing
 

@@ -15,6 +15,7 @@ namespace AgentSupervisor
         private Button _markAllReadButton = null!;
         private Label _statusLabel = null!;
         private ContextMenuStrip _contextMenu = null!;
+        private int _listBoxTopIndex = 0;
 
         public ReviewRequestsForm(
             ReviewRequestService reviewRequestService,
@@ -111,11 +112,17 @@ namespace AgentSupervisor
                 Height = 30,
                 DialogResult = DialogResult.OK
             };
+            closeButton.Click += CloseButton_Click;
             buttonPanel.Controls.Add(closeButton);
 
             Controls.Add(buttonPanel);
 
             AcceptButton = closeButton;
+        }
+
+        private void CloseButton_Click(object? sender, EventArgs e)
+        {
+            Close();
         }
 
         private void LoadRequests()
@@ -133,6 +140,7 @@ namespace AgentSupervisor
 
         private void OnFormClosing(object? sender, FormClosingEventArgs e)
         {
+            _listBoxTopIndex = _listBox.TopIndex;
             // Cancel the close and hide the form instead
             e.Cancel = true;
             Hide();
@@ -142,6 +150,7 @@ namespace AgentSupervisor
         {
             LoadRequests();
             Show();
+            _listBox.TopIndex = _listBoxTopIndex;
             BringToFront();
             Activate();
         }

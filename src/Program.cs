@@ -55,7 +55,6 @@ namespace AgentSupervisor
         private Task? _monitoringTask;
         private MainWindow? _mainWindow;
         private TaskbarBadgeManager? _badgeManager;
-        private ReviewRequestsForm? _reviewRequestsForm;
         private SettingsForm? _settingsForm;
 
         public BotApplicationContext()

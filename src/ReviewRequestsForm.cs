@@ -15,7 +15,6 @@ namespace AgentSupervisor
         private Button _markAllReadButton = null!;
         private Label _statusLabel = null!;
         private ContextMenuStrip _contextMenu = null!;
-        private int _listBoxTopIndex = 0;
 
         public ReviewRequestsForm(
             ReviewRequestService reviewRequestService,
@@ -127,6 +126,8 @@ namespace AgentSupervisor
 
         private void LoadRequests()
         {
+            var oldTopIndex = _listBox.TopIndex;
+
             _listBox.Items.Clear();
             var requests = _reviewRequestService.GetAll();
             
@@ -135,13 +136,12 @@ namespace AgentSupervisor
                 _listBox.Items.Add(request);
             }
 
-            _listBox.TopIndex = _listBoxTopIndex;
+            _listBox.TopIndex = oldTopIndex<_listBox.Items.Count ? oldTopIndex : 0;
             UpdateStatus();
         }
 
         private void OnFormClosing(object? sender, FormClosingEventArgs e)
         {
-            _listBoxTopIndex = _listBox.TopIndex;
             // Cancel the close and hide the form instead
             e.Cancel = true;
             Hide();

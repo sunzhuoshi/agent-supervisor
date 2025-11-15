@@ -149,7 +149,7 @@ namespace AgentSupervisor
                 {
 #if ENABLE_CI_FEATURES
                     // Check if collection is paused (CI builds only)
-                    if (_config!.PauseCollection)
+                    if (_config.PauseCollection)
                     {
                         var currentUnreadCount = _reviewRequestService!.GetNewCount();
                         var currentTotalCount = _reviewRequestService!.GetTotalCount();
@@ -167,7 +167,7 @@ namespace AgentSupervisor
                         }
                         
                         // Skip to the delay without collecting data
-                        await Task.Delay(TimeSpan.FromSeconds(_config!.PollingIntervalSeconds), cancellationToken);
+                        await Task.Delay(TimeSpan.FromSeconds(_config.PollingIntervalSeconds), cancellationToken);
                         continue;
                     }
 #endif
@@ -180,7 +180,7 @@ namespace AgentSupervisor
                         if (!_notificationHistory!.HasBeenNotified(review.Id))
                         {
                             // Show desktop notification only if enabled in settings
-                            if (_config!.EnableDesktopNotifications)
+                            if (_config.EnableDesktopNotifications)
                             {
                                 _systemTrayManager!.ShowNotification(review);
                             }
@@ -201,7 +201,7 @@ namespace AgentSupervisor
                             _notificationHistory.Add(entry);
                             newReviewCount++;
                             
-                            if (_config!.EnableDesktopNotifications)
+                            if (_config.EnableDesktopNotifications)
                             {
                                 Logger.LogInfo($"Desktop notification shown for review: {entry.Repository} PR#{entry.PullRequestNumber}");
                             }
@@ -234,7 +234,7 @@ namespace AgentSupervisor
 
                 try
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(_config!.PollingIntervalSeconds), cancellationToken);
+                    await Task.Delay(TimeSpan.FromSeconds(_config.PollingIntervalSeconds), cancellationToken);
                 }
                 catch (TaskCanceledException)
                 {

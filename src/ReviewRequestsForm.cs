@@ -31,8 +31,8 @@ namespace AgentSupervisor
             InitializeComponent();
             LoadRequests();
             
-            // Hook FormClosing event to save scroll position
-            FormClosing += (s, e) => SaveScrollPosition();
+            // Override FormClosing to hide instead of close
+            FormClosing += OnFormClosing;
         }
 
         private void InitializeComponent()
@@ -147,6 +147,24 @@ namespace AgentSupervisor
             {
                 _listBox.TopIndex = _savedScrollPosition;
             }
+        }
+
+        private void OnFormClosing(object? sender, FormClosingEventArgs e)
+        {
+            // Save scroll position before hiding
+            SaveScrollPosition();
+            
+            // Cancel the close and hide the form instead
+            e.Cancel = true;
+            Hide();
+        }
+
+        public void RefreshAndShow()
+        {
+            LoadRequests();
+            Show();
+            BringToFront();
+            Activate();
         }
 
         private void UpdateStatus()

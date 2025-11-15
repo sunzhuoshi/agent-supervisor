@@ -112,15 +112,14 @@ namespace AgentSupervisor
 
         private void ShowReviewRequests()
         {
-            // If form is already open, bring it to front
+            // If form exists, refresh and show it
             if (_reviewRequestsForm != null && !_reviewRequestsForm.IsDisposed)
             {
                 if (_reviewRequestsForm.WindowState == FormWindowState.Minimized)
                 {
                     _reviewRequestsForm.WindowState = FormWindowState.Normal;
                 }
-                _reviewRequestsForm.BringToFront();
-                _reviewRequestsForm.Activate();
+                _reviewRequestsForm.RefreshAndShow();
                 return;
             }
 
@@ -131,10 +130,7 @@ namespace AgentSupervisor
                 () => _reviewRequestService.MarkAllAsRead(),
                 _onRefreshBadge);
             
-            // Clean up reference when form is closed
-            _reviewRequestsForm.FormClosed += (s, e) => _reviewRequestsForm = null;
-            
-            _reviewRequestsForm.ShowDialog();
+            _reviewRequestsForm.Show();
         }
 
         private void ShowAbout()

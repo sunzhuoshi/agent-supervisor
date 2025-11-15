@@ -50,6 +50,9 @@ namespace AgentSupervisor
             
             // Refresh list when form is activated/restored
             Activated += OnFormActivated;
+
+            // Refresh list when form is resized
+            Resize += OnForm_Resize;
             
             // Start minimized
             WindowState = FormWindowState.Minimized;
@@ -137,6 +140,12 @@ namespace AgentSupervisor
             {
                 LoadRequests();
             }
+        }
+
+        private void OnForm_Resize(object? sender, EventArgs e)
+        {
+            // Refresh the listbox to properly redraw NEW badges at correct positions
+            _listBox.Refresh();
         }
 
         private void LoadRequests()

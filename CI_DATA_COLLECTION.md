@@ -23,8 +23,8 @@ When the application is built with CI features enabled, additional menu items ap
 ┌─────────────────────────────────┐
 │ Review Requests by Copilots     │
 ├─────────────────────────────────┤
-│ Collect Data          ← CI only │
-│ Pause Collect         ← CI only │  
+│ Collect at Onc        ← CI only │
+│ Pause Collection      ← CI only │  
 ├─────────────────────────────────┤
 │ Settings                        │
 │ About                           │
@@ -35,7 +35,7 @@ When the application is built with CI features enabled, additional menu items ap
 
 #### Collect Data
 
-When the "Collect Data" menu item is clicked, the application:
+When the "Collect at Once" menu item is clicked, the application:
 
 1. **Immediately triggers** a collection of review requests from GitHub
 2. Bypasses the normal scheduled polling interval
@@ -74,7 +74,7 @@ The CI build workflow (`.github/workflows/build.yml`) automatically enables CI f
   run: dotnet build --no-restore --configuration Release /p:DefineConstants="ENABLE_CI_FEATURES" ...
 ```
 
-Builds from the CI workflow will include the "Collect Data" menu item.
+Builds from the CI workflow will include the "Collect at Once" menu item.
 
 ### Local Testing
 

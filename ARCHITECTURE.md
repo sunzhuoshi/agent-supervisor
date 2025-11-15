@@ -2,7 +2,7 @@
 
 ## Overview
 
-Agent Supervisor is a Windows console application written in C# that monitors GitHub pull request reviews and provides desktop notifications without interfering with Windows system notifications.
+Agent Supervisor is a Windows system tray application written in C# using Windows Forms that monitors GitHub pull request reviews and provides desktop notifications. The application runs in the background with a taskbar presence and system tray icon.
 
 ## System Architecture
 
@@ -11,38 +11,48 @@ Agent Supervisor is a Windows console application written in C# that monitors Gi
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │                         Program.cs                            │
-│                    (Main Entry Point)                        │
+│                  (BotApplicationContext)                     │
 │  - Initializes services                                      │
 │  - Manages application lifecycle                             │
-│  - Handles user input (H, O, R, Q commands)                 │
+│  - Coordinates monitoring loop                               │
 └─────────────┬────────────────────────────────────────────────┘
               │
               ├──────────────────────────────────────────────┐
               │                                              │
+              │                                              │
     ┌─────────▼─────────┐                        ┌──────────▼─────────┐
     │  Configuration.cs │                        │  GitHubService.cs  │
     │                   │                        │                    │
-    │ - Load/Save JSON  │                        │ - GitHub API calls │
+    │ - Registry storage│                        │ - GitHub API calls │
     │ - PAT management  │                        │ - Review polling   │
     │ - Settings        │                        │ - Authentication   │
     └───────────────────┘                        └──────────┬─────────┘
                                                             │
-                                                            │
-                                         ┌──────────────────▼──────────────────┐
-                                         │    NotificationService.cs           │
-                                         │                                     │
-                                         │ - Display notifications in console  │
-                                         │ - Browser integration               │
-                                         │ - History display                   │
-                                         └──────────┬──────────────────────────┘
-                                                    │
-                                         ┌──────────▼──────────┐
-                                         │ NotificationHistory │
-                                         │                     │
-                                         │ - Persistent storage│
-                                         │ - Deduplication     │
-                                         │ - JSON file I/O     │
-                                         └─────────────────────┘
+              ┌──────────────────────────────────────────┬──┴──────┐
+              │                                          │         │
+   ┌──────────▼──────────┐              ┌───────────────▼────┐   │
+   │  MainWindow.cs      │              │ SystemTrayManager  │   │
+   │                     │              │                    │   │
+   │ - Taskbar presence  │              │ - Tray icon        │   │
+   │ - Review list UI    │              │ - Balloon tips     │   │
+   │ - Badge overlay     │              │ - Context menu     │   │
+   └─────────┬───────────┘              └─────────┬──────────┘   │
+             │                                    │               │
+   ┌─────────▼───────────┐              ┌────────▼──────────┐    │
+   │ TaskbarBadgeManager │              │ NotificationHistory│    │
+   │                     │              │                    │    │
+   │ - Badge overlay     │              │ - Persistent store │    │
+   │ - Count display     │              │ - Deduplication    │    │
+   └─────────────────────┘              │ - JSON file I/O    │    │
+                                        └────────────────────┘    │
+                                                                  │
+                                        ┌─────────────────────────▼──┐
+                                        │ ReviewRequestService       │
+                                        │                            │
+                                        │ - Track review requests    │
+                                        │ - New/read status          │
+                                        │ - Persistent storage       │
+                                        └────────────────────────────┘
 ```
 
 ### Data Models
@@ -61,46 +71,86 @@ Agent Supervisor is a Windows console application written in C# that monitors Gi
 │ - PullRequestNumber │         │ - Timestamp         │
 └─────────────────────┘         │ - NotifiedAt        │
                                 └─────────────────────┘
+
+┌─────────────────────┐
+│ ReviewRequestEntry  │
+├─────────────────────┤
+│ - Id                │
+│ - Repository        │
+│ - PullRequestNumber │
+│ - HtmlUrl           │
+│ - Title             │
+│ - Author            │
+│ - CreatedAt         │
+│ - IsNew (bool)      │
+└─────────────────────┘
 ```
 
 ## Key Components
 
-### 1. Program.cs
-**Responsibility**: Application entry point and orchestration
-- Initializes all services
-- Manages the monitoring loop
-- Handles user input for interactive commands
-- Coordinates between services
+### 1. Program.cs & BotApplicationContext
+**Responsibility**: Application entry point and lifecycle management
+- Single instance enforcement via mutex
+- Initializes all services in proper order
+- Manages the background monitoring loop
+- Coordinates between all components
+- Handles application shutdown
 
-### 2. GitHubService.cs
+### 2. MainWindow.cs
+**Responsibility**: Windows Forms window with taskbar presence
+- Hidden window that provides taskbar presence
+- Displays list of review requests
+- Shows new/read status for each request
+- Supports double-click to open PRs in browser
+- Integrates with TaskbarBadgeManager for badge overlay
+
+### 3. TaskbarBadgeManager.cs
+**Responsibility**: Taskbar badge overlay management
+- Creates and updates taskbar badge overlay
+- Displays count of unread review requests
+- Uses Windows API for badge rendering
+
+### 4. SystemTrayManager.cs
+**Responsibility**: System tray icon and notifications
+- Creates system tray icon
+- Displays balloon tip notifications
+- Provides context menu (Settings, About, Exit)
+- Opens review request list on double-click
+- Updates tray icon tooltip with status
+
+### 5. GitHubService.cs
 **Responsibility**: GitHub API integration
 - Authenticates using Personal Access Token
 - Polls GitHub for PRs where user is requested as reviewer
-- Fetches review data from GitHub REST API
-- Tracks seen reviews to avoid duplicate notifications
+- Fetches PR details via GitHub REST API
+- Updates ReviewRequestService with current PRs
+- Tracks new review requests for notifications
 
 **Key Methods**:
 - `GetCurrentUserAsync()`: Retrieves authenticated user information
-- `GetPendingReviewsAsync()`: Fetches all pending reviews for the user
+- `GetPendingReviewsAsync()`: Fetches all pending review requests
 
-### 3. NotificationService.cs
-**Responsibility**: Notification display and management
-- Displays formatted console notifications with colors
-- Plays audio beeps (Windows-specific)
-- Opens PRs in browser
-- Shows notification history
+### 6. ReviewRequestService.cs
+**Responsibility**: Review request tracking and persistence
+- Maintains list of review requests with new/read status
+- Persists state to JSON file
+- Provides counts of total and new requests
+- Notifies observers when review data changes
+- Removes stale review requests
 
 **Key Methods**:
-- `ShowNotification()`: Displays a new review notification
-- `DisplayConsoleNotification()`: Formats and prints notification
-- `OpenInBrowser()`: Opens URL in default browser
-- `DisplayHistory()`: Shows recent notifications
+- `AddOrUpdate()`: Updates or adds review request
+- `MarkAsRead()`: Marks a request as read
+- `MarkAllAsRead()`: Marks all requests as read
+- `GetNewCount()`: Returns count of unread requests
+- `GetTotalCount()`: Returns total request count
+- `RemoveStaleRequests()`: Removes closed/completed PRs
 
-### 4. NotificationHistory.cs
+### 7. NotificationHistory.cs
 **Responsibility**: Persistent notification storage
-- Maintains JSON file of all notifications
+- Maintains JSON file of all notifications shown
 - Prevents duplicate notifications
-- Thread-safe operations
+- Thread-safe operations with locking
 - Automatic size management (keeps last N entries)
 
 **Key Methods**:
@@ -108,128 +158,197 @@ Agent Supervisor is a Windows console application written in C# that monitors Gi
 - `Add()`: Adds new notification and persists to disk
 - `GetRecent()`: Retrieves N most recent notifications
 
-### 5. Configuration.cs
-**Responsibility**: Application configuration
-- Loads/saves configuration from/to JSON
-- Interactive first-time setup
+### 8. ReviewRequestHistory.cs
+**Responsibility**: Simple ID tracking for seen review requests
+- Tracks which review requests have been seen before
+- Helps identify new review requests
+- Persists to review_requests.json
+
+### 9. Configuration.cs
+**Responsibility**: Application configuration via Windows Registry
+- Loads/saves configuration from/to Windows Registry
+- Interactive settings UI integration
 - Default values management
 
 **Configuration Fields**:
 - `PersonalAccessToken`: GitHub PAT for API access
-- `PollingIntervalSeconds`: How often to check for reviews (default: 60)
-- `MaxHistoryEntries`: Maximum notifications to keep (default: 100)
+- `PollingIntervalSeconds`: Check interval (default: 60)
+- `MaxHistoryEntries`: Max notifications to keep (default: 100)
+- `EnableDesktopNotifications`: Enable/disable balloon tips
+- `ProxyUrl` / `UseProxy`: Proxy configuration
+
+### 10. SettingsForm.cs
+**Responsibility**: Settings UI dialog
+- Provides GUI for configuration
+- Validates settings before saving
+- Saves to Windows Registry via Configuration
+
+### 11. AboutForm.cs
+**Responsibility**: About dialog
+- Displays application information
+- Shows version number
+- Application description and credits
+
+### 12. Logger.cs
+**Responsibility**: Application logging
+- Writes to log file (AgentSupervisor.log)
+- Automatic log rotation when size exceeds limit
+- Keeps last 5 backup files
+- Thread-safe logging operations
 
 ## Data Flow
 
 1. **Initialization**:
    ```
-   Program → Load Configuration → Initialize Services → Connect to GitHub
+   Program → Check Single Instance → Load Configuration from Registry → 
+   Show Settings if No Token → Initialize Services → Connect to GitHub →
+   Create MainWindow & SystemTrayManager → Start Background Monitoring
    ```
 
 2. **Monitoring Loop** (repeats every N seconds):
    ```
-   GitHubService → Fetch PRs → Fetch Reviews → Filter New Reviews →
-   NotificationService → Check History → Display Notification → Save to History
+   GitHubService → Fetch PRs via GitHub API → Update ReviewRequestService →
+   Check NotificationHistory → Show Balloon Tip for New Reviews →
+   Save to NotificationHistory → Update Taskbar Badge Count
    ```
 
-3. **User Interaction**:
+3. **User Interactions**:
    ```
-   User Input → Program → Execute Command:
-     H → Display History
-     O → Open Last PR
-     R → Force Refresh
-     Q → Exit
+   Double-click Tray Icon → Show MainWindow with Review List
+   Double-click Review → Mark as Read → Open in Browser
+   Click Balloon Tip → Open PR in Browser
+   Right-click Tray Icon → Context Menu:
+     - Review Requests by Copilots → Show MainWindow
+     - Settings → Show SettingsForm
+     - About → Show AboutForm
+     - Exit → Shutdown Application
    ```
 
 ## File System
 
 ### Generated Files
-- `config.json`: User configuration (PAT, settings) - **Sensitive, excluded from git**
 - `notification_history.json`: Notification history - **Excluded from git**
+- `review_request_details.json`: Review requests with new/read status - **Excluded from git**
+- `review_requests.json`: Simple ID tracking of seen requests - **Excluded from git**
+- `AgentSupervisor.log`: Application log file with rotation - **Excluded from git**
+
+### Configuration
+- Configuration stored in Windows Registry under `HKEY_CURRENT_USER\Software\AgentSupervisor`
 
 ### Source Files
 - `src/`: Source code directory
-  - `Program.cs`: Main entry point
+  - `Program.cs`: Main entry point and BotApplicationContext
+  - `MainWindow.cs`: Hidden window with review list UI
+  - `TaskbarBadgeManager.cs`: Badge overlay management
+  - `SystemTrayManager.cs`: System tray icon and notifications
   - `GitHubService.cs`: GitHub API integration
-  - `NotificationService.cs`: Notification display
-  - `NotificationHistory.cs`: History management
-  - `Configuration.cs`: Config management
+  - `ReviewRequestService.cs`: Review request tracking
+  - `ReviewRequestHistory.cs`: Simple ID tracking
+  - `NotificationHistory.cs`: Notification history management
+  - `Configuration.cs`: Registry-based configuration
+  - `SettingsForm.cs`: Settings dialog UI
+  - `AboutForm.cs`: About dialog UI
+  - `Logger.cs`: File-based logging
   - `Models/`: Data models
     - `PullRequestReview.cs`: PR review model
     - `NotificationEntry.cs`: Notification model
+    - `ReviewRequestEntry.cs`: Review request with new/read status
 
 ## Security Considerations
 
 1. **Personal Access Token**: 
-   - Stored in `config.json` 
-   - File excluded from git via `.gitignore`
-   - Never logged or displayed
+   - Stored in Windows Registry under `HKEY_CURRENT_USER\Software\AgentSupervisor`
+   - Protected by Windows user account security
+   - Never logged or displayed in UI
 
 2. **Dependencies**:
    - System.Text.Json 8.0.5 (secure version)
    - Octokit 11.0.1 (GitHub API client)
-   - No known vulnerabilities
+   - Regular security scanning via GitHub Actions
 
 3. **GitHub API**:
    - Uses HTTPS for all communications
    - Bearer token authentication
    - Respects GitHub API rate limits
 
+4. **Windows Integration**:
+   - Uses Windows Forms for UI
+   - Integrates with Windows notification system
+   - Uses Windows Registry for settings storage
+
 ## Threading Model
 
-- **Main Thread**: Handles UI and user input
+- **Main Thread (UI Thread)**: Handles UI interactions, forms, system tray
 - **Background Task**: Runs monitoring loop asynchronously
 - **Cancellation**: Uses `CancellationTokenSource` for graceful shutdown
-- **Thread Safety**: NotificationHistory uses locking for concurrent access
+- **Thread Safety**: 
+  - NotificationHistory uses locking for concurrent access
+  - ReviewRequestService uses locking for state management
+  - UI updates use Invoke/BeginInvoke for cross-thread safety
 
 ## Build System
 
 ### .NET CLI Build
-- Standard .NET 6.0 Windows Forms project
+- .NET 8.0 Windows Forms project
 - Uses `AgentSupervisor.csproj`
-- Targets `net6.0-windows` framework
-- Builds to `bin/Debug/net6.0-windows/` or `bin/Release/net6.0-windows/`
+- Targets `net8.0-windows` framework
+- Builds to `bin/Debug/net8.0-windows/` or `bin/Release/net8.0-windows/`
+- Includes custom application icon (res/app_icon.ico)
+
+### CI/CD
+- GitHub Actions workflow for automated builds
+- Release workflow for creating versioned releases
+- CodeQL security scanning
 
 ## Error Handling
 
-- Network errors: Logged to console, monitoring continues
+- Network errors: Logged to file, monitoring continues
 - API errors: Logged with status codes, retried on next poll
 - File I/O errors: Logged but don't crash the application
+- Registry errors: Graceful fallback to defaults
+- UI errors: Logged and shown to user via MessageBox when critical
 - Graceful degradation: App continues running even if some operations fail
 
 ## Performance Characteristics
 
-- **Memory**: Low footprint (< 50 MB typical)
-- **Network**: Minimal API calls (1 per polling interval)
-- **Disk I/O**: Only on configuration load/save and notification additions
+- **Memory**: Low footprint (< 100 MB typical)
+- **Network**: Minimal API calls (1 search + N PR details per polling interval)
+- **Disk I/O**: Only on configuration changes and notification additions
 - **CPU**: Idle between polls, minimal processing during checks
+- **UI**: Responsive with background async operations
 
 ## Extension Points
 
 The architecture supports easy extension:
 
-1. **Custom Notification Providers**: Implement alternative to console notifications
-2. **Additional GitHub Events**: Extend GitHubService to monitor other events
+1. **Custom Notification Providers**: Extend SystemTrayManager or replace with alternative notification systems
+2. **Additional GitHub Events**: Extend GitHubService to monitor other events (issues, mentions, etc.)
 3. **Filtering Rules**: Add configurable filters for which reviews to notify
-4. **Multiple Accounts**: Support multiple GitHub accounts
+4. **Multiple Accounts**: Support multiple GitHub accounts/tokens
 5. **Webhook Support**: Replace polling with webhook-based notifications
+6. **Additional UI Forms**: Add more dialogs for advanced features
+7. **Plugins/Extensions**: Design plugin system for community extensions
 
 ## Testing Strategy
 
 While no unit tests are currently included, the architecture supports testing:
 
-- Services are loosely coupled
-- Dependencies can be mocked
+- Services are loosely coupled via interfaces (potential)
+- Dependencies can be injected and mocked
 - Configuration can be injected
-- File I/O can be abstracted
+- File I/O and Registry access can be abstracted
+- UI components can be tested with Windows Forms testing frameworks
 
 ## Future Enhancements
 
 Potential improvements:
-- GUI application instead of console
-- System tray integration
-- Native Windows toast notifications (with user opt-in)
-- Webhook endpoint for real-time notifications
+- Native Windows 10/11 toast notifications (requires Windows Runtime APIs)
+- Rich notifications with action buttons
+- Webhook endpoint for real-time notifications (no polling)
 - Support for GitHub Apps authentication
-- Multi-repository filtering
-- Custom notification templates
+- Multi-repository filtering and grouping
+- Custom notification templates and sounds
+- Dark mode support for UI
+- Keyboard shortcuts for common actions
+- Integration with other development tools
+- Statistics and analytics dashboard

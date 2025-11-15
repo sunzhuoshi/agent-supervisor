@@ -177,6 +177,15 @@ namespace AgentSupervisor
             Activate();
         }
 
+        public void RefreshIfVisible()
+        {
+            // Only refresh the list if the window is visible and not minimized
+            if (WindowState != FormWindowState.Minimized && Visible)
+            {
+                LoadRequests();
+            }
+        }
+
         private void UpdateStatus()
         {
             var newCount = _reviewRequestService.GetNewCount();

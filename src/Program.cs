@@ -92,7 +92,11 @@ namespace AgentSupervisor
                 var unreadCount = _reviewRequestService?.GetNewCount() ?? 0;
                 if (_mainWindow != null && !_mainWindow.IsDisposed)
                 {
-                    _mainWindow.Invoke(() => _badgeManager?.UpdateBadgeCount(unreadCount));
+                    _mainWindow.Invoke(() => 
+                    {
+                        _badgeManager?.UpdateBadgeCount(unreadCount);
+                        _mainWindow.RefreshIfVisible();
+                    });
                 }
             });
             
@@ -248,7 +252,11 @@ namespace AgentSupervisor
                 var unreadCount = _reviewRequestService?.GetNewCount() ?? 0;
                 if (_mainWindow != null && !_mainWindow.IsDisposed)
                 {
-                    _mainWindow.Invoke(() => _badgeManager?.UpdateBadgeCount(unreadCount));
+                    _mainWindow.Invoke(() => 
+                    {
+                        _badgeManager?.UpdateBadgeCount(unreadCount);
+                        _mainWindow.RefreshIfVisible();
+                    });
                 }
             });
             _gitHubService = new GitHubService(_config!.PersonalAccessToken, proxyUrl, _reviewRequestService);

@@ -65,16 +65,18 @@ namespace AgentSupervisor
         {
             if (_reviewRequestService != null && _onOpenUrlClick != null)
             {
-                ShowReviewRequests();
+                var reviewRequestService = _reviewRequestService;
+                var onOpenUrlClick = _onOpenUrlClick;
+                ShowReviewRequests(reviewRequestService, onOpenUrlClick);
             }
         }
 
-        private void ShowReviewRequests()
+        private void ShowReviewRequests(ReviewRequestService reviewRequestService, Action<string> onOpenUrlClick)
         {
             var form = new ReviewRequestsForm(
-                _reviewRequestService!,
-                _onOpenUrlClick!,
-                () => _reviewRequestService!.MarkAllAsRead(),
+                reviewRequestService,
+                onOpenUrlClick,
+                () => reviewRequestService.MarkAllAsRead(),
                 _onRefreshBadge);
             form.ShowDialog();
         }

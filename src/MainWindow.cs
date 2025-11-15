@@ -268,14 +268,7 @@ namespace AgentSupervisor
         {
             if (_listBox.SelectedItem is ReviewRequestEntry request)
             {
-                // Mark as read
-                _reviewRequestService.MarkAsRead(request.Id);
-                
-                // Open URL
-                _onOpenUrlClick(request.HtmlUrl);
-                
-                // Refresh the display
-                LoadRequests();
+                MarkAsReadAndOpen(request);
             }
         }
 
@@ -289,15 +282,20 @@ namespace AgentSupervisor
         {
             if (_listBox.SelectedItem is ReviewRequestEntry request)
             {
-                // Mark as read
-                _reviewRequestService.MarkAsRead(request.Id);
-                
-                // Open URL
-                _onOpenUrlClick(request.HtmlUrl);
-                
-                // Refresh the display
-                LoadRequests();
+                MarkAsReadAndOpen(request);
             }
+        }
+
+        private void MarkAsReadAndOpen(ReviewRequestEntry request)
+        {
+            // Mark as read
+            _reviewRequestService.MarkAsRead(request.Id);
+            
+            // Open URL
+            _onOpenUrlClick(request.HtmlUrl);
+            
+            // Refresh the display
+            LoadRequests();
         }
 
         private void ContextMenu_MarkAsRead_Click(object? sender, EventArgs e)

@@ -194,14 +194,7 @@ namespace AgentSupervisor
                     }
 
                     var totalPendingCount = _reviewRequestService!.GetTotalCount();
-                    if (newReviewCount > 0)
-                    {
-                        _systemTrayManager!.UpdateStatus($"{totalPendingCount} pending review(s) - {unreadCount} unread");
-                    }
-                    else
-                    {
-                        _systemTrayManager!.UpdateStatus($"{totalPendingCount} pending review(s) - {unreadCount} unread");
-                    }
+                    _systemTrayManager!.UpdateStatus($"{totalPendingCount} pending review(s) - {unreadCount} unread");
                 }
                 catch (Exception ex)
                 {

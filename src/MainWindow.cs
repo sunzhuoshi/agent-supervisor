@@ -251,7 +251,7 @@ namespace AgentSupervisor
             // Draw title
             y += 18;
             var titleMaxWidth = e.Bounds.Width - 80;
-            var title = request.Title.Length > 60 ? request.Title.Substring(0, 60) + "..." : request.Title;
+            var title = request.Title.Length > 60 ? request.Title[..60] + "..." : request.Title;
             e.Graphics.DrawString(title, e.Font ?? SystemFonts.DefaultFont, textBrush, new RectangleF(x, y, titleMaxWidth, 30));
 
             // Draw author and date

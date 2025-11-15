@@ -7,7 +7,7 @@ namespace AgentSupervisor
     public class GitHubService
     {
         private readonly HttpClient _httpClient;
-        private readonly string _username;
+        private string _username;
         private readonly ReviewRequestHistory _reviewRequestHistory;
         private readonly ReviewRequestService? _reviewRequestService;
 
@@ -68,8 +68,9 @@ namespace AgentSupervisor
                 var json = await response.Content.ReadAsStringAsync();
                 using var doc = JsonDocument.Parse(json);
                 var login = doc.RootElement.GetProperty("login").GetString();
-                Logger.LogInfo($"Current user: {login}");
-                return login ?? string.Empty;
+                _username = login ?? string.Empty;
+                Logger.LogInfo($"Current user: {_username}");
+                return _username;
             }
             catch (Exception ex)
             {

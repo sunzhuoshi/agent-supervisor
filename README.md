@@ -148,10 +148,10 @@ You can configure settings using the Settings UI (right-click tray icon → Sett
 2. **Taskbar Badge**: Shows a number bubble on the taskbar icon indicating pending review requests
 3. **System Tray**: Displays an icon in the Windows notification area
 4. **Balloon Notifications**: When a new PR review is detected, a Windows balloon tip notification appears
-5. **Notification History**: All notifications are saved to `notification_history.json`
-6. **Auto-Update**: Checks for new releases on startup and notifies when updates are available
-7. **Review Request Tracking**: All review requests are saved to `review_request_details.json` with new/read status
-8. **Click to Open**: Click on a notification or double-click a review request to open the PR in your default browser
+5. **Review Request Tracking**: All review requests are saved to `review_request_details.json` with new/read status
+6. **Notification History**: All notifications are saved to `notification_history.json`
+7. **Click to Open**: Click on a notification or double-click a review request to open the PR in your default browser
+8. **Auto-Update**: Checks for new releases on startup and notifies when updates are available
 
 ## Files Created
 

@@ -113,8 +113,7 @@ namespace AgentSupervisor
                     // Update existing entry
                     bool hasChanges = existing.Title != entry.Title || 
                                      existing.Author != entry.Author || 
-                                     existing.HtmlUrl != entry.HtmlUrl ||
-                                     existing.UpdatedAt != entry.UpdatedAt;
+                                     existing.HtmlUrl != entry.HtmlUrl;
                     
                     if (hasChanges)
                     {
@@ -125,7 +124,7 @@ namespace AgentSupervisor
                     }
                     
                     // Check if the entry has been updated (newer updated_at timestamp)
-                    if (existing.UpdatedAt != DateTime.MinValue && entry.UpdatedAt > existing.UpdatedAt)
+                    if (entry.UpdatedAt > existing.UpdatedAt)
                     {
                         existing.UpdatedAt = entry.UpdatedAt;
                         existing.IsNew = true;

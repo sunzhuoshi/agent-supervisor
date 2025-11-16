@@ -8,13 +8,63 @@ namespace AgentSupervisor
         private const string RequestsFileName = "review_request_details.json";
         private readonly List<ReviewRequestEntry> _requests;
         private readonly object _lockObject = new object();
-        private readonly Action _onBadgeUpdateNeeded;
+        private readonly List<IReviewRequestObserver> _observers = new List<IReviewRequestObserver>();
 
-        public ReviewRequestService(Action onBadgeUpdateNeeded)
+        public ReviewRequestService()
         {
-            _onBadgeUpdateNeeded = onBadgeUpdateNeeded;
             _requests = Load();
-            _onBadgeUpdateNeeded.Invoke();
+        }
+
+        /// <summary>
+        /// Subscribe an observer to receive notifications about review request changes.
+        /// </summary>
+        public void Subscribe(IReviewRequestObserver observer)
+        {
+            lock (_lockObject)
+            {
+                if (!_observers.Contains(observer))
+                {
+                    _observers.Add(observer);
+                    Logger.LogInfo($"Observer subscribed: {observer.GetType().Name}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Unsubscribe an observer from receiving notifications.
+        /// </summary>
+        public void Unsubscribe(IReviewRequestObserver observer)
+        {
+            lock (_lockObject)
+            {
+                _observers.Remove(observer);
+                Logger.LogInfo($"Observer unsubscribed: {observer.GetType().Name}");
+            }
+        }
+
+        /// <summary>
+        /// Notify all observers that the review requests have changed.
+        /// </summary>
+        private void NotifyObservers()
+        {
+            // Create a copy of observers to avoid issues with modifications during iteration
+            List<IReviewRequestObserver> observersCopy;
+            lock (_lockObject)
+            {
+                observersCopy = new List<IReviewRequestObserver>(_observers);
+            }
+
+            foreach (var observer in observersCopy)
+            {
+                try
+                {
+                    observer.OnReviewRequestsChanged();
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError($"Error notifying observer {observer.GetType().Name}", ex);
+                }
+            }
         }
 
         private List<ReviewRequestEntry> Load()
@@ -69,10 +119,10 @@ namespace AgentSupervisor
                     entry.IsNew = true;
                     entry.AddedAt = DateTime.UtcNow;
                     _requests.Add(entry);
-                    _onBadgeUpdateNeeded?.Invoke();
                 }
                 Save();
             }
+            NotifyObservers();
         }
 
         public void MarkAsRead(string requestId)
@@ -84,9 +134,9 @@ namespace AgentSupervisor
                 {
                     request.IsNew = false;
                     Save();
-                    _onBadgeUpdateNeeded?.Invoke();
                 }
             }
+            NotifyObservers();
         }
 
         public void MarkAllAsRead()
@@ -105,9 +155,9 @@ namespace AgentSupervisor
                 if (changed)
                 {
                     Save();
-                    _onBadgeUpdateNeeded?.Invoke();
                 }
             }
+            NotifyObservers();
         }
 
         public List<ReviewRequestEntry> GetAll()
@@ -143,9 +193,9 @@ namespace AgentSupervisor
                 if (_requests.Count != initialCount)
                 {
                     Save();
-                    _onBadgeUpdateNeeded?.Invoke();
                 }
             }
+            NotifyObservers();
         }
     }
 }

@@ -84,21 +84,22 @@ namespace AgentSupervisor
                 }
             }
 
-            // Initialize services (ReviewRequestService without badge callback first)
+            // Initialize services
             _notificationHistory = new NotificationHistory(_config.MaxHistoryEntries);
             
-            // Initialize ReviewRequestService with badge update callback (will be set after MainWindow creation)
-            _reviewRequestService = new ReviewRequestService(UpdateBadgeAndRefreshIfVisible);
+            // Initialize ReviewRequestService (no callbacks needed - uses observer pattern)
+            _reviewRequestService = new ReviewRequestService();
             
             // Create main window with review requests functionality
             _mainWindow = new MainWindow(
                 _reviewRequestService,
-                OnOpenUrlClick,
-                () => _reviewRequestService.MarkAllAsRead(),
-                RefreshTaskbarBadge);
+                OnOpenUrlClick);
             // Required to be shown in task bar
             _mainWindow.Show();
-            _badgeManager = new TaskbarBadgeManager(_mainWindow);
+            _badgeManager = new TaskbarBadgeManager(_mainWindow, _reviewRequestService);
+            
+            // Set badge manager in MainWindow for cross-updates
+            _mainWindow.SetBadgeManager(_badgeManager);
             
             _systemTrayManager = new SystemTrayManager(
                 _notificationHistory,
@@ -106,7 +107,6 @@ namespace AgentSupervisor
                 OnSettingsClick,
                 OnExitClick,
                 OnOpenUrlClick,
-                RefreshTaskbarBadge,
                 ShowReviewRequestsForm
 #if ENABLE_CI_FEATURES
                 , TriggerImmediateCollection
@@ -156,16 +156,6 @@ namespace AgentSupervisor
                         _systemTrayManager!.UpdateStatus($"Paused - {currentTotalCount} pending review(s) - {currentUnreadCount} unread");
                         Logger.LogInfo("Data collection is paused, skipping this cycle");
                         
-                        // Still update the badge even when paused
-                        if (_mainWindow != null && !_mainWindow.IsDisposed)
-                        {
-                            _mainWindow.Invoke(() => 
-                            {
-                                _badgeManager!.UpdateBadgeCount(currentUnreadCount);
-                                _mainWindow.RefreshIfVisible();
-                            });
-                        }
-                        
                         // Skip to the delay without collecting data
                         await Task.Delay(TimeSpan.FromSeconds(_config.PollingIntervalSeconds), cancellationToken);
                         continue;
@@ -212,17 +202,8 @@ namespace AgentSupervisor
                         }
                     }
 
-                    // Update taskbar badge with count of unread review requests
+                    // Update status with current counts
                     var unreadCount = _reviewRequestService!.GetNewCount();
-                    if (_mainWindow != null && !_mainWindow.IsDisposed)
-                    {
-                        _mainWindow.Invoke(() => 
-                        {
-                            _badgeManager!.UpdateBadgeCount(unreadCount);
-                            _mainWindow.RefreshIfVisible();
-                        });
-                    }
-
                     var totalPendingCount = _reviewRequestService!.GetTotalCount();
                     _systemTrayManager!.UpdateStatus($"{totalPendingCount} pending review(s) - {unreadCount} unread");
                 }
@@ -274,8 +255,18 @@ namespace AgentSupervisor
 
             var proxyUrl = _config!.UseProxy ? _config.ProxyUrl : null;
             _notificationHistory = new NotificationHistory(_config.MaxHistoryEntries);
-            _reviewRequestService = new ReviewRequestService(UpdateBadgeAndRefreshIfVisible);
+            _reviewRequestService = new ReviewRequestService();
             _gitHubService = new GitHubService(_config!.PersonalAccessToken, proxyUrl, _reviewRequestService);
+
+            // Re-subscribe views to the new service instance
+            if (_mainWindow != null && !_mainWindow.IsDisposed)
+            {
+                _reviewRequestService.Subscribe(_mainWindow);
+            }
+            if (_badgeManager != null)
+            {
+                _reviewRequestService.Subscribe(_badgeManager);
+            }
 
             _cts = new CancellationTokenSource();
             _monitoringTask = Task.Run(() => MonitorReviews(_cts.Token));
@@ -314,40 +305,6 @@ namespace AgentSupervisor
             }
         }
 
-        private void RefreshTaskbarBadge()
-        {
-            try
-            {
-                // Get the current unread review count from ReviewRequestService
-                var unreadCount = _reviewRequestService!.GetNewCount();
-                
-                // Update the taskbar badge on the UI thread
-                if (_mainWindow != null && !_mainWindow.IsDisposed)
-                {
-                    _mainWindow.Invoke(() => _badgeManager!.UpdateBadgeCount(unreadCount));
-                }
-                
-                Logger.LogInfo($"Taskbar badge refreshed: {unreadCount} unread review(s)");
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError("Error refreshing taskbar badge", ex);
-            }
-        }
-
-        private void UpdateBadgeAndRefreshIfVisible()
-        {
-            var unreadCount = _reviewRequestService?.GetNewCount() ?? 0;
-            if (_mainWindow != null && !_mainWindow.IsDisposed)
-            {
-                _mainWindow.BeginInvoke(() => 
-                {
-                    _badgeManager?.UpdateBadgeCount(unreadCount);
-                    _mainWindow.RefreshIfVisible();
-                });
-            }
-        }
-
 #if ENABLE_CI_FEATURES
         private async void TriggerImmediateCollection()
         {
@@ -366,17 +323,8 @@ namespace AgentSupervisor
                 // Trigger the review collection immediately
                 var reviews = await _gitHubService.GetPendingReviewsAsync();
                 
-                // Update the UI
+                // Update status
                 var unreadCount = _reviewRequestService!.GetNewCount();
-                if (_mainWindow != null && !_mainWindow.IsDisposed)
-                {
-                    _mainWindow.Invoke(() => 
-                    {
-                        _badgeManager!.UpdateBadgeCount(unreadCount);
-                        _mainWindow.RefreshIfVisible();
-                    });
-                }
-
                 var totalPendingCount = _reviewRequestService!.GetTotalCount();
                 _systemTrayManager?.UpdateStatus($"{totalPendingCount} pending review(s) - {unreadCount} unread");
                 

@@ -15,7 +15,6 @@ namespace AgentSupervisor
         private readonly Action _onSettingsClick;
         private readonly Action _onExitClick;
         private readonly Action<string> _onOpenUrlClick;
-        private readonly Action? _onRefreshBadge;
         private readonly Action _showReviewRequestsForm;
 #if ENABLE_CI_FEATURES
         private readonly Action? _onTriggerCollection;
@@ -32,7 +31,6 @@ namespace AgentSupervisor
             Action onSettingsClick,
             Action onExitClick,
             Action<string> onOpenUrlClick,
-            Action? onRefreshBadge,
             Action showReviewRequestsForm
 #if ENABLE_CI_FEATURES
             , Action? onTriggerCollection = null
@@ -48,7 +46,6 @@ namespace AgentSupervisor
             _onSettingsClick = onSettingsClick;
             _onExitClick = onExitClick;
             _onOpenUrlClick = onOpenUrlClick;
-            _onRefreshBadge = onRefreshBadge;
             _showReviewRequestsForm = showReviewRequestsForm;
 #if ENABLE_CI_FEATURES
             _onTriggerCollection = onTriggerCollection;

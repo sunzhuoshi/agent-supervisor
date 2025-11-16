@@ -146,6 +146,9 @@ namespace AgentSupervisor
                         var createdAt = item.TryGetProperty("created_at", out var created)
                             ? DateTime.Parse(created.GetString() ?? DateTime.UtcNow.ToString())
                             : DateTime.UtcNow;
+                        var updatedAt = item.TryGetProperty("updated_at", out var updated)
+                            ? DateTime.Parse(updated.GetString() ?? DateTime.UtcNow.ToString())
+                            : DateTime.UtcNow;
                         
                         // Get PR author info if available
                         var authorLogin = "Unknown";
@@ -173,7 +176,8 @@ namespace AgentSupervisor
                                 HtmlUrl = htmlUrl,
                                 Title = title,
                                 Author = authorLogin,
-                                CreatedAt = createdAt
+                                CreatedAt = createdAt,
+                                UpdatedAt = updatedAt
                             };
                             _reviewRequestService.AddOrUpdate(entry);
                         }

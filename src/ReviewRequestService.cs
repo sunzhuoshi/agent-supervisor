@@ -109,10 +109,18 @@ namespace AgentSupervisor
                 var existing = _requests.FirstOrDefault(r => r.Id == entry.Id);
                 if (existing != null)
                 {
-                    // Update existing entry, preserve IsNew status
+                    // Update existing entry
                     existing.Title = entry.Title;
                     existing.Author = entry.Author;
                     existing.HtmlUrl = entry.HtmlUrl;
+                    
+                    // Check if the entry has been updated (newer updated_at timestamp)
+                    if (entry.UpdatedAt > existing.UpdatedAt)
+                    {
+                        existing.UpdatedAt = entry.UpdatedAt;
+                        existing.IsNew = true;
+                        notifyNeeded = true;
+                    }
                 }
                 else
                 {

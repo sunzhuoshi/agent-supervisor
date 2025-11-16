@@ -33,7 +33,7 @@ namespace AgentSupervisor
             {
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
-                Application.Run(new BotApplicationContext());
+                Application.Run(new AppApplicationContext());
             }
             finally
             {
@@ -44,7 +44,7 @@ namespace AgentSupervisor
         }
     }
 
-    public class BotApplicationContext : ApplicationContext
+    public class AppApplicationContext : ApplicationContext
     {
         private GitHubService? _gitHubService;
         private NotificationHistory? _notificationHistory;
@@ -58,7 +58,7 @@ namespace AgentSupervisor
         private UpdateService? _updateService;
         private SettingsForm? _settingsForm;
 
-        public BotApplicationContext()
+        public AppApplicationContext()
         {
             InitializeApplication();
         }

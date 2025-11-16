@@ -17,10 +17,10 @@ namespace AgentSupervisor
         private readonly Action<string> _onOpenUrlClick;
         private readonly Action _showReviewRequestsForm;
 #if ENABLE_DEV_FEATURES
-        private readonly Action? _onTriggerCollection;
+        private readonly Action? _onTriggerPolling;
         private readonly Configuration _config;
         private readonly Action? _onConfigChanged;
-        private ToolStripMenuItem? _pauseCollectionMenuItem;
+        private ToolStripMenuItem? _pausePollingMenuItem;
 #endif
         private Icon? _customIcon;
         private AboutForm? _aboutForm;
@@ -33,7 +33,7 @@ namespace AgentSupervisor
             Action<string> onOpenUrlClick,
             Action showReviewRequestsForm
 #if ENABLE_DEV_FEATURES
-            , Action? onTriggerCollection = null
+            , Action? onTriggerPolling = null
             , Configuration? config = null
             , Action? onConfigChanged = null
 #endif
@@ -48,7 +48,7 @@ namespace AgentSupervisor
             _onOpenUrlClick = onOpenUrlClick;
             _showReviewRequestsForm = showReviewRequestsForm;
 #if ENABLE_DEV_FEATURES
-            _onTriggerCollection = onTriggerCollection;
+            _onTriggerPolling = onTriggerPolling;
             _config = config ?? new Configuration();
             _onConfigChanged = onConfigChanged;
 #endif
@@ -95,19 +95,19 @@ namespace AgentSupervisor
             menu.Items.Add(new ToolStripSeparator());
 
 #if ENABLE_DEV_FEATURES
-            // DEV-only menu item for data collection
-            var collectDataItem = new ToolStripMenuItem("Collect at Once");
-            collectDataItem.Click += (s, e) => CollectData();
-            menu.Items.Add(collectDataItem);
+            // DEV-only menu item for data polling
+            var pollDataItem = new ToolStripMenuItem("Poll at Once");
+            pollDataItem.Click += (s, e) => PollData();
+            menu.Items.Add(pollDataItem);
             
-            // DEV-only menu item for pausing collection
-            _pauseCollectionMenuItem = new ToolStripMenuItem(GetPauseMenuText());
-            _pauseCollectionMenuItem.Click += (s, e) => TogglePauseCollection();
-            menu.Items.Add(_pauseCollectionMenuItem);
+            // CI-only menu item for pausing polling
+            _pausePollingMenuItem = new ToolStripMenuItem(GetPauseMenuText());
+            _pausePollingMenuItem.Click += (s, e) => TogglePausePolling();
+            menu.Items.Add(_pausePollingMenuItem);
             
             menu.Items.Add(new ToolStripSeparator());
             
-            Logger.LogInfo("DEV features enabled - 'Collect at Once' and 'Pause Collection' menu items added");
+            Logger.LogInfo("CI features enabled - 'Poll at Once' and 'Pause Polling' menu items added");
 #endif
 
             var settingsItem = new ToolStripMenuItem("Settings");
@@ -213,24 +213,24 @@ namespace AgentSupervisor
 
 #if ENABLE_DEV_FEATURES
         /// <summary>
-        /// Triggers immediate collection of review requests from GitHub
+        /// Triggers immediate polling of review requests from GitHub
         /// This method is only available when ENABLE_DEV_FEATURES is defined during compilation
         /// </summary>
-        private void CollectData()
+        private void PollData()
         {
             try
             {
-                Logger.LogInfo("Triggering immediate data collection (DEV build)");
+                Logger.LogInfo("Triggering immediate data polling (DEV build)");
 
-                if (_onTriggerCollection != null)
+                if (_onTriggerPolling != null)
                 {
-                    _onTriggerCollection();
+                    _onTriggerPolling();
                 }
                 else
                 {
-                    Logger.LogWarning("Collection callback not configured");
+                    Logger.LogWarning("Polling callback not configured");
                     MessageBox.Show(
-                        "Data collection callback is not configured.",
+                        "Data polling callback is not configured.",
                         "Configuration Error",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Warning);
@@ -238,49 +238,49 @@ namespace AgentSupervisor
             }
             catch (Exception ex)
             {
-                Logger.LogError("Error triggering data collection", ex);
+                Logger.LogError("Error triggering data polling", ex);
                 MessageBox.Show(
-                    $"Error triggering data collection:\n\n{ex.Message}",
-                    "Collection Error",
+                    $"Error triggering data polling:\n\n{ex.Message}",
+                    "Polling Error",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
             }
         }
 
         /// <summary>
-        /// Toggles the pause collection state
+        /// Toggles the pause polling state
         /// This method is only available when ENABLE_DEV_FEATURES is defined during compilation
         /// </summary>
-        private void TogglePauseCollection()
+        private void TogglePausePolling()
         {
             try
             {
-                _config.PauseCollection = !_config.PauseCollection;
+                _config.PausePolling = !_config.PausePolling;
                 _config.Save();
                 
                 // Update menu item text
-                if (_pauseCollectionMenuItem != null)
+                if (_pausePollingMenuItem != null)
                 {
-                    _pauseCollectionMenuItem.Text = GetPauseMenuText();
+                    _pausePollingMenuItem.Text = GetPauseMenuText();
                 }
                 
                 // Notify the application of the configuration change
                 _onConfigChanged?.Invoke();
                 
-                var statusMessage = _config.PauseCollection ? "Data collection paused" : "Data collection resumed";
-                Logger.LogInfo($"Pause collection toggled: {statusMessage}");
+                var statusMessage = _config.PausePolling ? "Data polling paused" : "Data polling resumed";
+                Logger.LogInfo($"Pause polling toggled: {statusMessage}");
                 
                 MessageBox.Show(
                     statusMessage,
-                    "Collection Status",
+                    "Polling Status",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                Logger.LogError("Error toggling pause collection", ex);
+                Logger.LogError("Error toggling pause polling", ex);
                 MessageBox.Show(
-                    $"Error toggling pause collection:\n\n{ex.Message}",
+                    $"Error toggling pause polling:\n\n{ex.Message}",
                     "Error",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
@@ -288,11 +288,11 @@ namespace AgentSupervisor
         }
 
         /// <summary>
-        /// Gets the menu text for the pause collection menu item based on current state
+        /// Gets the menu text for the pause polling menu item based on current state
         /// </summary>
         private string GetPauseMenuText()
         {
-            return _config.PauseCollection ? "Resume Collection" : "Pause Collection";
+            return _config.PausePolling ? "Resume Polling" : "Pause Polling";
         }
 #endif
 

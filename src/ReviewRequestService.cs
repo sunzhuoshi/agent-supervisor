@@ -113,7 +113,8 @@ namespace AgentSupervisor
                     // Update existing entry
                     bool hasChanges = existing.Title != entry.Title || 
                                      existing.Author != entry.Author || 
-                                     existing.HtmlUrl != entry.HtmlUrl;
+                                     existing.HtmlUrl != entry.HtmlUrl ||
+                                     existing.UpdatedAt != entry.UpdatedAt;
                     
                     if (hasChanges)
                     {

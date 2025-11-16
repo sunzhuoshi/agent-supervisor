@@ -107,7 +107,7 @@ namespace AgentSupervisor
                 OnSettingsClick,
                 OnExitClick,
                 OnOpenUrlClick,
-                OnCheckForUpdatesClick);
+                OnCheckForUpdatesClick,
                 RefreshTaskbarBadge,
                 ShowReviewRequestsForm
 #if ENABLE_CI_FEATURES

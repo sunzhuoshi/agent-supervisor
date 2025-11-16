@@ -11,7 +11,7 @@ Agent Supervisor is a Windows system tray application written in C# using Window
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │                         Program.cs                            │
-│                  (BotApplicationContext)                     │
+│                  (AppApplicationContext)                     │
 │  - Initializes services                                      │
 │  - Manages application lifecycle                             │
 │  - Coordinates monitoring loop                               │
@@ -102,7 +102,7 @@ The application uses the Observer pattern to maintain separation between the dat
   - Automatic UI updates without manual coordination
   - Easy to add new views without modifying existing code
 
-### 1. Program.cs & BotApplicationContext
+### 1. Program.cs & AppApplicationContext
 **Responsibility**: Application entry point and lifecycle management
 - Single instance enforcement via mutex
 - Initializes all services in proper order
@@ -255,7 +255,7 @@ The application uses the Observer pattern to maintain separation between the dat
 
 ### Source Files
 - `src/`: Source code directory
-  - `Program.cs`: Main entry point and BotApplicationContext
+  - `Program.cs`: Main entry point and AppApplicationContext
   - `MainWindow.cs`: Hidden window with review list UI (implements IReviewRequestObserver)
   - `TaskbarBadgeManager.cs`: Badge overlay management (implements IReviewRequestObserver)
   - `SystemTrayManager.cs`: System tray icon and notifications

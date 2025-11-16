@@ -14,6 +14,9 @@ namespace AgentSupervisor
         [STAThread]
         static void Main(string[] args)
         {
+            // Enable high DPI support
+            Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
+            
             // Check for single instance
             _mutex = new Mutex(true, MutexName, out bool createdNew);
             

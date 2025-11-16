@@ -104,15 +104,24 @@ namespace AgentSupervisor
         public void AddOrUpdate(ReviewRequestEntry entry)
         {
             bool notifyNeeded = false;
+            bool saveNeeded = false;
             lock (_lockObject)
             {
                 var existing = _requests.FirstOrDefault(r => r.Id == entry.Id);
                 if (existing != null)
                 {
                     // Update existing entry
-                    existing.Title = entry.Title;
-                    existing.Author = entry.Author;
-                    existing.HtmlUrl = entry.HtmlUrl;
+                    bool hasChanges = existing.Title != entry.Title || 
+                                     existing.Author != entry.Author || 
+                                     existing.HtmlUrl != entry.HtmlUrl;
+                    
+                    if (hasChanges)
+                    {
+                        existing.Title = entry.Title;
+                        existing.Author = entry.Author;
+                        existing.HtmlUrl = entry.HtmlUrl;
+                        saveNeeded = true;
+                    }
                     
                     // Check if the entry has been updated (newer updated_at timestamp)
                     if (entry.UpdatedAt > existing.UpdatedAt)
@@ -120,6 +129,7 @@ namespace AgentSupervisor
                         existing.UpdatedAt = entry.UpdatedAt;
                         existing.IsNew = true;
                         notifyNeeded = true;
+                        saveNeeded = true;
                     }
                 }
                 else
@@ -129,8 +139,13 @@ namespace AgentSupervisor
                     entry.AddedAt = DateTime.UtcNow;
                     _requests.Add(entry);
                     notifyNeeded = true;
+                    saveNeeded = true;
                 }
-                Save();
+                
+                if (saveNeeded)
+                {
+                    Save();
+                }
             }
             
             if (notifyNeeded)

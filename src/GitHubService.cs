@@ -143,12 +143,28 @@ namespace AgentSupervisor
                         var prId = item.GetProperty("id").GetInt64();
                         var htmlUrl = item.GetProperty("html_url").GetString() ?? "";
                         var title = item.GetProperty("title").GetString() ?? "";
-                        var createdAt = item.TryGetProperty("created_at", out var created)
-                            ? DateTime.Parse(created.GetString() ?? DateTime.UtcNow.ToString())
-                            : DateTime.UtcNow;
-                        var updatedAt = item.TryGetProperty("updated_at", out var updated)
-                            ? DateTime.Parse(updated.GetString() ?? DateTime.UtcNow.ToString())
-                            : DateTime.UtcNow;
+                        
+                        var createdAt = DateTime.UtcNow;
+                        if (item.TryGetProperty("created_at", out var created) && 
+                            created.ValueKind == JsonValueKind.String)
+                        {
+                            var createdStr = created.GetString();
+                            if (!string.IsNullOrEmpty(createdStr) && DateTime.TryParse(createdStr, out var parsedCreated))
+                            {
+                                createdAt = parsedCreated;
+                            }
+                        }
+                        
+                        var updatedAt = DateTime.UtcNow;
+                        if (item.TryGetProperty("updated_at", out var updated) && 
+                            updated.ValueKind == JsonValueKind.String)
+                        {
+                            var updatedStr = updated.GetString();
+                            if (!string.IsNullOrEmpty(updatedStr) && DateTime.TryParse(updatedStr, out var parsedUpdated))
+                            {
+                                updatedAt = parsedUpdated;
+                            }
+                        }
                         
                         // Get PR author info if available
                         var authorLogin = "Unknown";

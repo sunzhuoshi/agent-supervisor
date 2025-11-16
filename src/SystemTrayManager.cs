@@ -16,7 +16,7 @@ namespace AgentSupervisor
         private readonly Action _onExitClick;
         private readonly Action<string> _onOpenUrlClick;
         private readonly Action _showReviewRequestsForm;
-#if ENABLE_CI_FEATURES
+#if ENABLE_DEV_FEATURES
         private readonly Action? _onTriggerPolling;
         private readonly Configuration _config;
         private readonly Action? _onConfigChanged;
@@ -32,7 +32,7 @@ namespace AgentSupervisor
             Action onExitClick,
             Action<string> onOpenUrlClick,
             Action showReviewRequestsForm
-#if ENABLE_CI_FEATURES
+#if ENABLE_DEV_FEATURES
             , Action? onTriggerPolling = null
             , Configuration? config = null
             , Action? onConfigChanged = null
@@ -47,7 +47,7 @@ namespace AgentSupervisor
             _onExitClick = onExitClick;
             _onOpenUrlClick = onOpenUrlClick;
             _showReviewRequestsForm = showReviewRequestsForm;
-#if ENABLE_CI_FEATURES
+#if ENABLE_DEV_FEATURES
             _onTriggerPolling = onTriggerPolling;
             _config = config ?? new Configuration();
             _onConfigChanged = onConfigChanged;
@@ -94,20 +94,20 @@ namespace AgentSupervisor
 
             menu.Items.Add(new ToolStripSeparator());
 
-#if ENABLE_CI_FEATURES
-            // CI-only menu item for data polling
+#if ENABLE_DEV_FEATURES
+            // DEV-only menu item for data polling
             var pollDataItem = new ToolStripMenuItem("Poll at Once");
             pollDataItem.Click += (s, e) => PollData();
             menu.Items.Add(pollDataItem);
             
-            // CI-only menu item for pausing polling
+            // DEV-only menu item for pausing polling
             _pausePollingMenuItem = new ToolStripMenuItem(GetPauseMenuText());
             _pausePollingMenuItem.Click += (s, e) => TogglePausePolling();
             menu.Items.Add(_pausePollingMenuItem);
             
             menu.Items.Add(new ToolStripSeparator());
             
-            Logger.LogInfo("CI features enabled - 'Poll at Once' and 'Pause Polling' menu items added");
+            Logger.LogInfo("DEV features enabled - 'Poll at Once' and 'Pause Polling' menu items added");
 #endif
 
             var settingsItem = new ToolStripMenuItem("Settings");
@@ -211,16 +211,16 @@ namespace AgentSupervisor
             }
         }
 
-#if ENABLE_CI_FEATURES
+#if ENABLE_DEV_FEATURES
         /// <summary>
         /// Triggers immediate polling of review requests from GitHub
-        /// This method is only available when ENABLE_CI_FEATURES is defined during compilation
+        /// This method is only available when ENABLE_DEV_FEATURES is defined during compilation
         /// </summary>
         private void PollData()
         {
             try
             {
-                Logger.LogInfo("Triggering immediate data polling (CI build)");
+                Logger.LogInfo("Triggering immediate data polling (DEV build)");
 
                 if (_onTriggerPolling != null)
                 {
@@ -249,7 +249,7 @@ namespace AgentSupervisor
 
         /// <summary>
         /// Toggles the pause polling state
-        /// This method is only available when ENABLE_CI_FEATURES is defined during compilation
+        /// This method is only available when ENABLE_DEV_FEATURES is defined during compilation
         /// </summary>
         private void TogglePausePolling()
         {

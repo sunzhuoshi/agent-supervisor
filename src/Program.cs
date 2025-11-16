@@ -108,7 +108,7 @@ namespace AgentSupervisor
                 OnExitClick,
                 OnOpenUrlClick,
                 ShowReviewRequestsForm
-#if ENABLE_CI_FEATURES
+#if ENABLE_DEV_FEATURES
                 , TriggerImmediatePolling
                 , _config
                 , OnConfigChanged
@@ -147,8 +147,8 @@ namespace AgentSupervisor
             {
                 try
                 {
-#if ENABLE_CI_FEATURES
-                    // Check if polling is paused (CI builds only)
+#if ENABLE_DEV_FEATURES
+                    // Check if polling is paused (DEV builds only)
                     if (_config.PausePolling)
                     {
                         var currentUnreadCount = _reviewRequestService!.GetNewCount();
@@ -305,7 +305,7 @@ namespace AgentSupervisor
             }
         }
 
-#if ENABLE_CI_FEATURES
+#if ENABLE_DEV_FEATURES
         private async void TriggerImmediatePolling()
         {
             try

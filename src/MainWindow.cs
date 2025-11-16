@@ -97,7 +97,7 @@ namespace AgentSupervisor
             {
                 Dock = DockStyle.Fill,
                 DrawMode = DrawMode.OwnerDrawFixed,
-                ItemHeight = 60,
+                ItemHeight = 70,
                 Font = new Font(Font.FontFamily, 9),
                 SelectionMode = SelectionMode.One,
                 ContextMenuStrip = _contextMenu
@@ -307,10 +307,10 @@ namespace AgentSupervisor
             if (request.IsNew)
             {
                 using var newBadgeBrush = new SolidBrush(Color.FromArgb(220, 53, 69));
-                using var newBadgeFont = new Font(e.Font?.FontFamily ?? SystemFonts.DefaultFont.FontFamily, 7, FontStyle.Bold);
+                using var newBadgeFont = new Font(e.Font?.FontFamily ?? SystemFonts.DefaultFont.FontFamily, 8, FontStyle.Bold);
                 using var newBadgeTextBrush = new SolidBrush(Color.White);
                 
-                var badgeRect = new Rectangle(e.Bounds.Right - 60, y, 50, 18);
+                var badgeRect = new Rectangle(e.Bounds.Right - 60, y, 50, 20);
                 e.Graphics.FillRectangle(newBadgeBrush, badgeRect);
                 
                 var badgeText = "NEW";
@@ -324,18 +324,18 @@ namespace AgentSupervisor
             using var titleFont = new Font(e.Font?.FontFamily ?? SystemFonts.DefaultFont.FontFamily, 9, FontStyle.Bold);
             using var textBrush = new SolidBrush(textColor);
             var titleMaxWidth = e.Bounds.Width - 80;
-            var title = request.Title.Length > 60 ? request.Title.Substring(0, 60) + "..." : request.Title;
+            var title = request.Title.Length > 70 ? request.Title.Substring(0, 70) + "..." : request.Title;
             e.Graphics.DrawString(title, titleFont, textBrush, new RectangleF(x, y, titleMaxWidth, 30));
 
             // Draw repository and PR number
-            y += 18;
+            y += 20;
             var repoText = $"{request.Repository} PR#{request.PullRequestNumber}";
             e.Graphics.DrawString(repoText, e.Font ?? SystemFonts.DefaultFont, textBrush, x, y);
 
             // Draw author and date
-            y += 18;
-            using var detailFont = new Font(e.Font?.FontFamily ?? SystemFonts.DefaultFont.FontFamily, 8);
-            using var detailBrush = new SolidBrush(e.State.HasFlag(DrawItemState.Selected) ? textColor : Color.Gray);
+            y += 20;
+            using var detailFont = new Font(e.Font?.FontFamily ?? SystemFonts.DefaultFont.FontFamily, 9);
+            using var detailBrush = new SolidBrush(e.State.HasFlag(DrawItemState.Selected) ? textColor : Color.FromArgb(80, 80, 80));
             var detailText = $"by {request.Author} • {request.CreatedAt:MMM dd, yyyy HH:mm}";
             e.Graphics.DrawString(detailText, detailFont, detailBrush, x, y);
 

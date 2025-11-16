@@ -24,7 +24,7 @@ When the application is built with DEV features enabled, additional menu items a
 │ Review Requests by Copilots     │
 ├─────────────────────────────────┤
 │ Poll at Once          ← DEV only │
-│ Pause Polling         ← DEV only │  
+│ Pause Polling                   │  
 ├─────────────────────────────────┤
 │ Settings                        │
 │ About                           │
@@ -47,7 +47,7 @@ This is useful for testing and debugging scenarios where you need to see the lat
 
 #### Pause Polling
 
-The "Pause Polling" menu item allows you to pause and resume the automatic data polling from GitHub:
+The "Pause Polling" menu item allows you to pause and resume the automatic data polling from GitHub. This feature is **available in all builds** (both DEV and release builds).
 
 - **Default State**: Not paused (polling is active)
 - **Menu Text**: Displays "Pause Polling" when polling is active, "Resume Polling" when paused
@@ -61,7 +61,7 @@ The "Pause Polling" menu item allows you to pause and resume the automatic data 
   - Data polling from GitHub continues as configured
   - System tray status returns to normal
 
-The pause state is persisted in the Windows Registry and survives application restarts. This is useful for temporarily stopping data polling during testing or when you want to avoid API rate limits without changing the polling interval.
+The pause state is persisted in the Windows Registry and survives application restarts. This is useful for temporarily stopping data polling during testing or when you want to avoid API rate limits without changing the polling interval. **This feature is particularly useful when polling is paused with a CI build, as it can be resumed with a formal release build.**
 
 ## Building with DEV Features
 
@@ -101,15 +101,19 @@ dotnet build --configuration Release
 
 ## Use Cases
 
-These DEV features are useful for:
+The DEV-only "Poll at Once" feature is useful for:
 
-1. **Immediate Data Refresh** (Poll at Once): Force an immediate fetch of review requests without waiting for the scheduled polling interval
+1. **Immediate Data Refresh**: Force an immediate fetch of review requests without waiting for the scheduled polling interval
 2. **Testing**: Verify that the GitHub API integration is working correctly during development builds
 3. **Debugging**: Quickly check for new review requests during development and testing
 4. **Development/Testing Pipeline**: Validate that the application can successfully connect to GitHub and fetch data
-5. **Pause/Resume Polling** (Pause Polling): Temporarily stop data polling without closing the application or changing polling interval settings
-6. **API Rate Limit Management**: Pause polling when approaching GitHub API rate limits during testing
+
+The "Pause Polling" feature (available in all builds) is useful for:
+
+5. **Pause/Resume Polling**: Temporarily stop data polling without closing the application or changing polling interval settings
+6. **API Rate Limit Management**: Pause polling when approaching GitHub API rate limits
 7. **Development Workflows**: Pause automatic polling while making code changes or debugging
+8. **Cross-Build Compatibility**: Resume polling with a release build when it was paused with a CI/DEV build
 
 ## Privacy & Security
 
@@ -121,6 +125,7 @@ These DEV features are useful for:
 
 ## Limitations
 
-- These menu items are **only** visible in builds compiled with `ENABLE_DEV_FEATURES` defined
-- For regular release builds, these features are not available (by design)
+- The "Poll at Once" menu item is **only** visible in builds compiled with `ENABLE_DEV_FEATURES` defined
+- The "Pause Polling" menu item is **available in all builds** (both DEV and release)
+- For regular release builds, only the pause polling feature is available (by design)
 - Triggering polling requires an active network connection to GitHub

@@ -110,12 +110,12 @@ namespace AgentSupervisor
                 OnOpenUrlClick,
                 OnCheckForUpdatesClick,
                 RefreshTaskbarBadge,
-                ShowReviewRequestsForm
+                ShowReviewRequestsForm,
 #if ENABLE_DEV_FEATURES
-                , TriggerImmediatePolling
-                , _config
-                , OnConfigChanged
+                TriggerImmediatePolling,
 #endif
+                _config,
+                OnConfigChanged
                 );
 
             var proxyUrl = _config.UseProxy ? _config.ProxyUrl : null;
@@ -160,8 +160,7 @@ namespace AgentSupervisor
             {
                 try
                 {
-#if ENABLE_DEV_FEATURES
-                    // Check if polling is paused (DEV builds only)
+                    // Check if polling is paused (available in all builds)
                     if (_config.PausePolling)
                     {
                         var currentUnreadCount = _reviewRequestService!.GetNewCount();
@@ -173,7 +172,7 @@ namespace AgentSupervisor
                         await Task.Delay(TimeSpan.FromSeconds(_config.PollingIntervalSeconds), cancellationToken);
                         continue;
                     }
-#endif
+
                     var reviews = await _gitHubService!.GetPendingReviewsAsync();
                     var newReviewCount = 0;
                     
@@ -490,6 +489,7 @@ namespace AgentSupervisor
                 _systemTrayManager?.UpdateStatus($"Error: {ex.Message}");
             }
         }
+#endif
 
         /// <summary>
         /// Called when configuration changes (e.g., when pause is toggled)
@@ -521,7 +521,6 @@ namespace AgentSupervisor
                 Logger.LogError("Error during polling", ex);
             }
         }
-#endif
 
         private void ShowReviewRequestsForm()
         {

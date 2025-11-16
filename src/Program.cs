@@ -55,6 +55,7 @@ namespace AgentSupervisor
         private Task? _monitoringTask;
         private MainWindow? _mainWindow;
         private TaskbarBadgeManager? _badgeManager;
+        private UpdateService? _updateService;
         private SettingsForm? _settingsForm;
 
         public BotApplicationContext()
@@ -107,6 +108,8 @@ namespace AgentSupervisor
                 OnSettingsClick,
                 OnExitClick,
                 OnOpenUrlClick,
+                OnCheckForUpdatesClick,
+                RefreshTaskbarBadge,
                 ShowReviewRequestsForm
 #if ENABLE_DEV_FEATURES
                 , TriggerImmediatePolling
@@ -117,6 +120,10 @@ namespace AgentSupervisor
 
             var proxyUrl = _config.UseProxy ? _config.ProxyUrl : null;
             _gitHubService = new GitHubService(_config.PersonalAccessToken, proxyUrl, _reviewRequestService);
+
+            // Initialize update service
+            var currentVersion = typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "1.0.0";
+            _updateService = new UpdateService(currentVersion);
 
             // Verify GitHub connection
             _systemTrayManager.UpdateStatus("Connecting to GitHub...");
@@ -133,6 +140,12 @@ namespace AgentSupervisor
 
             _systemTrayManager.UpdateStatus($"Connected as {username}");
             Logger.LogInfo($"Connected to GitHub as {username}");
+
+            // Check for updates on startup if enabled
+            if (_config.CheckForUpdatesOnStartup)
+            {
+                _ = Task.Run(async () => await CheckForUpdatesAsync(false));
+            }
 
             // Start monitoring
             _cts = new CancellationTokenSource();
@@ -305,6 +318,147 @@ namespace AgentSupervisor
             }
         }
 
+        private async void OnCheckForUpdatesClick()
+        {
+            await CheckForUpdatesAsync(true);
+        }
+
+        private async Task CheckForUpdatesAsync(bool manualCheck)
+        {
+            try
+            {
+                Logger.LogInfo("Checking for updates");
+                
+                if (manualCheck)
+                {
+                    _systemTrayManager?.UpdateStatus("Checking for updates...");
+                }
+
+                var updateInfo = await _updateService!.CheckForUpdatesAsync();
+                
+                // Update last check time
+                _config!.LastUpdateCheck = DateTime.UtcNow;
+                _config.Save();
+
+                if (updateInfo != null)
+                {
+                    Logger.LogInfo($"Update available: {updateInfo.Version}");
+                    
+                    // Check if this version was previously skipped
+                    if (!manualCheck && updateInfo.Version == _config!.SkippedVersion)
+                    {
+                        Logger.LogInfo($"Skipping notification for version {updateInfo.Version} (user previously declined)");
+                        return;
+                    }
+                    
+                    // Show notification
+                    _systemTrayManager?.ShowUpdateNotification(updateInfo);
+                    
+                    // Build the update message
+                    var message = $"A new version ({updateInfo.Version}) is available!\n\n" +
+                                 $"Published: {updateInfo.PublishedAt:MMMM dd, yyyy}\n\n";
+                    
+                    // Add pre-release warning if applicable
+                    if (updateInfo.IsPreRelease)
+                    {
+                        message += "⚠️ WARNING: This is a pre-release version (alpha/beta).\n" +
+                                  "It may contain bugs or incomplete features.\n\n";
+                    }
+                    
+                    message += $"Would you like to open the download page in your browser?";
+                    
+                    // Show dialog with update option
+                    var result = MessageBox.Show(
+                        message,
+                        updateInfo.IsPreRelease ? "Pre-Release Update Available" : "Update Available",
+                        MessageBoxButtons.YesNo,
+                        updateInfo.IsPreRelease ? MessageBoxIcon.Warning : MessageBoxIcon.Information);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        // Open the release page in the default browser
+                        OnOpenUrlClick(updateInfo.ReleaseUrl);
+                    }
+                    else
+                    {
+                        // User clicked No - remember this version to skip future notifications
+                        _config!.SkippedVersion = updateInfo.Version;
+                        _config.Save();
+                        Logger.LogInfo($"User skipped version {updateInfo.Version}");
+                    }
+                }
+                else
+                {
+                    Logger.LogInfo("No updates available");
+                    
+                    if (manualCheck)
+                    {
+                        MessageBox.Show(
+                            "You are running the latest version.",
+                            "No Updates Available",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Error checking for updates", ex);
+                
+                if (manualCheck)
+                {
+                    MessageBox.Show(
+                        $"Error checking for updates: {ex.Message}",
+                        "Update Check Failed",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
+            }
+            finally
+            {
+                if (manualCheck)
+                {
+                    // Restore previous status
+                    var username = await _gitHubService!.GetCurrentUserAsync();
+                    _systemTrayManager?.UpdateStatus($"Connected as {username}");
+                }
+            }
+        }
+
+        private void RefreshTaskbarBadge()
+        {
+            try
+            {
+                // Get the current unread review count from ReviewRequestService
+                var unreadCount = _reviewRequestService!.GetNewCount();
+                
+                // Update the taskbar badge on the UI thread
+                if (_mainWindow != null && !_mainWindow.IsDisposed)
+                {
+                    _mainWindow.Invoke(() => _badgeManager!.UpdateBadgeCount(unreadCount));
+                }
+                
+                Logger.LogInfo($"Taskbar badge refreshed: {unreadCount} unread review(s)");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Error refreshing taskbar badge", ex);
+            }
+        }
+
+        private void UpdateBadgeAndRefreshIfVisible()
+        {
+            var unreadCount = _reviewRequestService?.GetNewCount() ?? 0;
+            if (_mainWindow != null && !_mainWindow.IsDisposed)
+            {
+                _mainWindow.BeginInvoke(() => 
+                {
+                    _badgeManager?.UpdateBadgeCount(unreadCount);
+                    _mainWindow.RefreshIfVisible();
+                });
+            }
+        }
+
 #if ENABLE_DEV_FEATURES
         private async void TriggerImmediatePolling()
         {
@@ -364,7 +518,7 @@ namespace AgentSupervisor
             }
             catch (Exception ex)
             {
-                Logger.LogError("Error handling configuration change", ex);
+                Logger.LogError("Error during polling", ex);
             }
         }
 #endif

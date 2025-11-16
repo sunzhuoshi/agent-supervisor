@@ -8,6 +8,7 @@ A Windows system tray application that helps improve GitHub Copilot agents workf
 
 ## Features
 
+- **Auto-Update**: Automatically checks for new releases from GitHub and prompts to upgrade with one click
 - **Taskbar Badge Overlay**: Shows the number of pending PR review requests on the taskbar icon
 - **System Tray Application**: Runs in background with system tray icon
 - **Monitor PR Reviews**: Automatically monitors pull request reviews assigned to the current user
@@ -75,11 +76,31 @@ dotnet build --configuration Release
      - "Review Requests by Copilots" - View all review requests with new/read status
      - "Settings" - Change your configuration
      - "About" - View application information
+     - "Check for Updates" - Manually check for application updates
      - "Exit" - Close the application
    - **Double-click the tray icon** - View PR review requests
    - **Double-click a review request** - Opens the PR in your browser and marks it as read
    - **Click a balloon notification** - Opens the PR in your browser
    - **Check the taskbar badge** - See how many reviews are pending at a glance
+
+## Auto-Update
+
+The application automatically checks for updates from GitHub releases:
+
+- **Automatic Check**: On startup, the app checks for new releases (can be disabled in config)
+- **Manual Check**: Right-click the tray icon and select "Check for Updates"
+- **Update Notification**: A balloon notification appears when a new version is available
+- **Download Link**: Click "Yes" to open the GitHub release page in your browser to download the update manually
+- **Manual Installation**: Download the latest release from GitHub and extract it to replace the old version
+
+When an update is available:
+1. A notification appears with version information
+2. Click "Yes" to open the GitHub release page in your default browser
+3. Download the release zip file
+4. Close Agent Supervisor
+5. Extract the downloaded files to the application directory (replacing old files)
+6. Your configuration files (`config.json`, `notification_history.json`, `review_requests.json`) are preserved automatically
+7. Restart Agent Supervisor
 
 ## Configuration
 
@@ -103,6 +124,12 @@ You can configure settings using the Settings UI (right-click tray icon → Sett
 - Settings survive application reinstalls (unless uninstalled via Windows Settings)
 - Standard Windows approach for application settings
 
+- `PersonalAccessToken`: Your GitHub Personal Access Token
+- `PollingIntervalSeconds`: How often to check for new PR reviews (default: 60)
+- `MaxHistoryEntries`: Maximum number of notifications to keep in history (default: 100)
+- `CheckForUpdatesOnStartup`: Whether to check for updates when the app starts (default: true)
+- `LastUpdateCheck`: Timestamp of the last update check (automatically managed)
+
 ## How It Works
 
 1. **Background Monitoring**: The application runs in the background, checking GitHub every N seconds
@@ -112,12 +139,13 @@ You can configure settings using the Settings UI (right-click tray icon → Sett
 5. **Review Request Tracking**: All review requests are saved to `review_request_details.json` with new/read status
 6. **Notification History**: All notifications are saved to `notification_history.json`
 7. **Click to Open**: Click on a notification or double-click a review request to open the PR in your default browser
+8. **Auto-Update**: Checks for new releases on startup and notifies when updates are available
 
 ## Files Created
 
 - `notification_history.json` - Notification history
 - `review_request_details.json` - PR review requests with new/read status
-- `review_requests.json` - Review request ID tracking
+- `review_requests.json` - Tracking of review requests to avoid duplicate notifications
 
 These files are excluded from git via `.gitignore`.
 
@@ -135,6 +163,7 @@ AgentSupervisor/
 │   ├── AboutForm.cs             # About dialog
 │   ├── SystemTrayManager.cs     # System tray icon and notifications
 │   ├── GitHubService.cs         # GitHub API integration
+│   ├── UpdateService.cs         # Auto-update functionality
 │   ├── NotificationHistory.cs   # Persistent notification storage
 │   ├── Configuration.cs         # Configuration management
 │   └── Models/

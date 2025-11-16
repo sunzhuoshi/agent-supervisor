@@ -15,6 +15,8 @@ namespace AgentSupervisor
         private readonly Action _onSettingsClick;
         private readonly Action _onExitClick;
         private readonly Action<string> _onOpenUrlClick;
+        private readonly Action _onCheckForUpdatesClick;
+        private readonly Action? _onRefreshBadge;
         private readonly Action _showReviewRequestsForm;
 #if ENABLE_DEV_FEATURES
         private readonly Action? _onTriggerPolling;
@@ -24,6 +26,7 @@ namespace AgentSupervisor
 #endif
         private Icon? _customIcon;
         private AboutForm? _aboutForm;
+        private EventHandler? _currentBalloonTipClickedHandler;
 
         public SystemTrayManager(
             NotificationHistory notificationHistory,
@@ -31,6 +34,8 @@ namespace AgentSupervisor
             Action onSettingsClick,
             Action onExitClick,
             Action<string> onOpenUrlClick,
+            Action onCheckForUpdatesClick,
+            Action? onRefreshBadge,
             Action showReviewRequestsForm
 #if ENABLE_DEV_FEATURES
             , Action? onTriggerPolling = null
@@ -46,6 +51,8 @@ namespace AgentSupervisor
             _onSettingsClick = onSettingsClick;
             _onExitClick = onExitClick;
             _onOpenUrlClick = onOpenUrlClick;
+            _onCheckForUpdatesClick = onCheckForUpdatesClick;
+            _onRefreshBadge = onRefreshBadge;
             _showReviewRequestsForm = showReviewRequestsForm;
 #if ENABLE_DEV_FEATURES
             _onTriggerPolling = onTriggerPolling;
@@ -117,6 +124,12 @@ namespace AgentSupervisor
             var aboutItem = new ToolStripMenuItem("About");
             aboutItem.Click += (s, e) => ShowAbout();
             menu.Items.Add(aboutItem);
+
+            menu.Items.Add(new ToolStripSeparator());
+
+            var checkUpdatesItem = new ToolStripMenuItem("Check for Updates");
+            checkUpdatesItem.Click += (s, e) => _onCheckForUpdatesClick();
+            menu.Items.Add(checkUpdatesItem);
 
             menu.Items.Add(new ToolStripSeparator());
 
@@ -209,6 +222,29 @@ namespace AgentSupervisor
                 Logger.LogError("Failed to create custom icon, using default", ex);
                 return SystemIcons.Information;
             }
+        }
+
+        public void ShowUpdateNotification(UpdateInfo updateInfo)
+        {
+            var title = "Update Available";
+            var message = $"Version {updateInfo.Version} is now available!\n" +
+                         $"Published: {updateInfo.PublishedAt:MMM dd, yyyy}";
+
+            _notifyIcon.ShowBalloonTip(5000, title, message, ToolTipIcon.Info);
+
+            // Remove previous handler if it exists
+            if (_currentBalloonTipClickedHandler != null)
+            {
+                _notifyIcon.BalloonTipClicked -= _currentBalloonTipClickedHandler;
+            }
+
+            // Store the release URL for the balloon click event
+            var tempUrl = updateInfo.ReleaseUrl;
+            _currentBalloonTipClickedHandler = (s, e) =>
+            {
+                _onOpenUrlClick(tempUrl);
+            };
+            _notifyIcon.BalloonTipClicked += _currentBalloonTipClickedHandler;
         }
 
 #if ENABLE_DEV_FEATURES

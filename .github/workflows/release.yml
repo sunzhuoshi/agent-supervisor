@@ -27,6 +27,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        token: ${{ github.event_name == 'workflow_dispatch' && secrets.PAT || secrets.GITHUB_TOKEN }}
     
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -60,36 +62,65 @@ jobs:
           }
         }
         
+        # Extract base version (MAJOR.MINOR.PATCH) without pre-release or build metadata
+        if ($version -match '^(\d+\.\d+\.\d+)') {
+          $baseVersion = $matches[1]
+        } else {
+          $baseVersion = $version
+        }
+        
         # Detect if this is a pre-release version
         $isPrerelease = $version -match '-'
         
         Write-Output "version=$version" >> $env:GITHUB_OUTPUT
+        Write-Output "base_version=$baseVersion" >> $env:GITHUB_OUTPUT
         Write-Output "is_prerelease=$isPrerelease" >> $env:GITHUB_OUTPUT
         Write-Output "Using version: $version"
+        Write-Output "Base version: $baseVersion"
         Write-Output "Pre-release: $isPrerelease"
+    
+    - name: Update version in .csproj for manual release
+      if: github.event_name == 'workflow_dispatch'
+      shell: pwsh
+      run: |
+        $baseVersion = "${{ steps.get_version.outputs.base_version }}"
+        [xml]$csproj = Get-Content AgentSupervisor.csproj
+        
+        # Update version properties
+        # Use base version for Version, AssemblyVersion, and FileVersion
+        $csproj.Project.PropertyGroup.Version = $baseVersion
+        $csproj.Project.PropertyGroup.AssemblyVersion = $baseVersion
+        $csproj.Project.PropertyGroup.FileVersion = $baseVersion
+        
+        # Save the file
+        $csproj.Save("$PWD/AgentSupervisor.csproj")
+        
+        Write-Output "Updated version to $baseVersion in AgentSupervisor.csproj"
     
     - name: Verify version in source
       shell: pwsh
       run: |
         $tagVersion = "${{ steps.get_version.outputs.version }}"
+        $baseTagVersion = "${{ steps.get_version.outputs.base_version }}"
         [xml]$csproj = Get-Content AgentSupervisor.csproj
         $sourceVersion = $csproj.Project.PropertyGroup.Version
         
-        Write-Output "Tag version: $tagVersion"
+        Write-Output "Tag version: $tagVersion (base: $baseTagVersion)"
         Write-Output "Source version: $sourceVersion"
         
-        if ($tagVersion -ne $sourceVersion) {
-          Write-Error "Version mismatch! Tag version ($tagVersion) does not match source version ($sourceVersion)"
+        if ($baseTagVersion -ne $sourceVersion) {
+          Write-Error "Version mismatch! Tag base version ($baseTagVersion) does not match source version ($sourceVersion)"
           exit 1
         }
         
         Write-Output "Version verification passed!"
     
-    - name: Create and push tag for manual release
+    - name: Commit version change and create tag for manual release
       if: github.event_name == 'workflow_dispatch'
       shell: pwsh
       run: |
         $version = "${{ steps.get_version.outputs.version }}"
+        $baseVersion = "${{ steps.get_version.outputs.base_version }}"
         $tag = "v$version"
         
         git config user.name "github-actions[bot]"
@@ -102,6 +133,16 @@ jobs:
           exit 1
         }
         
+        # Commit the version change if there are changes
+        $status = git status --porcelain AgentSupervisor.csproj
+        if ($status) {
+          git add AgentSupervisor.csproj
+          git commit -m "Bump version to $baseVersion"
+          $branch = "${{ github.ref }}".Split('/')[-1]
+          git push origin HEAD:$branch
+          Write-Output "Committed version change"
+        }
+        
         # Create and push the tag
         git tag -a $tag -m "Release $version"
         git push origin $tag
@@ -109,15 +150,19 @@ jobs:
         Write-Output "Created and pushed tag: $tag"
     
     - name: Restore dependencies
+      if: github.event_name == 'push'
       run: dotnet restore
     
     - name: Build
-      run: dotnet build --no-restore --configuration Release
+      if: github.event_name == 'push'
+      run: dotnet build --no-restore --configuration Release /p:InformationalVersion=${{ steps.get_version.outputs.version }}
     
     - name: Check for vulnerabilities
+      if: github.event_name == 'push'
       run: dotnet list package --vulnerable --include-transitive
     
     - name: Prepare release artifacts
+      if: github.event_name == 'push'
       shell: pwsh
       run: |
         $artifactsPath = "release-artifacts"
@@ -148,6 +193,7 @@ jobs:
         Write-Output "Created release artifact: $zipName"
     
     - name: Create GitHub Release
+      if: github.event_name == 'push'
       uses: softprops/action-gh-release@v2
       with:
         tag_name: v${{ steps.get_version.outputs.version }}

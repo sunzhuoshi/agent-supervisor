@@ -6,12 +6,11 @@ using AgentSupervisor.Models;
 
 namespace AgentSupervisor
 {
-    public class MainWindow : Form
+    public class MainWindow : Form, IReviewRequestObserver
     {
         private readonly ReviewRequestService _reviewRequestService;
         private readonly Action<string> _onOpenUrlClick;
-        private readonly Action _onMarkAllAsRead;
-        private readonly Action? _onRefreshBadge;
+        private TaskbarBadgeManager? _badgeManager;
         private ListBox _listBox = null!;
         private Button _markAllReadButton = null!;
         private Label _statusLabel = null!;
@@ -19,17 +18,16 @@ namespace AgentSupervisor
 
         public MainWindow(
             ReviewRequestService reviewRequestService,
-            Action<string> onOpenUrlClick,
-            Action onMarkAllAsRead,
-            Action onRefreshBadge)
+            Action<string> onOpenUrlClick)
         {
             _reviewRequestService = reviewRequestService;
             _onOpenUrlClick = onOpenUrlClick;
-            _onMarkAllAsRead = onMarkAllAsRead;
-            _onRefreshBadge = onRefreshBadge;
 
             InitializeComponent();
             LoadRequests();
+            
+            // Subscribe to review request changes
+            _reviewRequestService.Subscribe(this);
             
             // Load and set the application icon
             try
@@ -58,6 +56,36 @@ namespace AgentSupervisor
             WindowState = FormWindowState.Minimized;
             
             Logger.LogInfo("MainWindow created with review requests functionality");
+        }
+
+        /// <summary>
+        /// Set the badge manager after construction (since MainWindow needs to be shown first)
+        /// </summary>
+        public void SetBadgeManager(TaskbarBadgeManager badgeManager)
+        {
+            _badgeManager = badgeManager;
+        }
+
+        /// <summary>
+        /// Observer callback - automatically called when review requests change
+        /// </summary>
+        public void OnReviewRequestsChanged()
+        {
+            // Update badge
+            if (_badgeManager != null)
+            {
+                var unreadCount = _reviewRequestService.GetNewCount();
+                if (!IsDisposed)
+                {
+                    BeginInvoke(() => _badgeManager.UpdateBadgeCount(unreadCount));
+                }
+            }
+
+            // Refresh UI if visible
+            if (!IsDisposed)
+            {
+                BeginInvoke(() => RefreshIfVisible());
+            }
         }
 
         private void InitializeComponent()
@@ -353,8 +381,8 @@ namespace AgentSupervisor
 
         private void MarkAllReadButton_Click(object? sender, EventArgs e)
         {
-            _onMarkAllAsRead();
-            RefreshChangedItems();
+            _reviewRequestService.MarkAllAsRead();
+            // UI will be updated automatically via observer pattern
         }
 
         private void ContextMenu_Open_Click(object? sender, EventArgs e)
@@ -367,25 +395,19 @@ namespace AgentSupervisor
 
         private void MarkAsReadAndOpen(ReviewRequestEntry request)
         {
-            // Mark as read
+            // Mark as read - UI will be updated automatically via observer
             _reviewRequestService.MarkAsRead(request.Id);
             
             // Open URL
             _onOpenUrlClick(request.HtmlUrl);
-            
-            // Refresh only the specific changed item
-            RefreshChangedItems(request.Id);
         }
 
         private void ContextMenu_MarkAsRead_Click(object? sender, EventArgs e)
         {
             if (_listBox.SelectedItem is ReviewRequestEntry request)
             {
-                // Mark as read
+                // Mark as read - UI will be updated automatically via observer
                 _reviewRequestService.MarkAsRead(request.Id);
-                
-                // Refresh only the specific changed item
-                RefreshChangedItems(request.Id);
             }
         }
     }

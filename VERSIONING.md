@@ -99,14 +99,14 @@ There are two ways to create a release:
 
 ### Option 1: Manual Workflow Dispatch (Recommended)
 
-1. **Update Version**: Modify version numbers in `AgentSupervisor.csproj`
-2. **Commit Changes**: Commit the version change with message `"Bump version to X.Y.Z"`
-3. **Push Changes**: Push the commit to the repository
-4. **Trigger Release**: 
+1. **Trigger Release**: 
    - Go to GitHub Actions → Release workflow
    - Click "Run workflow"
    - Enter the version number (e.g., `1.0.0` without `v` prefix)
-   - The workflow will automatically create and push the tag
+   - The workflow will automatically:
+     - Update version numbers in `AgentSupervisor.csproj`
+     - Commit the version change with message `"Bump version to X.Y.Z"`
+     - Create and push the git tag `vX.Y.Z`
 
 ### Option 2: Push Git Tag
 
@@ -119,8 +119,9 @@ There are two ways to create a release:
 
 The GitHub Actions workflow will:
 - Validate version format (MAJOR.MINOR.PATCH)
+- For manual workflow dispatch: Update version in .csproj and commit the change
 - Verify tag version matches source version
-- Create git tag (for manual workflow dispatch)
+- For manual workflow dispatch: Create git tag and push commit and tag
 - Build the application
 - Check for security vulnerabilities
 - Create GitHub release with artifacts

@@ -125,42 +125,37 @@ namespace AgentSupervisor
                 {
                     try
                     {
-                        var pullRequestUrl = item.GetProperty("pull_request").GetProperty("url").GetString();
-                        if (string.IsNullOrEmpty(pullRequestUrl))
+                        // Extract all necessary data directly from the search result
+                        // This avoids making an additional API call for each PR
+                        
+                        // Get repository full name from repository_url
+                        // Format: "https://api.github.com/repos/owner/repo"
+                        var repositoryUrl = item.GetProperty("repository_url").GetString();
+                        if (string.IsNullOrEmpty(repositoryUrl))
                         {
                             continue;
                         }
-
-                        // Get PR details
-                        Logger.LogInfo($"HTTP GET {pullRequestUrl}");
-                        startTime = DateTime.UtcNow;
-                        var prResponse = await _httpClient.GetAsync(pullRequestUrl);
-                        elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
-                        Logger.LogInfo($"HTTP Response: {(int)prResponse.StatusCode} {prResponse.StatusCode} | {elapsed:F0}ms | {pullRequestUrl}");
                         
-                        if (!prResponse.IsSuccessStatusCode)
-                        {
-                            continue;
-                        }
-
-                        var prJson = await prResponse.Content.ReadAsStringAsync();
-                        using var prDoc = JsonDocument.Parse(prJson);
+                        // Parse repository full name from the URL
+                        var repoFullName = repositoryUrl.Replace("https://api.github.com/repos/", "");
                         
-                        var repoFullName = prDoc.RootElement.GetProperty("base")
-                            .GetProperty("repo").GetProperty("full_name").GetString() ?? "";
-                        var prNumber = prDoc.RootElement.GetProperty("number").GetInt32();
-                        var prId = prDoc.RootElement.GetProperty("id").GetInt64();
-                        var htmlUrl = prDoc.RootElement.GetProperty("html_url").GetString() ?? "";
-                        var title = prDoc.RootElement.GetProperty("title").GetString() ?? "";
-                        var createdAt = prDoc.RootElement.TryGetProperty("created_at", out var created)
+                        var prNumber = item.GetProperty("number").GetInt32();
+                        var prId = item.GetProperty("id").GetInt64();
+                        var htmlUrl = item.GetProperty("html_url").GetString() ?? "";
+                        var title = item.GetProperty("title").GetString() ?? "";
+                        var createdAt = item.TryGetProperty("created_at", out var created)
                             ? DateTime.Parse(created.GetString() ?? DateTime.UtcNow.ToString())
                             : DateTime.UtcNow;
                         
                         // Get PR author info if available
                         var authorLogin = "Unknown";
-                        if (prDoc.RootElement.TryGetProperty("user", out var userElement))
+                        var authorHtmlUrl = "";
+                        if (item.TryGetProperty("user", out var userElement))
                         {
                             authorLogin = userElement.GetProperty("login").GetString() ?? "Unknown";
+                            authorHtmlUrl = userElement.TryGetProperty("html_url", out var userUrl)
+                                ? userUrl.GetString() ?? ""
+                                : "";
                         }
                         
                         // Create unique identifier for this review request
@@ -202,10 +197,7 @@ namespace AgentSupervisor
                             review.User = new User
                             {
                                 Login = authorLogin,
-                                HtmlUrl = prDoc.RootElement.TryGetProperty("user", out var uElem) && 
-                                         uElem.TryGetProperty("html_url", out var userHtmlUrl)
-                                    ? userHtmlUrl.GetString() ?? ""
-                                    : ""
+                                HtmlUrl = authorHtmlUrl
                             };
                             
                             reviews.Add(review);

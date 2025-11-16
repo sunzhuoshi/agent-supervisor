@@ -100,14 +100,14 @@ namespace AgentSupervisor
             pollDataItem.Click += (s, e) => PollData();
             menu.Items.Add(pollDataItem);
             
-            // CI-only menu item for pausing polling
+            // DEV-only menu item for pausing polling
             _pausePollingMenuItem = new ToolStripMenuItem(GetPauseMenuText());
             _pausePollingMenuItem.Click += (s, e) => TogglePausePolling();
             menu.Items.Add(_pausePollingMenuItem);
             
             menu.Items.Add(new ToolStripSeparator());
             
-            Logger.LogInfo("CI features enabled - 'Poll at Once' and 'Pause Polling' menu items added");
+            Logger.LogInfo("DEV features enabled - 'Poll at Once' and 'Pause Polling' menu items added");
 #endif
 
             var settingsItem = new ToolStripMenuItem("Settings");

@@ -62,27 +62,29 @@ jobs:
           }
         }
         
-        # Detect if this is a pre-release version
-        $isPrerelease = $version -match '-'
-        
-        Write-Output "version=$version" >> $env:GITHUB_OUTPUT
-        Write-Output "is_prerelease=$isPrerelease" >> $env:GITHUB_OUTPUT
-        Write-Output "Using version: $version"
-        Write-Output "Pre-release: $isPrerelease"
-    
-    - name: Update version in .csproj for manual release
-      if: github.event_name == 'workflow_dispatch'
-      shell: pwsh
-      run: |
-        $version = "${{ steps.get_version.outputs.version }}"
-        [xml]$csproj = Get-Content AgentSupervisor.csproj
-        
         # Extract base version (MAJOR.MINOR.PATCH) without pre-release or build metadata
         if ($version -match '^(\d+\.\d+\.\d+)') {
           $baseVersion = $matches[1]
         } else {
           $baseVersion = $version
         }
+        
+        # Detect if this is a pre-release version
+        $isPrerelease = $version -match '-'
+        
+        Write-Output "version=$version" >> $env:GITHUB_OUTPUT
+        Write-Output "base_version=$baseVersion" >> $env:GITHUB_OUTPUT
+        Write-Output "is_prerelease=$isPrerelease" >> $env:GITHUB_OUTPUT
+        Write-Output "Using version: $version"
+        Write-Output "Base version: $baseVersion"
+        Write-Output "Pre-release: $isPrerelease"
+    
+    - name: Update version in .csproj for manual release
+      if: github.event_name == 'workflow_dispatch'
+      shell: pwsh
+      run: |
+        $baseVersion = "${{ steps.get_version.outputs.base_version }}"
+        [xml]$csproj = Get-Content AgentSupervisor.csproj
         
         # Update version properties
         # Use base version for Version, AssemblyVersion, and FileVersion
@@ -99,15 +101,9 @@ jobs:
       shell: pwsh
       run: |
         $tagVersion = "${{ steps.get_version.outputs.version }}"
+        $baseTagVersion = "${{ steps.get_version.outputs.base_version }}"
         [xml]$csproj = Get-Content AgentSupervisor.csproj
         $sourceVersion = $csproj.Project.PropertyGroup.Version
-        
-        # Extract base version from tag for comparison
-        if ($tagVersion -match '^(\d+\.\d+\.\d+)') {
-          $baseTagVersion = $matches[1]
-        } else {
-          $baseTagVersion = $tagVersion
-        }
         
         Write-Output "Tag version: $tagVersion (base: $baseTagVersion)"
         Write-Output "Source version: $sourceVersion"
@@ -124,6 +120,7 @@ jobs:
       shell: pwsh
       run: |
         $version = "${{ steps.get_version.outputs.version }}"
+        $baseVersion = "${{ steps.get_version.outputs.base_version }}"
         $tag = "v$version"
         
         git config user.name "github-actions[bot]"
@@ -140,7 +137,7 @@ jobs:
         $status = git status --porcelain AgentSupervisor.csproj
         if ($status) {
           git add AgentSupervisor.csproj
-          git commit -m "Bump version to $tag"
+          git commit -m "Bump version to $baseVersion"
           $branch = "${{ github.ref }}".Split('/')[-1]
           git push origin HEAD:$branch
           Write-Output "Committed version change"

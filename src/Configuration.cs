@@ -5,8 +5,8 @@ namespace AgentSupervisor
     public class Configuration
     {
         public string PersonalAccessToken { get; set; } = string.Empty;
-        public int PollingIntervalSeconds { get; set; } = 60;
-        public int MaxHistoryEntries { get; set; } = 100;
+        public int PollingIntervalSeconds { get; set; } = Constants.DefaultPollingIntervalSeconds;
+        public int MaxHistoryEntries { get; set; } = Constants.DefaultMaxHistoryEntries;
         public string ProxyUrl { get; set; } = string.Empty;
         public bool UseProxy { get; set; } = false;
         public DateTime? LastUpdateCheck { get; set; } = null;
@@ -15,20 +15,18 @@ namespace AgentSupervisor
         public bool EnableDesktopNotifications { get; set; } = true;
         public bool PausePolling { get; set; } = false;
 
-        private const string RegistryKeyPath = @"Software\AgentSupervisor";
-
         public static Configuration Load()
         {
             try
             {
-                using var key = Registry.CurrentUser.OpenSubKey(RegistryKeyPath);
+                using var key = Registry.CurrentUser.OpenSubKey(Constants.RegistryKeyPath);
                 if (key != null)
                 {
                     var config = new Configuration
                     {
                         PersonalAccessToken = key.GetValue("PersonalAccessToken") as string ?? string.Empty,
-                        PollingIntervalSeconds = (int)(key.GetValue("PollingIntervalSeconds") ?? 60),
-                        MaxHistoryEntries = (int)(key.GetValue("MaxHistoryEntries") ?? 100),
+                        PollingIntervalSeconds = (int)(key.GetValue("PollingIntervalSeconds") ?? Constants.DefaultPollingIntervalSeconds),
+                        MaxHistoryEntries = (int)(key.GetValue("MaxHistoryEntries") ?? Constants.DefaultMaxHistoryEntries),
                         ProxyUrl = key.GetValue("ProxyUrl") as string ?? string.Empty,
                         UseProxy = ((int)(key.GetValue("UseProxy") ?? 0)) != 0,
                         SkippedVersion = key.GetValue("SkippedVersion") as string ?? string.Empty,
@@ -51,7 +49,7 @@ namespace AgentSupervisor
         {
             try
             {
-                using var key = Registry.CurrentUser.CreateSubKey(RegistryKeyPath);
+                using var key = Registry.CurrentUser.CreateSubKey(Constants.RegistryKeyPath);
                 if (key != null)
                 {
                     key.SetValue("PersonalAccessToken", PersonalAccessToken);

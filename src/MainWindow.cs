@@ -32,7 +32,7 @@ namespace AgentSupervisor
             // Load and set the application icon
             try
             {
-                var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "res", "app_icon.ico");
+                var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.IconResourcePath, Constants.AppIconFileName);
                 if (File.Exists(iconPath))
                 {
                     Icon = new Icon(iconPath);
@@ -91,10 +91,10 @@ namespace AgentSupervisor
         private void InitializeComponent()
         {
             // Form settings
-            Text = "Agent Supervisor - Review Requests by Copilots";
-            Size = new Size(600, 500);
+            Text = $"{Constants.ApplicationName} - Review Requests by Copilots";
+            Size = new Size(Constants.MainWindowDefaultWidth, Constants.MainWindowDefaultHeight);
             StartPosition = FormStartPosition.CenterScreen;
-            MinimumSize = new Size(500, 400);
+            MinimumSize = new Size(Constants.MainWindowMinWidth, Constants.MainWindowMinHeight);
             ShowInTaskbar = true;
             FormBorderStyle = FormBorderStyle.Sizable;
 

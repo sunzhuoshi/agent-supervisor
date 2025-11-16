@@ -4,7 +4,6 @@ namespace AgentSupervisor
 {
     public class ReviewRequestHistory
     {
-        private const string HistoryFileName = "review_requests.json";
         private readonly HashSet<string> _seenRequestIds;
         private readonly object _lockObject = new object();
 
@@ -15,11 +14,11 @@ namespace AgentSupervisor
 
         private HashSet<string> Load()
         {
-            if (File.Exists(HistoryFileName))
+            if (File.Exists(Constants.ReviewRequestHistoryFileName))
             {
                 try
                 {
-                    var json = File.ReadAllText(HistoryFileName);
+                    var json = File.ReadAllText(Constants.ReviewRequestHistoryFileName);
                     var list = JsonSerializer.Deserialize<List<string>>(json);
                     return list != null ? new HashSet<string>(list) : new HashSet<string>();
                 }
@@ -40,7 +39,7 @@ namespace AgentSupervisor
                     var options = new JsonSerializerOptions { WriteIndented = true };
                     var list = _seenRequestIds.ToList();
                     var json = JsonSerializer.Serialize(list, options);
-                    File.WriteAllText(HistoryFileName, json);
+                    File.WriteAllText(Constants.ReviewRequestHistoryFileName, json);
                 }
                 catch (Exception ex)
                 {

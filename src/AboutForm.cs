@@ -14,8 +14,8 @@ namespace AgentSupervisor
 
         private void InitializeComponents()
         {
-            this.Text = "About Agent Supervisor";
-            this.Size = new Size(450, 300);
+            this.Text = $"About {Constants.ApplicationName}";
+            this.Size = new Size(Constants.AboutFormWidth, Constants.AboutFormHeight);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -24,7 +24,7 @@ namespace AgentSupervisor
             // Application Name Label
             var appNameLabel = new Label
             {
-                Text = "Agent Supervisor",
+                Text = Constants.ApplicationName,
                 Location = new Point(20, 20),
                 Size = new Size(410, 30),
                 Font = new Font(this.Font.FontFamily, 16, FontStyle.Bold),
@@ -60,7 +60,7 @@ namespace AgentSupervisor
             // Copyright Label
             var copyrightLabel = new Label
             {
-                Text = $"© {DateTime.Now.Year} Agent Supervisor Contributors",
+                Text = $"© {DateTime.Now.Year} {Constants.ApplicationName} Contributors",
                 Location = new Point(20, 140),
                 Size = new Size(410, 20),
                 TextAlign = ContentAlignment.MiddleCenter
@@ -70,7 +70,7 @@ namespace AgentSupervisor
             // GitHub Link Label
             var githubLinkLabel = new LinkLabel
             {
-                Text = "github.com/sunzhuoshi/agent-supervisor",
+                Text = Constants.GitHubRepoUrl.Replace("https://", ""),
                 Location = new Point(20, 170),
                 Size = new Size(410, 20),
                 TextAlign = ContentAlignment.MiddleCenter
@@ -81,13 +81,13 @@ namespace AgentSupervisor
                 {
                     System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                     {
-                        FileName = "https://github.com/sunzhuoshi/agent-supervisor",
+                        FileName = Constants.GitHubRepoUrl,
                         UseShellExecute = true
                     });
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error opening link: {ex.Message}", "Error",
+                    MessageBox.Show($"Error opening link: {ex.Message}", Constants.MessageBoxTitleError,
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             };

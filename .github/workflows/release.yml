@@ -120,6 +120,7 @@ jobs:
       shell: pwsh
       run: |
         $version = "${{ steps.get_version.outputs.version }}"
+        $baseVersion = "${{ steps.get_version.outputs.base_version }}"
         $tag = "v$version"
         
         git config user.name "github-actions[bot]"
@@ -136,7 +137,7 @@ jobs:
         $status = git status --porcelain AgentSupervisor.csproj
         if ($status) {
           git add AgentSupervisor.csproj
-          git commit -m "Bump version to $tag"
+          git commit -m "Bump version to $baseVersion"
           $branch = "${{ github.ref }}".Split('/')[-1]
           git push origin HEAD:$branch
           Write-Output "Committed version change"

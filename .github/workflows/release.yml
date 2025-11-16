@@ -122,11 +122,12 @@ jobs:
         }
         
         # Commit the version change if there are changes
-        $status = git status --porcelain
+        $status = git status --porcelain AgentSupervisor.csproj
         if ($status) {
           git add AgentSupervisor.csproj
           git commit -m "Bump version to $version"
-          git push origin HEAD:${{ github.ref_name }}
+          $branch = "${{ github.ref }}".Split('/')[-1]
+          git push origin HEAD:$branch
           Write-Output "Committed version change"
         }
         

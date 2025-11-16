@@ -79,6 +79,31 @@ namespace AgentSupervisor
             }
         }
 
+        /// <summary>
+        /// Attempts to parse a DateTime from a JSON property.
+        /// </summary>
+        /// <param name="item">The JSON element containing the property</param>
+        /// <param name="propertyName">The name of the property to parse</param>
+        /// <param name="result">The parsed DateTime, or DateTime.UtcNow if parsing fails</param>
+        /// <returns>True if parsing was successful, false otherwise</returns>
+        private static bool TryParseJsonDateTime(JsonElement item, string propertyName, out DateTime result)
+        {
+            result = DateTime.UtcNow;
+            
+            if (item.TryGetProperty(propertyName, out var property) && 
+                property.ValueKind == JsonValueKind.String)
+            {
+                var dateStr = property.GetString();
+                if (!string.IsNullOrEmpty(dateStr) && DateTime.TryParse(dateStr, out var parsed))
+                {
+                    result = parsed;
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
         public async Task<List<PullRequestReview>> GetPendingReviewsAsync()
         {
             var reviews = new List<PullRequestReview>();
@@ -143,9 +168,9 @@ namespace AgentSupervisor
                         var prId = item.GetProperty("id").GetInt64();
                         var htmlUrl = item.GetProperty("html_url").GetString() ?? "";
                         var title = item.GetProperty("title").GetString() ?? "";
-                        var createdAt = item.TryGetProperty("created_at", out var created)
-                            ? DateTime.Parse(created.GetString() ?? DateTime.UtcNow.ToString())
-                            : DateTime.UtcNow;
+                        
+                        TryParseJsonDateTime(item, "created_at", out var createdAt);
+                        TryParseJsonDateTime(item, "updated_at", out var updatedAt);
                         
                         // Get PR author info if available
                         var authorLogin = "Unknown";
@@ -173,7 +198,8 @@ namespace AgentSupervisor
                                 HtmlUrl = htmlUrl,
                                 Title = title,
                                 Author = authorLogin,
-                                CreatedAt = createdAt
+                                CreatedAt = createdAt,
+                                UpdatedAt = updatedAt
                             };
                             _reviewRequestService.AddOrUpdate(entry);
                         }

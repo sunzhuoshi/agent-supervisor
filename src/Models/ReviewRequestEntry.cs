@@ -25,6 +25,9 @@ namespace AgentSupervisor.Models
         [JsonPropertyName("created_at")]
         public DateTime CreatedAt { get; set; }
 
+        [JsonPropertyName("updated_at")]
+        public DateTime UpdatedAt { get; set; }
+
         [JsonPropertyName("is_new")]
         public bool IsNew { get; set; }
 

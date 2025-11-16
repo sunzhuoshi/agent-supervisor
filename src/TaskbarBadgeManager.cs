@@ -7,19 +7,24 @@ using System.Runtime.InteropServices;
 
 namespace AgentSupervisor
 {
-    public class TaskbarBadgeManager : IDisposable
+    public class TaskbarBadgeManager : IDisposable, IReviewRequestObserver
     {
         private readonly Form _mainWindow;
+        private readonly ReviewRequestService _reviewRequestService;
         private Icon? _currentBadgeIcon;
         private int _currentCount;
 
         [DllImport("shell32.dll", SetLastError = true)]
         private static extern void SetCurrentProcessExplicitAppUserModelID([MarshalAs(UnmanagedType.LPWStr)] string AppID);
 
-        public TaskbarBadgeManager(Form mainWindow)
+        public TaskbarBadgeManager(Form mainWindow, ReviewRequestService reviewRequestService)
         {
             _mainWindow = mainWindow;
+            _reviewRequestService = reviewRequestService;
             _currentCount = 0;
+            
+            // Subscribe to review request changes
+            _reviewRequestService.Subscribe(this);
             
             // Set a unique AppUserModelID for proper taskbar integration
             try
@@ -31,7 +36,22 @@ namespace AgentSupervisor
                 Logger.LogError("Failed to set AppUserModelID", ex);
             }
             
+            // Initialize badge with current count
+            UpdateBadgeCount(_reviewRequestService.GetNewCount());
+            
             Logger.LogInfo("TaskbarBadgeManager initialized");
+        }
+
+        /// <summary>
+        /// Observer callback - automatically called when review requests change
+        /// </summary>
+        public void OnReviewRequestsChanged()
+        {
+            var unreadCount = _reviewRequestService.GetNewCount();
+            if (!_mainWindow.IsDisposed)
+            {
+                _mainWindow.BeginInvoke(() => UpdateBadgeCount(unreadCount));
+            }
         }
 
         public void UpdateBadgeCount(int count)
@@ -73,6 +93,12 @@ namespace AgentSupervisor
             {
                 Logger.LogError($"Failed to update badge count to {count}", ex);
             }
+        }
+
+        public void Dispose()
+        {
+            _reviewRequestService.Unsubscribe(this);
+            _currentBadgeIcon?.Dispose();
         }
 
         private Icon CreateBadgeIcon(int count)
@@ -170,11 +196,6 @@ namespace AgentSupervisor
                 Color.FromArgb(0, 122, 204),   // Blue
                 45f);
             graphics.FillEllipse(brush, 2, 2, 28, 28);
-        }
-
-        public void Dispose()
-        {
-            _currentBadgeIcon?.Dispose();
         }
     }
 }

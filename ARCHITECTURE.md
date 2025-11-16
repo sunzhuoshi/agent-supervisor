@@ -88,6 +88,20 @@ Agent Supervisor is a Windows system tray application written in C# using Window
 
 ## Key Components
 
+## Design Patterns
+
+### Observer Pattern (Model/View Separation)
+The application uses the Observer pattern to maintain separation between the data model and views:
+
+- **Model**: `ReviewRequestService` maintains the state of review requests
+- **Observer Interface**: `IReviewRequestObserver` defines the contract for observers
+- **Views**: `MainWindow` and `TaskbarBadgeManager` implement `IReviewRequestObserver`
+- **Notifications**: When the model changes (add, update, mark as read), all observers are automatically notified
+- **Benefits**: 
+  - Loose coupling between model and views
+  - Automatic UI updates without manual coordination
+  - Easy to add new views without modifying existing code
+
 ### 1. Program.cs & BotApplicationContext
 **Responsibility**: Application entry point and lifecycle management
 - Single instance enforcement via mutex
@@ -97,18 +111,20 @@ Agent Supervisor is a Windows system tray application written in C# using Window
 - Handles application shutdown
 
 ### 2. MainWindow.cs
-**Responsibility**: Windows Forms window with taskbar presence
+**Responsibility**: Windows Forms window with taskbar presence (View/Observer)
 - Hidden window that provides taskbar presence
 - Displays list of review requests
 - Shows new/read status for each request
 - Supports double-click to open PRs in browser
+- Implements `IReviewRequestObserver` to automatically update when model changes
 - Integrates with TaskbarBadgeManager for badge overlay
 
 ### 3. TaskbarBadgeManager.cs
-**Responsibility**: Taskbar badge overlay management
+**Responsibility**: Taskbar badge overlay management (View/Observer)
 - Creates and updates taskbar badge overlay
 - Displays count of unread review requests
 - Uses Windows API for badge rendering
+- Implements `IReviewRequestObserver` to automatically update badge when model changes
 
 ### 4. SystemTrayManager.cs
 **Responsibility**: System tray icon and notifications
@@ -131,20 +147,22 @@ Agent Supervisor is a Windows system tray application written in C# using Window
 - `GetPendingReviewsAsync()`: Fetches all pending review requests
 
 ### 6. ReviewRequestService.cs
-**Responsibility**: Review request tracking and persistence
+**Responsibility**: Review request tracking and persistence (Model)
 - Maintains list of review requests with new/read status
 - Persists state to JSON file
 - Provides counts of total and new requests
-- Notifies observers when review data changes
+- Implements Observer pattern to notify views of changes
 - Removes stale review requests
 
 **Key Methods**:
-- `AddOrUpdate()`: Updates or adds review request
-- `MarkAsRead()`: Marks a request as read
-- `MarkAllAsRead()`: Marks all requests as read
+- `Subscribe()`: Registers an observer to receive change notifications
+- `Unsubscribe()`: Removes an observer from receiving notifications
+- `AddOrUpdate()`: Updates or adds review request and notifies observers
+- `MarkAsRead()`: Marks a request as read and notifies observers
+- `MarkAllAsRead()`: Marks all requests as read and notifies observers
 - `GetNewCount()`: Returns count of unread requests
 - `GetTotalCount()`: Returns total request count
-- `RemoveStaleRequests()`: Removes closed/completed PRs
+- `RemoveStaleRequests()`: Removes closed/completed PRs and notifies observers
 
 ### 7. NotificationHistory.cs
 **Responsibility**: Persistent notification storage
@@ -238,17 +256,18 @@ Agent Supervisor is a Windows system tray application written in C# using Window
 ### Source Files
 - `src/`: Source code directory
   - `Program.cs`: Main entry point and BotApplicationContext
-  - `MainWindow.cs`: Hidden window with review list UI
-  - `TaskbarBadgeManager.cs`: Badge overlay management
+  - `MainWindow.cs`: Hidden window with review list UI (implements IReviewRequestObserver)
+  - `TaskbarBadgeManager.cs`: Badge overlay management (implements IReviewRequestObserver)
   - `SystemTrayManager.cs`: System tray icon and notifications
   - `GitHubService.cs`: GitHub API integration
-  - `ReviewRequestService.cs`: Review request tracking
+  - `ReviewRequestService.cs`: Review request tracking (observable model)
   - `ReviewRequestHistory.cs`: Simple ID tracking
   - `NotificationHistory.cs`: Notification history management
   - `Configuration.cs`: Registry-based configuration
   - `SettingsForm.cs`: Settings dialog UI
   - `AboutForm.cs`: About dialog UI
   - `Logger.cs`: File-based logging
+  - `IReviewRequestObserver.cs`: Observer pattern interface
   - `Models/`: Data models
     - `PullRequestReview.cs`: PR review model
     - `NotificationEntry.cs`: Notification model

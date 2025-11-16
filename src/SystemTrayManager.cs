@@ -26,6 +26,7 @@ namespace AgentSupervisor
 #endif
         private Icon? _customIcon;
         private AboutForm? _aboutForm;
+        private EventHandler? _currentBalloonTipClickedHandler;
 
         public SystemTrayManager(
             NotificationHistory notificationHistory,
@@ -231,12 +232,19 @@ namespace AgentSupervisor
 
             _notifyIcon.ShowBalloonTip(5000, title, message, ToolTipIcon.Info);
 
+            // Remove previous handler if it exists
+            if (_currentBalloonTipClickedHandler != null)
+            {
+                _notifyIcon.BalloonTipClicked -= _currentBalloonTipClickedHandler;
+            }
+
             // Store the release URL for the balloon click event
             var tempUrl = updateInfo.ReleaseUrl;
-            _notifyIcon.BalloonTipClicked += (s, e) =>
+            _currentBalloonTipClickedHandler = (s, e) =>
             {
                 _onOpenUrlClick(tempUrl);
             };
+            _notifyIcon.BalloonTipClicked += _currentBalloonTipClickedHandler;
         }
 
 #if ENABLE_DEV_FEATURES

@@ -344,6 +344,13 @@ namespace AgentSupervisor
                 {
                     Logger.LogInfo($"Update available: {updateInfo.Version}");
                     
+                    // Check if this version was previously skipped
+                    if (!manualCheck && updateInfo.Version == _config!.SkippedVersion)
+                    {
+                        Logger.LogInfo($"Skipping notification for version {updateInfo.Version} (user previously declined)");
+                        return;
+                    }
+                    
                     // Show notification
                     _systemTrayManager?.ShowUpdateNotification(updateInfo);
                     
@@ -371,6 +378,13 @@ namespace AgentSupervisor
                     {
                         // Open the release page in the default browser
                         OnOpenUrlClick(updateInfo.ReleaseUrl);
+                    }
+                    else
+                    {
+                        // User clicked No - remember this version to skip future notifications
+                        _config!.SkippedVersion = updateInfo.Version;
+                        _config.Save();
+                        Logger.LogInfo($"User skipped version {updateInfo.Version}");
                     }
                 }
                 else
@@ -504,13 +518,7 @@ namespace AgentSupervisor
             }
             catch (Exception ex)
             {
-                Logger.LogError("Error downloading update", ex);
-                MessageBox.Show(
-                    $"Error downloading update: {ex.Message}",
-                    "Update Failed",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-                Logger.LogError("Error handling configuration change", ex);
+                Logger.LogError("Error during polling", ex);
             }
         }
 #endif

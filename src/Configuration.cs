@@ -11,6 +11,7 @@ namespace AgentSupervisor
         public bool UseProxy { get; set; } = false;
         public DateTime? LastUpdateCheck { get; set; } = null;
         public bool CheckForUpdatesOnStartup { get; set; } = true;
+        public string SkippedVersion { get; set; } = string.Empty;
         public bool EnableDesktopNotifications { get; set; } = true;
         public bool PausePolling { get; set; } = false;
 
@@ -30,6 +31,7 @@ namespace AgentSupervisor
                         MaxHistoryEntries = (int)(key.GetValue("MaxHistoryEntries") ?? 100),
                         ProxyUrl = key.GetValue("ProxyUrl") as string ?? string.Empty,
                         UseProxy = ((int)(key.GetValue("UseProxy") ?? 0)) != 0,
+                        SkippedVersion = key.GetValue("SkippedVersion") as string ?? string.Empty,
                         EnableDesktopNotifications = ((int)(key.GetValue("EnableDesktopNotifications") ?? 1)) != 0,
                         PausePolling = ((int)(key.GetValue("PausePolling") ?? 0)) != 0
                     };
@@ -57,6 +59,7 @@ namespace AgentSupervisor
                     key.SetValue("MaxHistoryEntries", MaxHistoryEntries, RegistryValueKind.DWord);
                     key.SetValue("ProxyUrl", ProxyUrl);
                     key.SetValue("UseProxy", UseProxy ? 1 : 0, RegistryValueKind.DWord);
+                    key.SetValue("SkippedVersion", SkippedVersion);
                     key.SetValue("EnableDesktopNotifications", EnableDesktopNotifications ? 1 : 0, RegistryValueKind.DWord);
                     key.SetValue("PausePolling", PausePolling ? 1 : 0, RegistryValueKind.DWord);
                     Logger.LogInfo("Configuration saved successfully to Registry");

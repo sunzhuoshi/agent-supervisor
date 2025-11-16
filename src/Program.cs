@@ -111,8 +111,8 @@ namespace AgentSupervisor
                 OnCheckForUpdatesClick,
                 RefreshTaskbarBadge,
                 ShowReviewRequestsForm
-#if ENABLE_CI_FEATURES
-                , TriggerImmediateCollection
+#if ENABLE_DEV_FEATURES
+                , TriggerImmediatePolling
                 , _config
                 , OnConfigChanged
 #endif
@@ -160,16 +160,16 @@ namespace AgentSupervisor
             {
                 try
                 {
-#if ENABLE_CI_FEATURES
-                    // Check if collection is paused (CI builds only)
-                    if (_config.PauseCollection)
+#if ENABLE_DEV_FEATURES
+                    // Check if polling is paused (DEV builds only)
+                    if (_config.PausePolling)
                     {
                         var currentUnreadCount = _reviewRequestService!.GetNewCount();
                         var currentTotalCount = _reviewRequestService!.GetTotalCount();
                         _systemTrayManager!.UpdateStatus($"Paused - {currentTotalCount} pending review(s) - {currentUnreadCount} unread");
-                        Logger.LogInfo("Data collection is paused, skipping this cycle");
+                        Logger.LogInfo("Data polling is paused, skipping this cycle");
                         
-                        // Skip to the delay without collecting data
+                        // Skip to the delay without polling data
                         await Task.Delay(TimeSpan.FromSeconds(_config.PollingIntervalSeconds), cancellationToken);
                         continue;
                     }
@@ -533,12 +533,12 @@ namespace AgentSupervisor
             }
         }
 
-#if ENABLE_CI_FEATURES
-        private async void TriggerImmediateCollection()
+#if ENABLE_DEV_FEATURES
+        private async void TriggerImmediatePolling()
         {
             try
             {
-                Logger.LogInfo("Immediate collection triggered from menu");
+                Logger.LogInfo("Immediate polling triggered from menu");
                 
                 if (_gitHubService == null)
                 {
@@ -546,9 +546,9 @@ namespace AgentSupervisor
                     return;
                 }
 
-                _systemTrayManager?.UpdateStatus("Collecting data...");
+                _systemTrayManager?.UpdateStatus("Polling data...");
                 
-                // Trigger the review collection immediately
+                // Trigger the review polling immediately
                 var reviews = await _gitHubService.GetPendingReviewsAsync();
                 
                 // Update status
@@ -556,11 +556,11 @@ namespace AgentSupervisor
                 var totalPendingCount = _reviewRequestService!.GetTotalCount();
                 _systemTrayManager?.UpdateStatus($"{totalPendingCount} pending review(s) - {unreadCount} unread");
                 
-                Logger.LogInfo($"Immediate collection completed: {totalPendingCount} total, {unreadCount} unread");
+                Logger.LogInfo($"Immediate polling completed: {totalPendingCount} total, {unreadCount} unread");
             }
             catch (Exception ex)
             {
-                Logger.LogError("Error during immediate collection", ex);
+                Logger.LogError("Error during immediate polling", ex);
                 _systemTrayManager?.UpdateStatus($"Error: {ex.Message}");
             }
         }
@@ -575,13 +575,13 @@ namespace AgentSupervisor
                 // Reload configuration from Registry to ensure we have the latest values
                 _config = Configuration.Load();
                 
-                Logger.LogInfo($"Configuration changed - PauseCollection: {_config.PauseCollection}");
+                Logger.LogInfo($"Configuration changed - PausePolling: {_config.PausePolling}");
                 
                 // Update status immediately to reflect the new state
                 var unreadCount = _reviewRequestService?.GetNewCount() ?? 0;
                 var totalPendingCount = _reviewRequestService?.GetTotalCount() ?? 0;
                 
-                if (_config.PauseCollection)
+                if (_config.PausePolling)
                 {
                     _systemTrayManager?.UpdateStatus($"Paused - {totalPendingCount} pending review(s) - {unreadCount} unread");
                 }

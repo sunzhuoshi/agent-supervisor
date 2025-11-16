@@ -12,7 +12,7 @@ namespace AgentSupervisor
         public DateTime? LastUpdateCheck { get; set; } = null;
         public bool CheckForUpdatesOnStartup { get; set; } = true;
         public bool EnableDesktopNotifications { get; set; } = true;
-        public bool PauseCollection { get; set; } = false;
+        public bool PausePolling { get; set; } = false;
 
         private const string RegistryKeyPath = @"Software\AgentSupervisor";
 
@@ -31,7 +31,7 @@ namespace AgentSupervisor
                         ProxyUrl = key.GetValue("ProxyUrl") as string ?? string.Empty,
                         UseProxy = ((int)(key.GetValue("UseProxy") ?? 0)) != 0,
                         EnableDesktopNotifications = ((int)(key.GetValue("EnableDesktopNotifications") ?? 1)) != 0,
-                        PauseCollection = ((int)(key.GetValue("PauseCollection") ?? 0)) != 0
+                        PausePolling = ((int)(key.GetValue("PausePolling") ?? 0)) != 0
                     };
                     Logger.LogInfo("Configuration loaded successfully from Registry");
                     return config;
@@ -58,7 +58,7 @@ namespace AgentSupervisor
                     key.SetValue("ProxyUrl", ProxyUrl);
                     key.SetValue("UseProxy", UseProxy ? 1 : 0, RegistryValueKind.DWord);
                     key.SetValue("EnableDesktopNotifications", EnableDesktopNotifications ? 1 : 0, RegistryValueKind.DWord);
-                    key.SetValue("PauseCollection", PauseCollection ? 1 : 0, RegistryValueKind.DWord);
+                    key.SetValue("PausePolling", PausePolling ? 1 : 0, RegistryValueKind.DWord);
                     Logger.LogInfo("Configuration saved successfully to Registry");
                 }
             }

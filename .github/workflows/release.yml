@@ -75,7 +75,6 @@ jobs:
       shell: pwsh
       run: |
         $version = "${{ steps.get_version.outputs.version }}"
-        $inputVersion = "${{ github.event.inputs.version }}"
         [xml]$csproj = Get-Content AgentSupervisor.csproj
         
         # Extract base version (MAJOR.MINOR.PATCH) without pre-release or build metadata
@@ -91,20 +90,10 @@ jobs:
         $csproj.Project.PropertyGroup.AssemblyVersion = $baseVersion
         $csproj.Project.PropertyGroup.FileVersion = $baseVersion
         
-        # Use full input version for InformationalVersion
-        # Check if InformationalVersion element exists
-        if ($null -eq $csproj.Project.PropertyGroup.InformationalVersion) {
-          $infoVersionElem = $csproj.CreateElement("InformationalVersion")
-          $infoVersionElem.InnerText = $inputVersion
-          $csproj.Project.PropertyGroup.AppendChild($infoVersionElem) | Out-Null
-        } else {
-          $csproj.Project.PropertyGroup.InformationalVersion = $inputVersion
-        }
-        
         # Save the file
         $csproj.Save("$PWD/AgentSupervisor.csproj")
         
-        Write-Output "Updated version to $baseVersion (InformationalVersion: $inputVersion) in AgentSupervisor.csproj"
+        Write-Output "Updated version to $baseVersion in AgentSupervisor.csproj"
     
     - name: Verify version in source
       shell: pwsh
@@ -167,7 +156,7 @@ jobs:
       run: dotnet restore
     
     - name: Build
-      run: dotnet build --no-restore --configuration Release
+      run: dotnet build --no-restore --configuration Release /p:InformationalVersion=${{ steps.get_version.outputs.version }}
     
     - name: Check for vulnerabilities
       run: dotnet list package --vulnerable --include-transitive

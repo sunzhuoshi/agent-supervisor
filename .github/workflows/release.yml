@@ -75,17 +75,36 @@ jobs:
       shell: pwsh
       run: |
         $version = "${{ steps.get_version.outputs.version }}"
+        $inputVersion = "${{ github.event.inputs.version }}"
         [xml]$csproj = Get-Content AgentSupervisor.csproj
         
-        # Update all version properties
-        $csproj.Project.PropertyGroup.Version = $version
-        $csproj.Project.PropertyGroup.AssemblyVersion = $version
-        $csproj.Project.PropertyGroup.FileVersion = $version
+        # Extract base version (MAJOR.MINOR.PATCH) without pre-release or build metadata
+        if ($version -match '^(\d+\.\d+\.\d+)') {
+          $baseVersion = $matches[1]
+        } else {
+          $baseVersion = $version
+        }
+        
+        # Update version properties
+        # Use base version for Version, AssemblyVersion, and FileVersion
+        $csproj.Project.PropertyGroup.Version = $baseVersion
+        $csproj.Project.PropertyGroup.AssemblyVersion = $baseVersion
+        $csproj.Project.PropertyGroup.FileVersion = $baseVersion
+        
+        # Use full input version for InformationalVersion
+        # Check if InformationalVersion element exists
+        if ($null -eq $csproj.Project.PropertyGroup.InformationalVersion) {
+          $infoVersionElem = $csproj.CreateElement("InformationalVersion")
+          $infoVersionElem.InnerText = $inputVersion
+          $csproj.Project.PropertyGroup.AppendChild($infoVersionElem) | Out-Null
+        } else {
+          $csproj.Project.PropertyGroup.InformationalVersion = $inputVersion
+        }
         
         # Save the file
         $csproj.Save("$PWD/AgentSupervisor.csproj")
         
-        Write-Output "Updated version to $version in AgentSupervisor.csproj"
+        Write-Output "Updated version to $baseVersion (InformationalVersion: $inputVersion) in AgentSupervisor.csproj"
     
     - name: Verify version in source
       shell: pwsh
@@ -94,11 +113,18 @@ jobs:
         [xml]$csproj = Get-Content AgentSupervisor.csproj
         $sourceVersion = $csproj.Project.PropertyGroup.Version
         
-        Write-Output "Tag version: $tagVersion"
+        # Extract base version from tag for comparison
+        if ($tagVersion -match '^(\d+\.\d+\.\d+)') {
+          $baseTagVersion = $matches[1]
+        } else {
+          $baseTagVersion = $tagVersion
+        }
+        
+        Write-Output "Tag version: $tagVersion (base: $baseTagVersion)"
         Write-Output "Source version: $sourceVersion"
         
-        if ($tagVersion -ne $sourceVersion) {
-          Write-Error "Version mismatch! Tag version ($tagVersion) does not match source version ($sourceVersion)"
+        if ($baseTagVersion -ne $sourceVersion) {
+          Write-Error "Version mismatch! Tag base version ($baseTagVersion) does not match source version ($sourceVersion)"
           exit 1
         }
         

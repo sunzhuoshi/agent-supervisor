@@ -5,7 +5,6 @@ namespace AgentSupervisor
 {
     public class ReviewRequestService
     {
-        private const string RequestsFileName = "review_request_details.json";
         private readonly List<ReviewRequestEntry> _requests;
         private readonly object _lockObject = new object();
         private readonly List<IReviewRequestObserver> _observers = new List<IReviewRequestObserver>();
@@ -69,11 +68,11 @@ namespace AgentSupervisor
 
         private List<ReviewRequestEntry> Load()
         {
-            if (File.Exists(RequestsFileName))
+            if (File.Exists(Constants.ReviewRequestDetailsFileName))
             {
                 try
                 {
-                    var json = File.ReadAllText(RequestsFileName);
+                    var json = File.ReadAllText(Constants.ReviewRequestDetailsFileName);
                     return JsonSerializer.Deserialize<List<ReviewRequestEntry>>(json) ?? new List<ReviewRequestEntry>();
                 }
                 catch (Exception ex)
@@ -92,7 +91,7 @@ namespace AgentSupervisor
                 {
                     var options = new JsonSerializerOptions { WriteIndented = true };
                     var json = JsonSerializer.Serialize(_requests, options);
-                    File.WriteAllText(RequestsFileName, json);
+                    File.WriteAllText(Constants.ReviewRequestDetailsFileName, json);
                 }
                 catch (Exception ex)
                 {

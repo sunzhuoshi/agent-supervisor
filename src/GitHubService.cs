@@ -32,12 +32,12 @@ namespace AgentSupervisor
 
             _httpClient = new HttpClient(handler);
             _httpClient.DefaultRequestHeaders.UserAgent.Add(
-                new ProductInfoHeaderValue("AgentSupervisor", "1.0"));
+                new ProductInfoHeaderValue(Constants.ApplicationName.Replace(" ", ""), Constants.ApplicationVersion));
             _httpClient.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", personalAccessToken);
             _httpClient.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
-            _httpClient.DefaultRequestHeaders.Add("X-GitHub-Api-Version", "2022-11-28");
+                new MediaTypeWithQualityHeaderValue(Constants.GitHubAcceptHeader));
+            _httpClient.DefaultRequestHeaders.Add("X-GitHub-Api-Version", Constants.GitHubApiVersion);
 
             _username = string.Empty;
             _reviewRequestHistory = new ReviewRequestHistory();
@@ -54,7 +54,7 @@ namespace AgentSupervisor
 
             try
             {
-                var url = "https://api.github.com/user";
+                var url = $"{Constants.GitHubApiBaseUrl}/user";
                 Logger.LogInfo($"HTTP GET {url}");
                 
                 var startTime = DateTime.UtcNow;
@@ -120,7 +120,7 @@ namespace AgentSupervisor
                 }
 
                 // Get all pull requests where the user is requested as a reviewer
-                var searchUrl = $"https://api.github.com/search/issues?q=type:pr+review-requested:{username}+state:open&sort=updated&per_page=50";
+                var searchUrl = $"{Constants.GitHubApiBaseUrl}/search/issues?q=type:pr+review-requested:{username}+state:open&sort=updated&per_page={Constants.GitHubSearchMaxResults}";
                 Logger.LogInfo($"HTTP GET {searchUrl}");
                 
                 var startTime = DateTime.UtcNow;
@@ -162,7 +162,7 @@ namespace AgentSupervisor
                         }
                         
                         // Parse repository full name from the URL
-                        var repoFullName = repositoryUrl.Replace("https://api.github.com/repos/", "");
+                        var repoFullName = repositoryUrl.Replace(Constants.GitHubApiReposPrefix, "");
                         
                         var prNumber = item.GetProperty("number").GetInt32();
                         var prId = item.GetProperty("id").GetInt64();

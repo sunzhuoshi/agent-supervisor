@@ -7,8 +7,6 @@ namespace AgentSupervisor
     public class Logger
     {
         private static readonly object _lockObject = new object();
-        private const string LogFileName = "AgentSupervisor.log";
-        private const int MaxLogSizeBytes = 10 * 1024 * 1024; // 10 MB
 
         public static void LogInfo(string message)
         {
@@ -32,7 +30,7 @@ namespace AgentSupervisor
             {
                 try
                 {
-                    var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                    var timestamp = DateTime.Now.ToString(Constants.LogTimestampFormat);
                     var logEntry = $"[{timestamp}] [{level}] {message}";
                     
                     // Write to debug output
@@ -40,20 +38,20 @@ namespace AgentSupervisor
                     
                     // Write to file
                     // Rotate log if it's too large
-                    if (File.Exists(LogFileName))
+                    if (File.Exists(Constants.LogFileName))
                     {
-                        var fileInfo = new FileInfo(LogFileName);
-                        if (fileInfo.Length > MaxLogSizeBytes)
+                        var fileInfo = new FileInfo(Constants.LogFileName);
+                        if (fileInfo.Length > Constants.MaxLogSizeBytes)
                         {
-                            var backupName = $"{LogFileName}.{DateTime.Now:yyyyMMddHHmmss}.bak";
-                            File.Move(LogFileName, backupName);
+                            var backupName = $"{Constants.LogFileName}.{DateTime.Now:yyyyMMddHHmmss}{Constants.LogBackupExtension}";
+                            File.Move(Constants.LogFileName, backupName);
                             
                             // Keep only the last 5 backup files
                             CleanupOldBackups();
                         }
                     }
 
-                    File.AppendAllText(LogFileName, logEntry + "\n");
+                    File.AppendAllText(Constants.LogFileName, logEntry + "\n");
                 }
                 catch
                 {
@@ -66,10 +64,10 @@ namespace AgentSupervisor
         {
             try
             {
-                var directory = Path.GetDirectoryName(LogFileName) ?? ".";
-                var backupFiles = Directory.GetFiles(directory, $"{Path.GetFileName(LogFileName)}.*.bak")
+                var directory = Path.GetDirectoryName(Constants.LogFileName) ?? ".";
+                var backupFiles = Directory.GetFiles(directory, $"{Path.GetFileName(Constants.LogFileName)}.*{Constants.LogBackupExtension}")
                     .OrderByDescending(f => f)
-                    .Skip(5)
+                    .Skip(Constants.MaxLogBackupCount)
                     .ToArray();
 
                 foreach (var file in backupFiles)

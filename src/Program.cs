@@ -9,21 +9,20 @@ namespace AgentSupervisor
     class Program
     {
         private static Mutex? _mutex;
-        private const string MutexName = "AgentSupervisor_SingleInstance_Mutex";
 
         [STAThread]
         static void Main(string[] args)
         {
             // Check for single instance
-            _mutex = new Mutex(true, MutexName, out bool createdNew);
+            _mutex = new Mutex(true, Constants.SingleInstanceMutexName, out bool createdNew);
             
             if (!createdNew)
             {
                 // Another instance is already running
                 Logger.LogWarning("Another instance of Agent Supervisor is already running");
                 MessageBox.Show(
-                    "Agent Supervisor is already running.\n\nPlease check the system tray for the application icon.",
-                    "Agent Supervisor Already Running",
+                    Constants.MessageAlreadyRunning,
+                    Constants.MessageBoxTitleAlreadyRunning,
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
                 return;
@@ -78,8 +77,8 @@ namespace AgentSupervisor
                     string.IsNullOrEmpty(_config.PersonalAccessToken))
                 {
                     Logger.LogWarning("Application exiting - no token configured");
-                    MessageBox.Show("Personal Access Token is required to run the application.", 
-                        "Configuration Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(Constants.MessageTokenRequired, 
+                        Constants.MessageBoxTitleWarning, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     Application.Exit();
                     return;
                 }
@@ -126,14 +125,14 @@ namespace AgentSupervisor
             _updateService = new UpdateService(currentVersion);
 
             // Verify GitHub connection
-            _systemTrayManager.UpdateStatus("Connecting to GitHub...");
+            _systemTrayManager.UpdateStatus(Constants.StatusConnecting);
             var username = await _gitHubService.GetCurrentUserAsync();
             
             if (string.IsNullOrEmpty(username))
             {
                 Logger.LogError("Failed to connect to GitHub");
-                MessageBox.Show("Failed to connect to GitHub. Please check your Personal Access Token.", 
-                    "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(Constants.MessageConnectionFailed, 
+                    Constants.MessageBoxTitleConnectionError, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 OnSettingsClick();
                 return;
             }
@@ -263,7 +262,7 @@ namespace AgentSupervisor
         {
             Logger.LogInfo("Restarting monitoring with new configuration");
             _cts?.Cancel();
-            _monitoringTask?.Wait(TimeSpan.FromSeconds(5));
+            _monitoringTask?.Wait(TimeSpan.FromSeconds(Constants.ShutdownTimeoutSeconds));
 
             var proxyUrl = _config!.UseProxy ? _config.ProxyUrl : null;
             _notificationHistory = new NotificationHistory(_config.MaxHistoryEntries);
@@ -283,14 +282,14 @@ namespace AgentSupervisor
             _cts = new CancellationTokenSource();
             _monitoringTask = Task.Run(() => MonitorReviews(_cts.Token));
 
-            _systemTrayManager?.UpdateStatus("Monitoring restarted");
+            _systemTrayManager?.UpdateStatus(Constants.StatusMonitoringRestarted);
         }
 
         private void OnExitClick()
         {
             Logger.LogInfo("Application exiting");
             _cts?.Cancel();
-            _monitoringTask?.Wait(TimeSpan.FromSeconds(5));
+            _monitoringTask?.Wait(TimeSpan.FromSeconds(Constants.ShutdownTimeoutSeconds));
             _systemTrayManager?.Dispose();
             _badgeManager?.Dispose();
             _settingsForm?.Dispose();
@@ -312,7 +311,7 @@ namespace AgentSupervisor
             catch (Exception ex)
             {
                 Logger.LogError($"Error opening URL: {url}", ex);
-                MessageBox.Show($"Error opening browser: {ex.Message}", "Error", 
+                MessageBox.Show($"Error opening browser: {ex.Message}", Constants.MessageBoxTitleError, 
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -330,7 +329,7 @@ namespace AgentSupervisor
                 
                 if (manualCheck)
                 {
-                    _systemTrayManager?.UpdateStatus("Checking for updates...");
+                    _systemTrayManager?.UpdateStatus(Constants.StatusCheckingForUpdates);
                 }
 
                 var updateInfo = await _updateService!.CheckForUpdatesAsync();
@@ -369,7 +368,7 @@ namespace AgentSupervisor
                     // Show dialog with update option
                     var result = MessageBox.Show(
                         message,
-                        updateInfo.IsPreRelease ? "Pre-Release Update Available" : "Update Available",
+                        updateInfo.IsPreRelease ? Constants.MessageBoxTitlePreReleaseUpdateAvailable : Constants.MessageBoxTitleUpdateAvailable,
                         MessageBoxButtons.YesNo,
                         updateInfo.IsPreRelease ? MessageBoxIcon.Warning : MessageBoxIcon.Information);
 
@@ -393,8 +392,8 @@ namespace AgentSupervisor
                     if (manualCheck)
                     {
                         MessageBox.Show(
-                            "You are running the latest version.",
-                            "No Updates Available",
+                            Constants.MessageNoUpdatesAvailable,
+                            Constants.MessageBoxTitleNoUpdatesAvailable,
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Information);
                     }
@@ -408,7 +407,7 @@ namespace AgentSupervisor
                 {
                     MessageBox.Show(
                         $"Error checking for updates: {ex.Message}",
-                        "Update Check Failed",
+                        Constants.MessageBoxTitleUpdateCheckFailed,
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
                 }

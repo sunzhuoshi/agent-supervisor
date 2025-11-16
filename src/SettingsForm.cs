@@ -24,8 +24,8 @@ namespace AgentSupervisor
 
         private void InitializeComponents()
         {
-            this.Text = "Agent Supervisor - Settings";
-            this.Size = new System.Drawing.Size(500, 450);
+            this.Text = $"{Constants.ApplicationName} - Settings";
+            this.Size = new System.Drawing.Size(Constants.SettingsFormWidth, Constants.SettingsFormHeight);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -76,9 +76,9 @@ namespace AgentSupervisor
             {
                 Location = new System.Drawing.Point(220, 108),
                 Size = new System.Drawing.Size(100, 25),
-                Minimum = 10,
-                Maximum = 3600,
-                Value = 60
+                Minimum = Constants.SettingsPollingMinSeconds,
+                Maximum = Constants.SettingsPollingMaxSeconds,
+                Value = Constants.DefaultPollingIntervalSeconds
             };
             this.Controls.Add(_intervalNumeric);
 
@@ -96,9 +96,9 @@ namespace AgentSupervisor
             {
                 Location = new System.Drawing.Point(220, 143),
                 Size = new System.Drawing.Size(100, 25),
-                Minimum = 10,
-                Maximum = 1000,
-                Value = 100
+                Minimum = Constants.SettingsHistoryMinEntries,
+                Maximum = Constants.SettingsHistoryMaxEntries,
+                Value = Constants.DefaultMaxHistoryEntries
             };
             this.Controls.Add(_maxHistoryNumeric);
 
@@ -191,7 +191,7 @@ namespace AgentSupervisor
         {
             if (string.IsNullOrWhiteSpace(_tokenTextBox.Text))
             {
-                MessageBox.Show("Personal Access Token is required.", "Validation Error", 
+                MessageBox.Show(Constants.MessageTokenValidationFailed, Constants.MessageBoxTitleValidationError, 
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 this.DialogResult = DialogResult.None;
                 return;
@@ -199,7 +199,7 @@ namespace AgentSupervisor
 
             if (_useProxyCheckBox.Checked && string.IsNullOrWhiteSpace(_proxyUrlTextBox.Text))
             {
-                MessageBox.Show("Proxy URL is required when proxy is enabled.", "Validation Error", 
+                MessageBox.Show(Constants.MessageProxyValidationFailed, Constants.MessageBoxTitleValidationError, 
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 this.DialogResult = DialogResult.None;
                 return;
@@ -213,7 +213,7 @@ namespace AgentSupervisor
             _configuration.ProxyUrl = _proxyUrlTextBox.Text.Trim();
             _configuration.Save();
 
-            MessageBox.Show("Settings saved successfully.", "Success", 
+            MessageBox.Show(Constants.MessageSettingsSaved, Constants.MessageBoxTitleSuccess, 
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }

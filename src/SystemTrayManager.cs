@@ -77,7 +77,7 @@ namespace AgentSupervisor
             {
                 Icon = _customIcon,
                 Visible = true,
-                Text = "Agent Supervisor"
+                Text = Constants.ApplicationName
             };
             icon.ContextMenuStrip = _contextMenu;
             icon.DoubleClick += (s, e) => _showReviewRequestsForm();
@@ -95,7 +95,7 @@ namespace AgentSupervisor
         {
             var menu = new ContextMenuStrip();
 
-            var recentItem = new ToolStripMenuItem("Review Requests by Copilots");
+            var recentItem = new ToolStripMenuItem(Constants.MenuItemReviewRequests);
             recentItem.Click += (s, e) => _showReviewRequestsForm();
             menu.Items.Add(recentItem);
 
@@ -103,7 +103,7 @@ namespace AgentSupervisor
 
 #if ENABLE_DEV_FEATURES
             // DEV-only menu item for data polling
-            var pollDataItem = new ToolStripMenuItem("Poll at Once");
+            var pollDataItem = new ToolStripMenuItem(Constants.MenuItemPollAtOnce);
             pollDataItem.Click += (s, e) => PollData();
             menu.Items.Add(pollDataItem);
             
@@ -117,23 +117,23 @@ namespace AgentSupervisor
             
             menu.Items.Add(new ToolStripSeparator());
 
-            var settingsItem = new ToolStripMenuItem("Settings");
+            var settingsItem = new ToolStripMenuItem(Constants.MenuItemSettings);
             settingsItem.Click += (s, e) => _onSettingsClick();
             menu.Items.Add(settingsItem);
 
-            var aboutItem = new ToolStripMenuItem("About");
+            var aboutItem = new ToolStripMenuItem(Constants.MenuItemAbout);
             aboutItem.Click += (s, e) => ShowAbout();
             menu.Items.Add(aboutItem);
 
             menu.Items.Add(new ToolStripSeparator());
 
-            var checkUpdatesItem = new ToolStripMenuItem("Check for Updates");
+            var checkUpdatesItem = new ToolStripMenuItem(Constants.MenuItemCheckForUpdates);
             checkUpdatesItem.Click += (s, e) => _onCheckForUpdatesClick();
             menu.Items.Add(checkUpdatesItem);
 
             menu.Items.Add(new ToolStripSeparator());
 
-            var exitItem = new ToolStripMenuItem("Exit");
+            var exitItem = new ToolStripMenuItem(Constants.MenuItemExit);
             exitItem.Click += (s, e) => _onExitClick();
             menu.Items.Add(exitItem);
 
@@ -146,7 +146,7 @@ namespace AgentSupervisor
             var message = $"PR #{review.PullRequestNumber} - {review.State}\n" +
                          $"Reviewer: {review.User?.Login ?? "Unknown"}";
 
-            _notifyIcon.ShowBalloonTip(5000, title, message, ToolTipIcon.Info);
+            _notifyIcon.ShowBalloonTip(Constants.NotificationTimeoutMilliseconds, title, message, ToolTipIcon.Info);
             
             // Store the URL for the balloon click event
             var tempUrl = review.HtmlUrl;
@@ -174,7 +174,7 @@ namespace AgentSupervisor
 
         public void UpdateStatus(string status)
         {
-            _notifyIcon.Text = $"Agent Supervisor\n{status}";
+            _notifyIcon.Text = $"{Constants.ApplicationName}\n{status}";
         }
 
         private Icon CreateCustomIcon()
@@ -182,10 +182,10 @@ namespace AgentSupervisor
             try
             {
                 // Load app_icon.ico for the system tray
-                var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "res", "app_icon.ico");
+                var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.IconResourcePath, Constants.AppIconFileName);
                 if (File.Exists(iconPath))
                 {
-                    var icon = new Icon(iconPath, 16, 16);
+                    var icon = new Icon(iconPath, Constants.SystemTrayIconSize, Constants.SystemTrayIconSize);
                     Logger.LogInfo("Custom icon loaded from app_icon.ico");
                     return icon;
                 }
@@ -193,17 +193,17 @@ namespace AgentSupervisor
                 {
                     Logger.LogWarning($"app_icon.ico not found at {iconPath}, using fallback");
                     // Fallback: Create a simple custom icon with GitHub Copilot colors
-                    using var bitmap = new Bitmap(16, 16);
+                    using var bitmap = new Bitmap(Constants.SystemTrayIconSize, Constants.SystemTrayIconSize);
                     using var graphics = Graphics.FromImage(bitmap);
                     
                     // Fill with a gradient from purple to blue (GitHub Copilot colors)
                     using var brush = new System.Drawing.Drawing2D.LinearGradientBrush(
-                        new Rectangle(0, 0, 16, 16),
-                        Color.FromArgb(138, 43, 226), // Purple
-                        Color.FromArgb(0, 122, 204),   // Blue
-                        45f);
+                        new Rectangle(0, 0, Constants.SystemTrayIconSize, Constants.SystemTrayIconSize),
+                        Color.FromArgb(Constants.IconGradientStartColorArgb),
+                        Color.FromArgb(Constants.IconGradientEndColorArgb),
+                        Constants.IconGradientAngle);
                     
-                    graphics.FillEllipse(brush, 0, 0, 16, 16);
+                    graphics.FillEllipse(brush, 0, 0, Constants.SystemTrayIconSize, Constants.SystemTrayIconSize);
                     
                     // Draw a simple "A" in white for "Agent"
                     using var font = new Font("Arial", 9, FontStyle.Bold);
@@ -226,11 +226,11 @@ namespace AgentSupervisor
 
         public void ShowUpdateNotification(UpdateInfo updateInfo)
         {
-            var title = "Update Available";
+            var title = Constants.MessageBoxTitleUpdateAvailable;
             var message = $"Version {updateInfo.Version} is now available!\n" +
                          $"Published: {updateInfo.PublishedAt:MMM dd, yyyy}";
 
-            _notifyIcon.ShowBalloonTip(5000, title, message, ToolTipIcon.Info);
+            _notifyIcon.ShowBalloonTip(Constants.NotificationTimeoutMilliseconds, title, message, ToolTipIcon.Info);
 
             // Remove previous handler if it exists
             if (_currentBalloonTipClickedHandler != null)
@@ -266,8 +266,8 @@ namespace AgentSupervisor
                 {
                     Logger.LogWarning("Polling callback not configured");
                     MessageBox.Show(
-                        "Data polling callback is not configured.",
-                        "Configuration Error",
+                        Constants.MessagePollingNotConfigured,
+                        Constants.MessageBoxTitleConfigurationError,
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Warning);
                 }
@@ -277,7 +277,7 @@ namespace AgentSupervisor
                 Logger.LogError("Error triggering data polling", ex);
                 MessageBox.Show(
                     $"Error triggering data polling:\n\n{ex.Message}",
-                    "Polling Error",
+                    Constants.MessageBoxTitlePollingError,
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
             }
@@ -303,12 +303,12 @@ namespace AgentSupervisor
                 // Notify the application of the configuration change
                 _onConfigChanged?.Invoke();
                 
-                var statusMessage = _config.PausePolling ? "Data polling paused" : "Data polling resumed";
+                var statusMessage = _config.PausePolling ? Constants.MessagePollingPaused : Constants.MessagePollingResumed;
                 Logger.LogInfo($"Pause polling toggled: {statusMessage}");
                 
                 MessageBox.Show(
                     statusMessage,
-                    "Polling Status",
+                    Constants.MessageBoxTitlePollingStatus,
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
             }
@@ -317,7 +317,7 @@ namespace AgentSupervisor
                 Logger.LogError("Error toggling pause polling", ex);
                 MessageBox.Show(
                     $"Error toggling pause polling:\n\n{ex.Message}",
-                    "Error",
+                    Constants.MessageBoxTitleError,
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
             }
@@ -328,7 +328,7 @@ namespace AgentSupervisor
         /// </summary>
         private string GetPauseMenuText()
         {
-            return _config.PausePolling ? "Resume Polling" : "Pause Polling";
+            return _config.PausePolling ? Constants.MenuItemResumePolling : Constants.MenuItemPausePolling;
         }
 
         public void Dispose()

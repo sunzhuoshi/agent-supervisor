@@ -9,18 +9,16 @@ namespace AgentSupervisor
     {
         private readonly HttpClient _httpClient;
         private readonly string _currentVersion;
-        private const string GitHubOwner = "sunzhuoshi";
-        private const string GitHubRepo = "agent-supervisor";
 
         public UpdateService(string currentVersion)
         {
             _currentVersion = currentVersion;
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.UserAgent.Add(
-                new ProductInfoHeaderValue("AgentSupervisor", currentVersion));
+                new ProductInfoHeaderValue(Constants.ApplicationName.Replace(" ", ""), currentVersion));
             _httpClient.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
-            _httpClient.DefaultRequestHeaders.Add("X-GitHub-Api-Version", "2022-11-28");
+                new MediaTypeWithQualityHeaderValue(Constants.GitHubAcceptHeader));
+            _httpClient.DefaultRequestHeaders.Add("X-GitHub-Api-Version", Constants.GitHubApiVersion);
             
             Logger.LogInfo($"UpdateService initialized with current version: {currentVersion}");
         }
@@ -30,7 +28,7 @@ namespace AgentSupervisor
             try
             {
                 Logger.LogInfo("Checking for updates from GitHub releases");
-                var url = $"https://api.github.com/repos/{GitHubOwner}/{GitHubRepo}/releases/latest";
+                var url = $"{Constants.GitHubApiBaseUrl}/repos/{Constants.GitHubOwner}/{Constants.GitHubRepo}/releases/latest";
                 
                 var startTime = DateTime.UtcNow;
                 var response = await _httpClient.GetAsync(url);
@@ -76,7 +74,7 @@ namespace AgentSupervisor
                     foreach (var asset in assets.EnumerateArray())
                     {
                         var assetName = asset.GetProperty("name").GetString() ?? "";
-                        if (assetName.EndsWith("-windows.zip", StringComparison.OrdinalIgnoreCase))
+                        if (assetName.EndsWith(Constants.WindowsZipAssetSuffix, StringComparison.OrdinalIgnoreCase))
                         {
                             downloadUrl = asset.GetProperty("browser_download_url").GetString();
                             Logger.LogInfo($"Found Windows asset: {assetName}");
@@ -162,7 +160,7 @@ namespace AgentSupervisor
                 
                 // Check if it has 4 or more parts (CI build format)
                 var parts = versionWithoutMetadata.Split('.');
-                if (parts.Length > 3)
+                if (parts.Length > Constants.CIBuildVersionPartThreshold)
                 {
                     Logger.LogInfo($"Version {version} is a CI build (has {parts.Length} parts)");
                     return true;
@@ -183,14 +181,14 @@ namespace AgentSupervisor
                 Logger.LogInfo($"Starting download from: {downloadUrl}");
                 
                 // Create temp directory for download
-                var tempDir = Path.Combine(Path.GetTempPath(), "AgentSupervisor-Update");
+                var tempDir = Path.Combine(Path.GetTempPath(), Constants.UpdateTempFolderName);
                 if (Directory.Exists(tempDir))
                 {
                     Directory.Delete(tempDir, true);
                 }
                 Directory.CreateDirectory(tempDir);
 
-                var zipPath = Path.Combine(tempDir, "update.zip");
+                var zipPath = Path.Combine(tempDir, Constants.UpdateZipFileName);
                 
                 // Download the update
                 using (var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead))
@@ -201,9 +199,9 @@ namespace AgentSupervisor
                     var canReportProgress = totalBytes != -1 && progress != null;
                     
                     using var contentStream = await response.Content.ReadAsStreamAsync();
-                    using var fileStream = new FileStream(zipPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
+                    using var fileStream = new FileStream(zipPath, FileMode.Create, FileAccess.Write, FileShare.None, Constants.HttpBufferSize, true);
                     
-                    var buffer = new byte[8192];
+                    var buffer = new byte[Constants.HttpBufferSize];
                     long totalRead = 0;
                     int bytesRead;
                     
@@ -223,22 +221,22 @@ namespace AgentSupervisor
                 Logger.LogInfo($"Download completed: {zipPath}");
 
                 // Extract the update
-                var extractPath = Path.Combine(tempDir, "extracted");
+                var extractPath = Path.Combine(tempDir, Constants.UpdateExtractFolderName);
                 ZipFile.ExtractToDirectory(zipPath, extractPath);
                 Logger.LogInfo($"Update extracted to: {extractPath}");
 
                 // Prepare the updater script
                 var currentDirectory = AppDomain.CurrentDomain.BaseDirectory;
-                var updateScriptPath = Path.Combine(tempDir, "update.bat");
+                var updateScriptPath = Path.Combine(tempDir, Constants.UpdateScriptFileName);
                 
                 // Create rollback directory for old version files
-                var rollbackDir = Path.Combine(currentDirectory, "rollback");
+                var rollbackDir = Path.Combine(currentDirectory, Constants.RollbackFolderName);
                 var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
                 var versionRollbackDir = Path.Combine(rollbackDir, $"version_{_currentVersion}_{timestamp}");
                 
                 // Backup config.json before update
-                var configPath = Path.Combine(currentDirectory, "config.json");
-                var configBackupPath = Path.Combine(tempDir, "config.json.backup");
+                var configPath = Path.Combine(currentDirectory, Constants.ConfigFileName);
+                var configBackupPath = Path.Combine(tempDir, Constants.ConfigFileName + Constants.ConfigBackupExtension);
                 
                 if (File.Exists(configPath))
                 {
@@ -247,8 +245,8 @@ namespace AgentSupervisor
                 }
 
                 // Backup notification_history.json before update
-                var historyPath = Path.Combine(currentDirectory, "notification_history.json");
-                var historyBackupPath = Path.Combine(tempDir, "notification_history.json.backup");
+                var historyPath = Path.Combine(currentDirectory, Constants.NotificationHistoryFileName);
+                var historyBackupPath = Path.Combine(tempDir, Constants.NotificationHistoryFileName + Constants.ConfigBackupExtension);
                 
                 if (File.Exists(historyPath))
                 {
@@ -257,8 +255,8 @@ namespace AgentSupervisor
                 }
 
                 // Backup review_requests.json before update
-                var reviewRequestsPath = Path.Combine(currentDirectory, "review_requests.json");
-                var reviewRequestsBackupPath = Path.Combine(tempDir, "review_requests.json.backup");
+                var reviewRequestsPath = Path.Combine(currentDirectory, Constants.ReviewRequestHistoryFileName);
+                var reviewRequestsBackupPath = Path.Combine(tempDir, Constants.ReviewRequestHistoryFileName + Constants.ConfigBackupExtension);
                 
                 if (File.Exists(reviewRequestsPath))
                 {
@@ -274,7 +272,7 @@ namespace AgentSupervisor
                 // 5. Restart the application
                 var updateScript = $@"@echo off
 echo Waiting for Agent Supervisor to close...
-timeout /t 2 /nobreak >nul
+timeout /t {Constants.UpdateWaitTimeoutSeconds} /nobreak >nul
 
 echo Creating rollback backup of old version...
 if not exist ""{rollbackDir}"" mkdir ""{rollbackDir}""
@@ -311,7 +309,7 @@ echo ============================================================
 echo.
 
 echo Cleaning up temporary update files...
-timeout /t 2 /nobreak >nul
+timeout /t {Constants.UpdateWaitTimeoutSeconds} /nobreak >nul
 
 echo Starting Agent Supervisor...
 start """" ""{Path.Combine(currentDirectory, "AgentSupervisor.exe")}""
@@ -327,11 +325,11 @@ rd /s /q ""{tempDir}""
                 Logger.LogInfo($"Update script created: {updateScriptPath}");
 
                 // Create exclude list for backup to avoid backing up user data and rollback folders
-                var excludeListPath = Path.Combine(tempDir, "exclude.txt");
-                var excludeList = @"config.json
-notification_history.json
-review_requests.json
-rollback\
+                var excludeListPath = Path.Combine(tempDir, Constants.UpdateExcludeListFileName);
+                var excludeList = $@"{Constants.ConfigFileName}
+{Constants.NotificationHistoryFileName}
+{Constants.ReviewRequestHistoryFileName}
+{Constants.RollbackFolderName}\
 ";
                 File.WriteAllText(excludeListPath, excludeList);
                 Logger.LogInfo($"Exclude list created: {excludeListPath}");
@@ -410,8 +408,8 @@ rollback\
             // Parse major.minor.patch
             // Note: CI builds (e.g., 1.0.0.123) are filtered out before comparison
             var numbers = mainVersion.Split('.');
-            if (numbers.Length < 3)
-                throw new FormatException($"Version must have at least 3 parts (major.minor.patch): {version}");
+            if (numbers.Length < Constants.SemanticVersionPartCount)
+                throw new FormatException($"Version must have at least {Constants.SemanticVersionPartCount} parts (major.minor.patch): {version}");
 
             semVer.Major = int.Parse(numbers[0]);
             semVer.Minor = int.Parse(numbers[1]);

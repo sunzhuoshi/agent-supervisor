@@ -125,7 +125,7 @@ jobs:
         $status = git status --porcelain AgentSupervisor.csproj
         if ($status) {
           git add AgentSupervisor.csproj
-          git commit -m "Bump version to $version"
+          git commit -m "Bump version to $tag"
           $branch = "${{ github.ref }}".Split('/')[-1]
           git push origin HEAD:$branch
           Write-Output "Committed version change"

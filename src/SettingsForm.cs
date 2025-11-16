@@ -14,9 +14,6 @@ namespace AgentSupervisor
         private CheckBox _enableNotificationsCheckBox = null!;
         private Button _saveButton = null!;
         private Button _cancelButton = null!;
-        private Button _fontSelectButton = null!;
-        private Label _fontDisplayLabel = null!;
-        private Font? _selectedFont;
 
         public SettingsForm(Configuration configuration)
         {
@@ -28,7 +25,7 @@ namespace AgentSupervisor
         private void InitializeComponents()
         {
             this.Text = "Agent Supervisor - Settings";
-            this.Size = new System.Drawing.Size(500, 520);
+            this.Size = new System.Drawing.Size(500, 450);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -114,52 +111,11 @@ namespace AgentSupervisor
             };
             this.Controls.Add(_enableNotificationsCheckBox);
 
-            // Font Selection Group
-            var fontGroup = new GroupBox
-            {
-                Text = "List Font",
-                Location = new System.Drawing.Point(20, 210),
-                Size = new System.Drawing.Size(450, 90)
-            };
-            this.Controls.Add(fontGroup);
-
-            // Font Display Label
-            _fontDisplayLabel = new Label
-            {
-                Text = "Segoe UI, 9pt",
-                Location = new System.Drawing.Point(10, 25),
-                Size = new System.Drawing.Size(330, 30),
-                AutoSize = false,
-                BorderStyle = BorderStyle.Fixed3D,
-                TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-            };
-            fontGroup.Controls.Add(_fontDisplayLabel);
-
-            // Font Select Button
-            _fontSelectButton = new Button
-            {
-                Text = "Select Font...",
-                Location = new System.Drawing.Point(350, 25),
-                Size = new System.Drawing.Size(90, 30)
-            };
-            _fontSelectButton.Click += FontSelectButton_Click;
-            fontGroup.Controls.Add(_fontSelectButton);
-
-            // Font Info Label
-            var fontInfoLabel = new Label
-            {
-                Text = "This font will be used for the review request list items.",
-                Location = new System.Drawing.Point(10, 60),
-                Size = new System.Drawing.Size(430, 20),
-                ForeColor = System.Drawing.Color.Gray
-            };
-            fontGroup.Controls.Add(fontInfoLabel);
-
             // Proxy Group
             var proxyGroup = new GroupBox
             {
                 Text = "Proxy Settings",
-                Location = new System.Drawing.Point(20, 310),
+                Location = new System.Drawing.Point(20, 210),
                 Size = new System.Drawing.Size(450, 100)
             };
             this.Controls.Add(proxyGroup);
@@ -199,7 +155,7 @@ namespace AgentSupervisor
             _saveButton = new Button
             {
                 Text = "Save",
-                Location = new System.Drawing.Point(290, 440),
+                Location = new System.Drawing.Point(290, 370),
                 Size = new System.Drawing.Size(85, 30),
                 DialogResult = DialogResult.OK
             };
@@ -210,7 +166,7 @@ namespace AgentSupervisor
             _cancelButton = new Button
             {
                 Text = "Cancel",
-                Location = new System.Drawing.Point(385, 440),
+                Location = new System.Drawing.Point(385, 370),
                 Size = new System.Drawing.Size(85, 30),
                 DialogResult = DialogResult.Cancel
             };
@@ -229,18 +185,6 @@ namespace AgentSupervisor
             _useProxyCheckBox.Checked = _configuration.UseProxy;
             _proxyUrlTextBox.Text = _configuration.ProxyUrl;
             _proxyUrlTextBox.Enabled = _configuration.UseProxy;
-            
-            // Load font settings
-            try
-            {
-                _selectedFont = new Font(_configuration.FontFamily, _configuration.FontSize);
-                _fontDisplayLabel.Text = $"{_selectedFont.FontFamily.Name}, {_selectedFont.Size}pt";
-            }
-            catch
-            {
-                _selectedFont = new Font("Segoe UI", 9.0f);
-                _fontDisplayLabel.Text = "Segoe UI, 9pt";
-            }
         }
 
         private void SaveButton_Click(object? sender, EventArgs e)
@@ -267,39 +211,10 @@ namespace AgentSupervisor
             _configuration.EnableDesktopNotifications = _enableNotificationsCheckBox.Checked;
             _configuration.UseProxy = _useProxyCheckBox.Checked;
             _configuration.ProxyUrl = _proxyUrlTextBox.Text.Trim();
-            
-            // Save font settings
-            if (_selectedFont != null)
-            {
-                _configuration.FontFamily = _selectedFont.FontFamily.Name;
-                _configuration.FontSize = _selectedFont.Size;
-            }
-            
             _configuration.Save();
 
             MessageBox.Show("Settings saved successfully.", "Success", 
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-
-        private void FontSelectButton_Click(object? sender, EventArgs e)
-        {
-            using var fontDialog = new FontDialog();
-            
-            if (_selectedFont != null)
-            {
-                fontDialog.Font = _selectedFont;
-            }
-            
-            fontDialog.ShowEffects = false;
-            fontDialog.ShowColor = false;
-            fontDialog.MinSize = 7;
-            fontDialog.MaxSize = 16;
-            
-            if (fontDialog.ShowDialog() == DialogResult.OK)
-            {
-                _selectedFont = fontDialog.Font;
-                _fontDisplayLabel.Text = $"{_selectedFont.FontFamily.Name}, {_selectedFont.Size}pt";
-            }
         }
     }
 }

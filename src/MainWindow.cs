@@ -12,25 +12,22 @@ namespace AgentSupervisor
         private readonly Action<string> _onOpenUrlClick;
         private readonly Action _onMarkAllAsRead;
         private readonly Action? _onRefreshBadge;
-        private readonly Configuration _configuration;
         private ListBox _listBox = null!;
         private Button _markAllReadButton = null!;
         private Label _statusLabel = null!;
         private ContextMenuStrip _contextMenu = null!;
-        private Font _listFont = null!;
+        private float _dpiScale = 1.0f;
 
         public MainWindow(
             ReviewRequestService reviewRequestService,
             Action<string> onOpenUrlClick,
             Action onMarkAllAsRead,
-            Action onRefreshBadge,
-            Configuration configuration)
+            Action onRefreshBadge)
         {
             _reviewRequestService = reviewRequestService;
             _onOpenUrlClick = onOpenUrlClick;
             _onMarkAllAsRead = onMarkAllAsRead;
             _onRefreshBadge = onRefreshBadge;
-            _configuration = configuration;
 
             InitializeComponent();
             LoadRequests();
@@ -66,11 +63,17 @@ namespace AgentSupervisor
 
         private void InitializeComponent()
         {
+            // Get DPI scale factor
+            using (var g = CreateGraphics())
+            {
+                _dpiScale = g.DpiX / 96f; // 96 DPI is the standard
+            }
+
             // Form settings
             Text = "Agent Supervisor - Review Requests by Copilots";
-            Size = new Size(600, 500);
+            Size = new Size(ScaleDpi(600), ScaleDpi(500));
             StartPosition = FormStartPosition.CenterScreen;
-            MinimumSize = new Size(500, 400);
+            MinimumSize = new Size(ScaleDpi(500), ScaleDpi(400));
             ShowInTaskbar = true;
             FormBorderStyle = FormBorderStyle.Sizable;
 
@@ -78,9 +81,9 @@ namespace AgentSupervisor
             _statusLabel = new Label
             {
                 Dock = DockStyle.Top,
-                Height = 30,
+                Height = ScaleDpi(30),
                 TextAlign = ContentAlignment.MiddleLeft,
-                Padding = new Padding(10, 5, 10, 5),
+                Padding = new Padding(ScaleDpi(10), ScaleDpi(5), ScaleDpi(10), ScaleDpi(5)),
                 Font = new Font(Font.FontFamily, 9, FontStyle.Bold)
             };
             Controls.Add(_statusLabel);
@@ -96,32 +99,13 @@ namespace AgentSupervisor
             markAsReadMenuItem.Click += ContextMenu_MarkAsRead_Click;
             _contextMenu.Items.Add(markAsReadMenuItem);
 
-            // Load font from configuration
-            try
-            {
-                _listFont = new Font(_configuration.FontFamily, _configuration.FontSize);
-            }
-            catch
-            {
-                _listFont = new Font("Segoe UI", 9.0f);
-            }
-
-            // Calculate item height based on font size
-            // Base formula: (titleHeight + repoHeight + detailHeight) + paddings
-            // Title: font size * 1.2 + 5 (top padding)
-            // Repository: font size * 1.2
-            // Detail: font size * 1.2 + 5 (bottom padding)
-            // Spacing between lines: font size * 0.4 for each gap (2 gaps)
-            int itemHeight = (int)(_listFont.Size * 3.6 + _listFont.Size * 0.8 + 10);
-            itemHeight = Math.Max(itemHeight, 50); // Minimum height
-
             // ListBox for review requests
             _listBox = new ListBox
             {
                 Dock = DockStyle.Fill,
                 DrawMode = DrawMode.OwnerDrawFixed,
-                ItemHeight = itemHeight,
-                Font = _listFont,
+                ItemHeight = ScaleDpi(60),
+                Font = new Font(Font.FontFamily, 9),
                 SelectionMode = SelectionMode.One,
                 ContextMenuStrip = _contextMenu
             };
@@ -139,16 +123,16 @@ namespace AgentSupervisor
             var buttonPanel = new Panel
             {
                 Dock = DockStyle.Bottom,
-                Height = 50,
-                Padding = new Padding(10)
+                Height = ScaleDpi(50),
+                Padding = new Padding(ScaleDpi(10))
             };
 
             _markAllReadButton = new Button
             {
                 Text = "Mark All as Read",
                 Dock = DockStyle.Left,
-                Width = 150,
-                Height = 30
+                Width = ScaleDpi(150),
+                Height = ScaleDpi(30)
             };
             _markAllReadButton.Click += MarkAllReadButton_Click;
             buttonPanel.Controls.Add(_markAllReadButton);
@@ -305,6 +289,16 @@ namespace AgentSupervisor
             }
         }
 
+        private int ScaleDpi(int value)
+        {
+            return (int)(value * _dpiScale);
+        }
+
+        private float ScaleDpiFloat(float value)
+        {
+            return value * _dpiScale;
+        }
+
         private void ListBox_DrawItem(object? sender, DrawItemEventArgs e)
         {
             if (e.Index < 0 || e.Index >= _listBox.Items.Count || _listBox.Items[e.Index] is not ReviewRequestEntry request)
@@ -323,22 +317,17 @@ namespace AgentSupervisor
                 ? SystemColors.HighlightText
                 : SystemColors.WindowText;
 
-            var baseFontSize = _listFont.Size;
-            var x = e.Bounds.X + 10;
-            var y = e.Bounds.Y + 5;
-
-            // Calculate badge font size (slightly smaller than base font)
-            var badgeFontSize = Math.Max(baseFontSize * 0.8f, 7.0f);
-            var badgeHeight = (int)(badgeFontSize * 2.2);
+            var x = e.Bounds.X + ScaleDpi(10);
+            var y = e.Bounds.Y + ScaleDpi(5);
 
             // Draw "NEW" badge if applicable
             if (request.IsNew)
             {
                 using var newBadgeBrush = new SolidBrush(Color.FromArgb(220, 53, 69));
-                using var newBadgeFont = new Font(_listFont.FontFamily, badgeFontSize, FontStyle.Bold);
+                using var newBadgeFont = new Font(e.Font?.FontFamily ?? SystemFonts.DefaultFont.FontFamily, 7, FontStyle.Bold);
                 using var newBadgeTextBrush = new SolidBrush(Color.White);
                 
-                var badgeRect = new Rectangle(e.Bounds.Right - 60, y, 50, badgeHeight);
+                var badgeRect = new Rectangle(e.Bounds.Right - ScaleDpi(60), y, ScaleDpi(50), ScaleDpi(18));
                 e.Graphics.FillRectangle(newBadgeBrush, badgeRect);
                 
                 var badgeText = "NEW";
@@ -348,27 +337,24 @@ namespace AgentSupervisor
                 e.Graphics.DrawString(badgeText, newBadgeFont, newBadgeTextBrush, badgeTextX, badgeTextY);
             }
 
-            // Calculate spacing based on font size
-            var lineSpacing = (int)(baseFontSize * 1.2);
-
-            // Draw title (bold)
-            using var titleFont = new Font(_listFont, FontStyle.Bold);
+            // Draw title
+            using var titleFont = new Font(e.Font?.FontFamily ?? SystemFonts.DefaultFont.FontFamily, 9, FontStyle.Bold);
             using var textBrush = new SolidBrush(textColor);
-            var titleMaxWidth = e.Bounds.Width - 80;
-            var maxTitleChars = (int)(60 * (baseFontSize / 9.0f)); // Scale with font size
-            var title = request.Title.Length > maxTitleChars ? request.Title.Substring(0, maxTitleChars) + "..." : request.Title;
-            e.Graphics.DrawString(title, titleFont, textBrush, new RectangleF(x, y, titleMaxWidth, 30));
+            var titleMaxWidth = e.Bounds.Width - ScaleDpi(80);
+            var title = request.Title.Length > 60 ? request.Title.Substring(0, 60) + "..." : request.Title;
+            e.Graphics.DrawString(title, titleFont, textBrush, new RectangleF(x, y, titleMaxWidth, ScaleDpi(30)));
 
             // Draw repository and PR number
-            y += lineSpacing;
+            y += ScaleDpi(18);
             var repoText = $"{request.Repository} PR#{request.PullRequestNumber}";
-            e.Graphics.DrawString(repoText, _listFont, textBrush, x, y);
+            e.Graphics.DrawString(repoText, e.Font ?? SystemFonts.DefaultFont, textBrush, x, y);
 
-            // Draw author and date (same size as base font)
-            y += lineSpacing;
+            // Draw author and date
+            y += ScaleDpi(18);
+            using var detailFont = new Font(e.Font?.FontFamily ?? SystemFonts.DefaultFont.FontFamily, 8);
             using var detailBrush = new SolidBrush(e.State.HasFlag(DrawItemState.Selected) ? textColor : Color.Gray);
             var detailText = $"by {request.Author} • {request.CreatedAt:MMM dd, yyyy HH:mm}";
-            e.Graphics.DrawString(detailText, _listFont, detailBrush, x, y);
+            e.Graphics.DrawString(detailText, detailFont, detailBrush, x, y);
 
             // Draw focus rectangle
             e.DrawFocusRectangle();

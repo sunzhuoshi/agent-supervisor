@@ -14,6 +14,9 @@ namespace AgentSupervisor
         [STAThread]
         static void Main(string[] args)
         {
+            // Enable high DPI support
+            Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
+            
             // Check for single instance
             _mutex = new Mutex(true, MutexName, out bool createdNew);
             
@@ -95,8 +98,7 @@ namespace AgentSupervisor
                 _reviewRequestService,
                 OnOpenUrlClick,
                 () => _reviewRequestService.MarkAllAsRead(),
-                RefreshTaskbarBadge,
-                _config);
+                RefreshTaskbarBadge);
             // Required to be shown in task bar
             _mainWindow.Show();
             _badgeManager = new TaskbarBadgeManager(_mainWindow);

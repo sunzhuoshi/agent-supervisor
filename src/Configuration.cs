@@ -11,8 +11,6 @@ namespace AgentSupervisor
         public bool UseProxy { get; set; } = false;
         public bool EnableDesktopNotifications { get; set; } = true;
         public bool PauseCollection { get; set; } = false;
-        public string FontFamily { get; set; } = "Segoe UI";
-        public float FontSize { get; set; } = 9.0f;
 
         private const string RegistryKeyPath = @"Software\AgentSupervisor";
 
@@ -31,9 +29,7 @@ namespace AgentSupervisor
                         ProxyUrl = key.GetValue("ProxyUrl") as string ?? string.Empty,
                         UseProxy = ((int)(key.GetValue("UseProxy") ?? 0)) != 0,
                         EnableDesktopNotifications = ((int)(key.GetValue("EnableDesktopNotifications") ?? 1)) != 0,
-                        PauseCollection = ((int)(key.GetValue("PauseCollection") ?? 0)) != 0,
-                        FontFamily = key.GetValue("FontFamily") as string ?? "Segoe UI",
-                        FontSize = float.Parse(key.GetValue("FontSize")?.ToString() ?? "9.0")
+                        PauseCollection = ((int)(key.GetValue("PauseCollection") ?? 0)) != 0
                     };
                     Logger.LogInfo("Configuration loaded successfully from Registry");
                     return config;
@@ -61,8 +57,6 @@ namespace AgentSupervisor
                     key.SetValue("UseProxy", UseProxy ? 1 : 0, RegistryValueKind.DWord);
                     key.SetValue("EnableDesktopNotifications", EnableDesktopNotifications ? 1 : 0, RegistryValueKind.DWord);
                     key.SetValue("PauseCollection", PauseCollection ? 1 : 0, RegistryValueKind.DWord);
-                    key.SetValue("FontFamily", FontFamily);
-                    key.SetValue("FontSize", FontSize.ToString());
                     Logger.LogInfo("Configuration saved successfully to Registry");
                 }
             }

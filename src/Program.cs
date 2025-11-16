@@ -148,7 +148,7 @@ namespace AgentSupervisor
                 try
                 {
 #if ENABLE_DEV_FEATURES
-                    // Check if polling is paused (CI builds only)
+                    // Check if polling is paused (DEV builds only)
                     if (_config.PausePolling)
                     {
                         var currentUnreadCount = _reviewRequestService!.GetNewCount();

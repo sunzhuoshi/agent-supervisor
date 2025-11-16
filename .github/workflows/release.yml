@@ -153,15 +153,19 @@ jobs:
         Write-Output "Created and pushed tag: $tag"
     
     - name: Restore dependencies
+      if: github.event_name == 'push'
       run: dotnet restore
     
     - name: Build
+      if: github.event_name == 'push'
       run: dotnet build --no-restore --configuration Release /p:InformationalVersion=${{ steps.get_version.outputs.version }}
     
     - name: Check for vulnerabilities
+      if: github.event_name == 'push'
       run: dotnet list package --vulnerable --include-transitive
     
     - name: Prepare release artifacts
+      if: github.event_name == 'push'
       shell: pwsh
       run: |
         $artifactsPath = "release-artifacts"
@@ -192,6 +196,7 @@ jobs:
         Write-Output "Created release artifact: $zipName"
     
     - name: Create GitHub Release
+      if: github.event_name == 'push'
       uses: softprops/action-gh-release@v2
       with:
         tag_name: v${{ steps.get_version.outputs.version }}

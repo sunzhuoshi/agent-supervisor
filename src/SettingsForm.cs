@@ -12,6 +12,7 @@ namespace AgentSupervisor
         private CheckBox _useProxyCheckBox = null!;
         private TextBox _proxyUrlTextBox = null!;
         private CheckBox _enableNotificationsCheckBox = null!;
+        private CheckBox _autoAdjustPollingCheckBox = null!;
         private Button _saveButton = null!;
         private Button _cancelButton = null!;
 
@@ -25,7 +26,7 @@ namespace AgentSupervisor
         private void InitializeComponents()
         {
             this.Text = "Agent Supervisor - Settings";
-            this.Size = new System.Drawing.Size(500, 450);
+            this.Size = new System.Drawing.Size(500, 490);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -111,11 +112,28 @@ namespace AgentSupervisor
             };
             this.Controls.Add(_enableNotificationsCheckBox);
 
+            // Auto Adjust Polling Interval CheckBox
+            _autoAdjustPollingCheckBox = new CheckBox
+            {
+                Text = "Auto Adjust Polling Interval (based on rate limits)",
+                Location = new System.Drawing.Point(20, 203),
+                Size = new System.Drawing.Size(450, 20)
+            };
+            _autoAdjustPollingCheckBox.CheckedChanged += (s, e) =>
+            {
+                // Provide visual feedback on what this feature does
+                var helpText = _autoAdjustPollingCheckBox.Checked
+                    ? "Polling interval will be adjusted automatically based on GitHub API rate limits"
+                    : "Polling interval will use the fixed value set above";
+                _autoAdjustPollingCheckBox.AccessibleDescription = helpText;
+            };
+            this.Controls.Add(_autoAdjustPollingCheckBox);
+
             // Proxy Group
             var proxyGroup = new GroupBox
             {
                 Text = "Proxy Settings",
-                Location = new System.Drawing.Point(20, 210),
+                Location = new System.Drawing.Point(20, 240),
                 Size = new System.Drawing.Size(450, 100)
             };
             this.Controls.Add(proxyGroup);
@@ -155,7 +173,7 @@ namespace AgentSupervisor
             _saveButton = new Button
             {
                 Text = "Save",
-                Location = new System.Drawing.Point(290, 370),
+                Location = new System.Drawing.Point(290, 410),
                 Size = new System.Drawing.Size(85, 30),
                 DialogResult = DialogResult.OK
             };
@@ -166,7 +184,7 @@ namespace AgentSupervisor
             _cancelButton = new Button
             {
                 Text = "Cancel",
-                Location = new System.Drawing.Point(385, 370),
+                Location = new System.Drawing.Point(385, 410),
                 Size = new System.Drawing.Size(85, 30),
                 DialogResult = DialogResult.Cancel
             };
@@ -182,6 +200,7 @@ namespace AgentSupervisor
             _intervalNumeric.Value = _configuration.PollingIntervalSeconds;
             _maxHistoryNumeric.Value = _configuration.MaxHistoryEntries;
             _enableNotificationsCheckBox.Checked = _configuration.EnableDesktopNotifications;
+            _autoAdjustPollingCheckBox.Checked = _configuration.AutoAdjustPollingInterval;
             _useProxyCheckBox.Checked = _configuration.UseProxy;
             _proxyUrlTextBox.Text = _configuration.ProxyUrl;
             _proxyUrlTextBox.Enabled = _configuration.UseProxy;
@@ -209,6 +228,7 @@ namespace AgentSupervisor
             _configuration.PollingIntervalSeconds = (int)_intervalNumeric.Value;
             _configuration.MaxHistoryEntries = (int)_maxHistoryNumeric.Value;
             _configuration.EnableDesktopNotifications = _enableNotificationsCheckBox.Checked;
+            _configuration.AutoAdjustPollingInterval = _autoAdjustPollingCheckBox.Checked;
             _configuration.UseProxy = _useProxyCheckBox.Checked;
             _configuration.ProxyUrl = _proxyUrlTextBox.Text.Trim();
             _configuration.Save();

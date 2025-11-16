@@ -10,6 +10,9 @@ namespace AgentSupervisor
         private string _username;
         private readonly ReviewRequestHistory _reviewRequestHistory;
         private readonly ReviewRequestService? _reviewRequestService;
+        private RateLimitInfo? _lastRateLimitInfo;
+
+        public RateLimitInfo? LastRateLimitInfo => _lastRateLimitInfo;
 
         public GitHubService(string personalAccessToken, string? proxyUrl = null, ReviewRequestService? reviewRequestService = null)
         {
@@ -65,6 +68,9 @@ namespace AgentSupervisor
                 
                 response.EnsureSuccessStatusCode();
                 
+                // Extract rate limit information
+                _lastRateLimitInfo = ExtractRateLimitInfo(response);
+                
                 var json = await response.Content.ReadAsStringAsync();
                 using var doc = JsonDocument.Parse(json);
                 var login = doc.RootElement.GetProperty("login").GetString();
@@ -104,6 +110,51 @@ namespace AgentSupervisor
             return false;
         }
 
+        /// <summary>
+        /// Extracts rate limit information from HTTP response headers
+        /// </summary>
+        /// <param name="response">The HTTP response message</param>
+        /// <returns>RateLimitInfo if headers are present, null otherwise</returns>
+        private RateLimitInfo? ExtractRateLimitInfo(HttpResponseMessage response)
+        {
+            try
+            {
+                var headers = response.Headers;
+                
+                // Try to get rate limit headers
+                if (headers.TryGetValues("x-ratelimit-limit", out var limitValues) &&
+                    headers.TryGetValues("x-ratelimit-remaining", out var remainingValues) &&
+                    headers.TryGetValues("x-ratelimit-reset", out var resetValues))
+                {
+                    var limitStr = limitValues.FirstOrDefault();
+                    var remainingStr = remainingValues.FirstOrDefault();
+                    var resetStr = resetValues.FirstOrDefault();
+
+                    if (int.TryParse(limitStr, out var limit) &&
+                        int.TryParse(remainingStr, out var remaining) &&
+                        long.TryParse(resetStr, out var reset))
+                    {
+                        var rateLimitInfo = new RateLimitInfo
+                        {
+                            Limit = limit,
+                            Remaining = remaining,
+                            ResetTimestamp = reset
+                        };
+
+                        Logger.LogInfo($"Rate Limit - Limit: {limit}, Remaining: {remaining}, Reset: {rateLimitInfo.ResetTime:yyyy-MM-dd HH:mm:ss} UTC");
+
+                        return rateLimitInfo;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Error extracting rate limit info", ex);
+            }
+
+            return null;
+        }
+
         public async Task<List<PullRequestReview>> GetPendingReviewsAsync()
         {
             var reviews = new List<PullRequestReview>();
@@ -134,6 +185,9 @@ namespace AgentSupervisor
                     Logger.LogError($"Error fetching PRs: {response.StatusCode}");
                     return reviews;
                 }
+
+                // Extract rate limit information
+                _lastRateLimitInfo = ExtractRateLimitInfo(response);
 
                 var json = await response.Content.ReadAsStringAsync();
                 using var doc = JsonDocument.Parse(json);

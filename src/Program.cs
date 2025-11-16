@@ -155,6 +155,7 @@ namespace AgentSupervisor
         private async Task MonitorReviews(CancellationToken cancellationToken)
         {
             Logger.LogInfo($"Monitoring started with interval: {_config!.PollingIntervalSeconds} seconds");
+            Logger.LogInfo($"Auto-adjust polling interval: {_config!.AutoAdjustPollingInterval}");
             
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -219,21 +220,41 @@ namespace AgentSupervisor
                     var unreadCount = _reviewRequestService!.GetNewCount();
                     var totalPendingCount = _reviewRequestService!.GetTotalCount();
                     _systemTrayManager!.UpdateStatus($"{totalPendingCount} pending review(s) - {unreadCount} unread");
+                    
+                    // Calculate next polling interval
+                    int nextInterval = _config.PollingIntervalSeconds;
+                    
+                    if (_config.AutoAdjustPollingInterval && _gitHubService.LastRateLimitInfo != null)
+                    {
+                        var rateLimitInfo = _gitHubService.LastRateLimitInfo;
+                        nextInterval = rateLimitInfo.CalculateOptimalInterval(
+                            minIntervalSeconds: 10,
+                            maxIntervalSeconds: 3600,
+                            safetyMargin: 1.2
+                        );
+                        
+                        Logger.LogInfo($"Auto-adjusted polling interval: {nextInterval} seconds (based on rate limit: {rateLimitInfo.Remaining}/{rateLimitInfo.Limit} remaining)");
+                        
+                        // Warn if we're near the rate limit
+                        if (rateLimitInfo.IsNearLimit(0.1))
+                        {
+                            Logger.LogWarning($"Approaching rate limit: {rateLimitInfo.Remaining} requests remaining");
+                        }
+                    }
+                    else
+                    {
+                        Logger.LogInfo($"Using configured polling interval: {nextInterval} seconds");
+                    }
+                    
+                    await Task.Delay(TimeSpan.FromSeconds(nextInterval), cancellationToken);
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError("Error during monitoring", ex);
                     _systemTrayManager?.UpdateStatus($"Error: {ex.Message}");
-                }
-
-                try
-                {
+                    
+                    // On error, use configured interval
                     await Task.Delay(TimeSpan.FromSeconds(_config.PollingIntervalSeconds), cancellationToken);
-                }
-                catch (TaskCanceledException)
-                {
-                    Logger.LogInfo("Monitoring cancelled");
-                    break;
                 }
             }
             

@@ -12,6 +12,7 @@ namespace AgentSupervisor
         private CheckBox _useProxyCheckBox = null!;
         private TextBox _proxyUrlTextBox = null!;
         private CheckBox _enableNotificationsCheckBox = null!;
+        private ComboBox _languageComboBox = null!;
         private Button _saveButton = null!;
         private Button _cancelButton = null!;
 
@@ -24,8 +25,8 @@ namespace AgentSupervisor
 
         private void InitializeComponents()
         {
-            this.Text = $"{Constants.ApplicationName} - Settings";
-            this.Size = new System.Drawing.Size(Constants.SettingsFormWidth, Constants.SettingsFormHeight);
+            this.Text = $"{Constants.ApplicationName} - {Localization.GetString("SettingsFormTitle")}";
+            this.Size = new System.Drawing.Size(Constants.SettingsFormWidth, Constants.SettingsFormHeight + 50);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -34,7 +35,7 @@ namespace AgentSupervisor
             // Token Label
             var tokenLabel = new Label
             {
-                Text = "GitHub Personal Access Token:",
+                Text = Localization.GetString("SettingsLabelToken"),
                 Location = new System.Drawing.Point(20, 20),
                 Size = new System.Drawing.Size(450, 20)
             };
@@ -52,7 +53,7 @@ namespace AgentSupervisor
             // Show/Hide Token CheckBox
             var showTokenCheckBox = new CheckBox
             {
-                Text = "Show token",
+                Text = Localization.GetString("SettingsLabelShowToken"),
                 Location = new System.Drawing.Point(20, 75),
                 Size = new System.Drawing.Size(150, 20)
             };
@@ -65,7 +66,7 @@ namespace AgentSupervisor
             // Polling Interval Label
             var intervalLabel = new Label
             {
-                Text = "Polling Interval (seconds):",
+                Text = Localization.GetString("SettingsLabelPollingInterval"),
                 Location = new System.Drawing.Point(20, 110),
                 Size = new System.Drawing.Size(200, 20)
             };
@@ -85,7 +86,7 @@ namespace AgentSupervisor
             // Max History Label
             var historyLabel = new Label
             {
-                Text = "Max History Entries:",
+                Text = Localization.GetString("SettingsLabelMaxHistory"),
                 Location = new System.Drawing.Point(20, 145),
                 Size = new System.Drawing.Size(200, 20)
             };
@@ -105,17 +106,40 @@ namespace AgentSupervisor
             // Enable Desktop Notifications CheckBox
             _enableNotificationsCheckBox = new CheckBox
             {
-                Text = "Enable Desktop Notifications",
+                Text = Localization.GetString("SettingsLabelEnableNotifications"),
                 Location = new System.Drawing.Point(20, 178),
                 Size = new System.Drawing.Size(250, 20)
             };
             this.Controls.Add(_enableNotificationsCheckBox);
 
+            // Language Label
+            var languageLabel = new Label
+            {
+                Text = Localization.GetString("SettingsLabelLanguage"),
+                Location = new System.Drawing.Point(20, 210),
+                Size = new System.Drawing.Size(200, 20)
+            };
+            this.Controls.Add(languageLabel);
+
+            // Language ComboBox
+            _languageComboBox = new ComboBox
+            {
+                Location = new System.Drawing.Point(220, 208),
+                Size = new System.Drawing.Size(150, 25),
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            foreach (var (code, displayName) in Localization.AvailableLanguages)
+            {
+                _languageComboBox.Items.Add(new LanguageItem { Code = code, DisplayName = displayName });
+            }
+            _languageComboBox.DisplayMember = "DisplayName";
+            this.Controls.Add(_languageComboBox);
+
             // Proxy Group
             var proxyGroup = new GroupBox
             {
-                Text = "Proxy Settings",
-                Location = new System.Drawing.Point(20, 210),
+                Text = Localization.GetString("SettingsLabelProxyGroup"),
+                Location = new System.Drawing.Point(20, 245),
                 Size = new System.Drawing.Size(450, 100)
             };
             this.Controls.Add(proxyGroup);
@@ -123,7 +147,7 @@ namespace AgentSupervisor
             // Use Proxy CheckBox
             _useProxyCheckBox = new CheckBox
             {
-                Text = "Use Proxy",
+                Text = Localization.GetString("SettingsLabelUseProxy"),
                 Location = new System.Drawing.Point(10, 25),
                 Size = new System.Drawing.Size(150, 20)
             };
@@ -136,7 +160,7 @@ namespace AgentSupervisor
             // Proxy URL Label
             var proxyLabel = new Label
             {
-                Text = "Proxy URL (e.g., http://proxy:8080):",
+                Text = Localization.GetString("SettingsLabelProxyUrl"),
                 Location = new System.Drawing.Point(10, 50),
                 Size = new System.Drawing.Size(430, 20)
             };
@@ -154,8 +178,8 @@ namespace AgentSupervisor
             // Save Button
             _saveButton = new Button
             {
-                Text = "Save",
-                Location = new System.Drawing.Point(290, 370),
+                Text = Localization.GetString("SettingsButtonSave"),
+                Location = new System.Drawing.Point(290, 405),
                 Size = new System.Drawing.Size(85, 30),
                 DialogResult = DialogResult.OK
             };
@@ -165,8 +189,8 @@ namespace AgentSupervisor
             // Cancel Button
             _cancelButton = new Button
             {
-                Text = "Cancel",
-                Location = new System.Drawing.Point(385, 370),
+                Text = Localization.GetString("SettingsButtonCancel"),
+                Location = new System.Drawing.Point(385, 405),
                 Size = new System.Drawing.Size(85, 30),
                 DialogResult = DialogResult.Cancel
             };
@@ -174,6 +198,12 @@ namespace AgentSupervisor
 
             this.AcceptButton = _saveButton;
             this.CancelButton = _cancelButton;
+        }
+
+        private class LanguageItem
+        {
+            public string Code { get; set; } = string.Empty;
+            public string DisplayName { get; set; } = string.Empty;
         }
 
         private void LoadSettings()
@@ -185,6 +215,21 @@ namespace AgentSupervisor
             _useProxyCheckBox.Checked = _configuration.UseProxy;
             _proxyUrlTextBox.Text = _configuration.ProxyUrl;
             _proxyUrlTextBox.Enabled = _configuration.UseProxy;
+            
+            // Load language selection
+            var currentLanguage = Localization.CurrentCultureName;
+            for (int i = 0; i < _languageComboBox.Items.Count; i++)
+            {
+                if (_languageComboBox.Items[i] is LanguageItem item && item.Code == currentLanguage)
+                {
+                    _languageComboBox.SelectedIndex = i;
+                    break;
+                }
+            }
+            if (_languageComboBox.SelectedIndex == -1 && _languageComboBox.Items.Count > 0)
+            {
+                _languageComboBox.SelectedIndex = 0;
+            }
         }
 
         private void SaveButton_Click(object? sender, EventArgs e)
@@ -212,9 +257,32 @@ namespace AgentSupervisor
             _configuration.UseProxy = _useProxyCheckBox.Checked;
             _configuration.ProxyUrl = _proxyUrlTextBox.Text.Trim();
             _configuration.Save();
-
-            MessageBox.Show(Constants.MessageSettingsSaved, Constants.MessageBoxTitleSuccess, 
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            
+            // Save language setting and apply if changed
+            if (_languageComboBox.SelectedItem is LanguageItem selectedLanguage)
+            {
+                var currentLanguage = Localization.CurrentCultureName;
+                if (selectedLanguage.Code != currentLanguage)
+                {
+                    Localization.SetCulture(selectedLanguage.Code);
+                    MessageBox.Show(
+                        Localization.GetString("MessageSettingsSaved") + "\n\n" + 
+                        Localization.GetString("MessageLanguageChangeRequiresRestart"),
+                        Constants.MessageBoxTitleSuccess, 
+                        MessageBoxButtons.OK, 
+                        MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show(Constants.MessageSettingsSaved, Constants.MessageBoxTitleSuccess, 
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            else
+            {
+                MessageBox.Show(Constants.MessageSettingsSaved, Constants.MessageBoxTitleSuccess, 
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
         }
     }
 }

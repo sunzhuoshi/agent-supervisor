@@ -91,7 +91,7 @@ namespace AgentSupervisor
         private void InitializeComponent()
         {
             // Form settings
-            Text = $"{Constants.ApplicationName} - Review Requests by Copilots";
+            Text = $"{Constants.ApplicationName} - {Localization.GetString("MainWindowTitle")}";
             Size = new Size(Constants.MainWindowDefaultWidth, Constants.MainWindowDefaultHeight);
             StartPosition = FormStartPosition.CenterScreen;
             MinimumSize = new Size(Constants.MainWindowMinWidth, Constants.MainWindowMinHeight);
@@ -112,11 +112,11 @@ namespace AgentSupervisor
             // Context menu for list items
             _contextMenu = new ContextMenuStrip();
             
-            var openMenuItem = new ToolStripMenuItem("Open");
+            var openMenuItem = new ToolStripMenuItem(Localization.GetString("MainWindowContextMenuOpen"));
             openMenuItem.Click += ContextMenu_Open_Click;
             _contextMenu.Items.Add(openMenuItem);
             
-            var markAsReadMenuItem = new ToolStripMenuItem("Mark as read");
+            var markAsReadMenuItem = new ToolStripMenuItem(Localization.GetString("MainWindowContextMenuMarkAsRead"));
             markAsReadMenuItem.Click += ContextMenu_MarkAsRead_Click;
             _contextMenu.Items.Add(markAsReadMenuItem);
 
@@ -150,7 +150,7 @@ namespace AgentSupervisor
 
             _markAllReadButton = new Button
             {
-                Text = "Mark All as Read",
+                Text = Localization.GetString("MainWindowButtonMarkAllRead"),
                 Dock = DockStyle.Left,
                 Width = 150,
                 Height = 30
@@ -300,12 +300,12 @@ namespace AgentSupervisor
 
             if (totalCount == 0)
             {
-                _statusLabel.Text = "No review requests";
+                _statusLabel.Text = Localization.GetString("MainWindowStatusNoRequests");
                 _markAllReadButton.Enabled = false;
             }
             else
             {
-                _statusLabel.Text = $"Total: {totalCount} review request(s) | New: {newCount}";
+                _statusLabel.Text = Localization.GetString("MainWindowStatusFormat", totalCount, newCount);
                 _markAllReadButton.Enabled = newCount > 0;
             }
         }
@@ -338,11 +338,12 @@ namespace AgentSupervisor
                 using var newBadgeFont = new Font(e.Font?.FontFamily ?? SystemFonts.DefaultFont.FontFamily, 7, FontStyle.Bold);
                 using var newBadgeTextBrush = new SolidBrush(Color.White);
                 
-                var badgeRect = new Rectangle(e.Bounds.Right - 60, y, 50, 18);
+                var badgeText = Localization.GetString("MainWindowBadgeNew");
+                var badgeTextSize = e.Graphics.MeasureString(badgeText, newBadgeFont);
+                var badgeWidth = Math.Max(50, (int)badgeTextSize.Width + 10);
+                var badgeRect = new Rectangle(e.Bounds.Right - badgeWidth - 10, y, badgeWidth, 18);
                 e.Graphics.FillRectangle(newBadgeBrush, badgeRect);
                 
-                var badgeText = "NEW";
-                var badgeTextSize = e.Graphics.MeasureString(badgeText, newBadgeFont);
                 var badgeTextX = badgeRect.X + (badgeRect.Width - badgeTextSize.Width) / 2;
                 var badgeTextY = badgeRect.Y + (badgeRect.Height - badgeTextSize.Height) / 2;
                 e.Graphics.DrawString(badgeText, newBadgeFont, newBadgeTextBrush, badgeTextX, badgeTextY);
@@ -364,7 +365,7 @@ namespace AgentSupervisor
             y += 18;
             using var detailFont = new Font(e.Font?.FontFamily ?? SystemFonts.DefaultFont.FontFamily, 8);
             using var detailBrush = new SolidBrush(e.State.HasFlag(DrawItemState.Selected) ? textColor : Color.Gray);
-            var detailText = $"by {request.Author} • {request.CreatedAt:MMM dd, yyyy HH:mm}";
+            var detailText = Localization.GetString("DetailAuthorDateFormat", request.Author, request.CreatedAt.ToString("MMM dd, yyyy HH:mm"));
             e.Graphics.DrawString(detailText, detailFont, detailBrush, x, y);
 
             // Draw focus rectangle

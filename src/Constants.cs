@@ -6,7 +6,7 @@ namespace AgentSupervisor
     public static class Constants
     {
         // Application Identity
-        public const string ApplicationName = "Agent Supervisor";
+        public static string ApplicationName => Localization.GetString("ApplicationName");
         public const string ApplicationVersion = "1.0";
         
         // GitHub Repository
@@ -77,47 +77,47 @@ namespace AgentSupervisor
         public const string LogBackupExtension = ".bak";
         
         // Message Box Titles
-        public const string MessageBoxTitleError = "Error";
-        public const string MessageBoxTitleSuccess = "Success";
-        public const string MessageBoxTitleWarning = "Configuration Required";
-        public const string MessageBoxTitleAlreadyRunning = "Agent Supervisor Already Running";
-        public const string MessageBoxTitleConnectionError = "Connection Error";
-        public const string MessageBoxTitleValidationError = "Validation Error";
-        public const string MessageBoxTitleUpdateAvailable = "Update Available";
-        public const string MessageBoxTitlePreReleaseUpdateAvailable = "Pre-Release Update Available";
-        public const string MessageBoxTitleNoUpdatesAvailable = "No Updates Available";
-        public const string MessageBoxTitleUpdateCheckFailed = "Update Check Failed";
-        public const string MessageBoxTitlePollingStatus = "Polling Status";
-        public const string MessageBoxTitlePollingError = "Polling Error";
-        public const string MessageBoxTitleConfigurationError = "Configuration Error";
+        public static string MessageBoxTitleError => Localization.GetString("MessageBoxTitleError");
+        public static string MessageBoxTitleSuccess => Localization.GetString("MessageBoxTitleSuccess");
+        public static string MessageBoxTitleWarning => Localization.GetString("MessageBoxTitleWarning");
+        public static string MessageBoxTitleAlreadyRunning => Localization.GetString("MessageBoxTitleAlreadyRunning");
+        public static string MessageBoxTitleConnectionError => Localization.GetString("MessageBoxTitleConnectionError");
+        public static string MessageBoxTitleValidationError => Localization.GetString("MessageBoxTitleValidationError");
+        public static string MessageBoxTitleUpdateAvailable => Localization.GetString("MessageBoxTitleUpdateAvailable");
+        public static string MessageBoxTitlePreReleaseUpdateAvailable => Localization.GetString("MessageBoxTitlePreReleaseUpdateAvailable");
+        public static string MessageBoxTitleNoUpdatesAvailable => Localization.GetString("MessageBoxTitleNoUpdatesAvailable");
+        public static string MessageBoxTitleUpdateCheckFailed => Localization.GetString("MessageBoxTitleUpdateCheckFailed");
+        public static string MessageBoxTitlePollingStatus => Localization.GetString("MessageBoxTitlePollingStatus");
+        public static string MessageBoxTitlePollingError => Localization.GetString("MessageBoxTitlePollingError");
+        public static string MessageBoxTitleConfigurationError => Localization.GetString("MessageBoxTitleConfigurationError");
         
         // Message Box Content
-        public const string MessageAlreadyRunning = "Agent Supervisor is already running.\n\nPlease check the system tray for the application icon.";
-        public const string MessageTokenRequired = "Personal Access Token is required to run the application.";
-        public const string MessageConnectionFailed = "Failed to connect to GitHub. Please check your Personal Access Token.";
-        public const string MessageTokenValidationFailed = "Personal Access Token is required.";
-        public const string MessageProxyValidationFailed = "Proxy URL is required when proxy is enabled.";
-        public const string MessageSettingsSaved = "Settings saved successfully.";
-        public const string MessageNoUpdatesAvailable = "You are running the latest version.";
-        public const string MessagePollingPaused = "Data polling paused";
-        public const string MessagePollingResumed = "Data polling resumed";
-        public const string MessagePollingNotConfigured = "Data polling callback is not configured.";
+        public static string MessageAlreadyRunning => Localization.GetString("MessageAlreadyRunning");
+        public static string MessageTokenRequired => Localization.GetString("MessageTokenRequired");
+        public static string MessageConnectionFailed => Localization.GetString("MessageConnectionFailed");
+        public static string MessageTokenValidationFailed => Localization.GetString("MessageTokenValidationFailed");
+        public static string MessageProxyValidationFailed => Localization.GetString("MessageProxyValidationFailed");
+        public static string MessageSettingsSaved => Localization.GetString("MessageSettingsSaved");
+        public static string MessageNoUpdatesAvailable => Localization.GetString("MessageNoUpdatesAvailable");
+        public static string MessagePollingPaused => Localization.GetString("MessagePollingPaused");
+        public static string MessagePollingResumed => Localization.GetString("MessagePollingResumed");
+        public static string MessagePollingNotConfigured => Localization.GetString("MessagePollingNotConfigured");
         
         // Menu Item Text
-        public const string MenuItemReviewRequests = "Review Requests by Copilots";
-        public const string MenuItemPollAtOnce = "Poll at Once";
-        public const string MenuItemPausePolling = "Pause Polling";
-        public const string MenuItemResumePolling = "Resume Polling";
-        public const string MenuItemSettings = "Settings";
-        public const string MenuItemAbout = "About";
-        public const string MenuItemCheckForUpdates = "Check for Updates";
-        public const string MenuItemExit = "Exit";
+        public static string MenuItemReviewRequests => Localization.GetString("MenuItemReviewRequests");
+        public static string MenuItemPollAtOnce => Localization.GetString("MenuItemPollAtOnce");
+        public static string MenuItemPausePolling => Localization.GetString("MenuItemPausePolling");
+        public static string MenuItemResumePolling => Localization.GetString("MenuItemResumePolling");
+        public static string MenuItemSettings => Localization.GetString("MenuItemSettings");
+        public static string MenuItemAbout => Localization.GetString("MenuItemAbout");
+        public static string MenuItemCheckForUpdates => Localization.GetString("MenuItemCheckForUpdates");
+        public static string MenuItemExit => Localization.GetString("MenuItemExit");
         
         // Status Messages
-        public const string StatusConnecting = "Connecting to GitHub...";
-        public const string StatusMonitoringRestarted = "Monitoring restarted";
-        public const string StatusCheckingForUpdates = "Checking for updates...";
-        public const string StatusPollingData = "Polling data...";
+        public static string StatusConnecting => Localization.GetString("StatusConnecting");
+        public static string StatusMonitoringRestarted => Localization.GetString("StatusMonitoringRestarted");
+        public static string StatusCheckingForUpdates => Localization.GetString("StatusCheckingForUpdates");
+        public static string StatusPollingData => Localization.GetString("StatusPollingData");
         
         // Mutex
         public const string SingleInstanceMutexName = "AgentSupervisor_SingleInstance_Mutex";

@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" use="preserve" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  
+  <!-- Application Identity -->
+  <data name="ApplicationName" xml:space="preserve">
+    <value>智能助理监督器</value>
+  </data>
+  
+  <!-- Message Box Titles -->
+  <data name="MessageBoxTitleError" xml:space="preserve">
+    <value>错误</value>
+  </data>
+  <data name="MessageBoxTitleSuccess" xml:space="preserve">
+    <value>成功</value>
+  </data>
+  <data name="MessageBoxTitleWarning" xml:space="preserve">
+    <value>需要配置</value>
+  </data>
+  <data name="MessageBoxTitleAlreadyRunning" xml:space="preserve">
+    <value>智能助理监督器已在运行</value>
+  </data>
+  <data name="MessageBoxTitleConnectionError" xml:space="preserve">
+    <value>连接错误</value>
+  </data>
+  <data name="MessageBoxTitleValidationError" xml:space="preserve">
+    <value>验证错误</value>
+  </data>
+  <data name="MessageBoxTitleUpdateAvailable" xml:space="preserve">
+    <value>有可用更新</value>
+  </data>
+  <data name="MessageBoxTitlePreReleaseUpdateAvailable" xml:space="preserve">
+    <value>有预发布更新</value>
+  </data>
+  <data name="MessageBoxTitleNoUpdatesAvailable" xml:space="preserve">
+    <value>没有可用更新</value>
+  </data>
+  <data name="MessageBoxTitleUpdateCheckFailed" xml:space="preserve">
+    <value>更新检查失败</value>
+  </data>
+  <data name="MessageBoxTitlePollingStatus" xml:space="preserve">
+    <value>轮询状态</value>
+  </data>
+  <data name="MessageBoxTitlePollingError" xml:space="preserve">
+    <value>轮询错误</value>
+  </data>
+  <data name="MessageBoxTitleConfigurationError" xml:space="preserve">
+    <value>配置错误</value>
+  </data>
+  
+  <!-- Message Box Content -->
+  <data name="MessageAlreadyRunning" xml:space="preserve">
+    <value>智能助理监督器已经在运行。
+
+请在系统托盘中查找应用程序图标。</value>
+  </data>
+  <data name="MessageTokenRequired" xml:space="preserve">
+    <value>运行应用程序需要个人访问令牌。</value>
+  </data>
+  <data name="MessageConnectionFailed" xml:space="preserve">
+    <value>连接到 GitHub 失败。请检查您的个人访问令牌。</value>
+  </data>
+  <data name="MessageTokenValidationFailed" xml:space="preserve">
+    <value>需要个人访问令牌。</value>
+  </data>
+  <data name="MessageProxyValidationFailed" xml:space="preserve">
+    <value>启用代理时需要代理 URL。</value>
+  </data>
+  <data name="MessageSettingsSaved" xml:space="preserve">
+    <value>设置已成功保存。</value>
+  </data>
+  <data name="MessageNoUpdatesAvailable" xml:space="preserve">
+    <value>您正在运行最新版本。</value>
+  </data>
+  <data name="MessagePollingPaused" xml:space="preserve">
+    <value>数据轮询已暂停</value>
+  </data>
+  <data name="MessagePollingResumed" xml:space="preserve">
+    <value>数据轮询已恢复</value>
+  </data>
+  <data name="MessagePollingNotConfigured" xml:space="preserve">
+    <value>数据轮询回调未配置。</value>
+  </data>
+  
+  <!-- Menu Item Text -->
+  <data name="MenuItemReviewRequests" xml:space="preserve">
+    <value>Copilot 代码审查请求</value>
+  </data>
+  <data name="MenuItemPollAtOnce" xml:space="preserve">
+    <value>立即轮询</value>
+  </data>
+  <data name="MenuItemPausePolling" xml:space="preserve">
+    <value>暂停轮询</value>
+  </data>
+  <data name="MenuItemResumePolling" xml:space="preserve">
+    <value>恢复轮询</value>
+  </data>
+  <data name="MenuItemSettings" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="MenuItemAbout" xml:space="preserve">
+    <value>关于</value>
+  </data>
+  <data name="MenuItemCheckForUpdates" xml:space="preserve">
+    <value>检查更新</value>
+  </data>
+  <data name="MenuItemExit" xml:space="preserve">
+    <value>退出</value>
+  </data>
+  
+  <!-- Status Messages -->
+  <data name="StatusConnecting" xml:space="preserve">
+    <value>正在连接到 GitHub...</value>
+  </data>
+  <data name="StatusMonitoringRestarted" xml:space="preserve">
+    <value>监控已重启</value>
+  </data>
+  <data name="StatusCheckingForUpdates" xml:space="preserve">
+    <value>正在检查更新...</value>
+  </data>
+  <data name="StatusPollingData" xml:space="preserve">
+    <value>正在轮询数据...</value>
+  </data>
+  
+  <!-- Settings Form Labels -->
+  <data name="SettingsFormTitle" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="SettingsLabelToken" xml:space="preserve">
+    <value>GitHub 个人访问令牌:</value>
+  </data>
+  <data name="SettingsLabelShowToken" xml:space="preserve">
+    <value>显示令牌</value>
+  </data>
+  <data name="SettingsLabelPollingInterval" xml:space="preserve">
+    <value>轮询间隔（秒）:</value>
+  </data>
+  <data name="SettingsLabelMaxHistory" xml:space="preserve">
+    <value>最大历史记录条数:</value>
+  </data>
+  <data name="SettingsLabelEnableNotifications" xml:space="preserve">
+    <value>启用桌面通知</value>
+  </data>
+  <data name="SettingsLabelProxyGroup" xml:space="preserve">
+    <value>代理设置</value>
+  </data>
+  <data name="SettingsLabelUseProxy" xml:space="preserve">
+    <value>使用代理</value>
+  </data>
+  <data name="SettingsLabelProxyUrl" xml:space="preserve">
+    <value>代理 URL（例如: http://proxy:8080）:</value>
+  </data>
+  <data name="SettingsLabelLanguage" xml:space="preserve">
+    <value>语言:</value>
+  </data>
+  <data name="SettingsButtonSave" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="SettingsButtonCancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  
+  <!-- About Form -->
+  <data name="AboutFormTitle" xml:space="preserve">
+    <value>关于</value>
+  </data>
+  <data name="AboutDescription" xml:space="preserve">
+    <value>一个 Windows 系统托盘应用程序，用于监控
+GitHub 拉取请求审查并发送桌面通知。</value>
+  </data>
+  <data name="AboutVersion" xml:space="preserve">
+    <value>版本</value>
+  </data>
+  <data name="AboutCopyright" xml:space="preserve">
+    <value>智能助理监督器贡献者</value>
+  </data>
+  <data name="AboutButtonOK" xml:space="preserve">
+    <value>确定</value>
+  </data>
+  
+  <!-- Main Window -->
+  <data name="MainWindowTitle" xml:space="preserve">
+    <value>Copilot 代码审查请求</value>
+  </data>
+  <data name="MainWindowStatusNoRequests" xml:space="preserve">
+    <value>没有审查请求</value>
+  </data>
+  <data name="MainWindowStatusFormat" xml:space="preserve">
+    <value>总计: {0} 个审查请求 | 新的: {1}</value>
+  </data>
+  <data name="MainWindowButtonMarkAllRead" xml:space="preserve">
+    <value>全部标记为已读</value>
+  </data>
+  <data name="MainWindowContextMenuOpen" xml:space="preserve">
+    <value>打开</value>
+  </data>
+  <data name="MainWindowContextMenuMarkAsRead" xml:space="preserve">
+    <value>标记为已读</value>
+  </data>
+  <data name="MainWindowBadgeNew" xml:space="preserve">
+    <value>新</value>
+  </data>
+  
+  <!-- Notification Messages -->
+  <data name="NotificationNewPRReview" xml:space="preserve">
+    <value>新的 PR 审查 - {0}</value>
+  </data>
+  <data name="NotificationPRFormat" xml:space="preserve">
+    <value>PR #{0} - {1}
+审查者: {2}</value>
+  </data>
+  <data name="NotificationUpdateFormat" xml:space="preserve">
+    <value>版本 {0} 现已可用！
+发布时间: {1}</value>
+  </data>
+  
+  <!-- Status Format Strings -->
+  <data name="StatusConnectedAs" xml:space="preserve">
+    <value>已连接为 {0}</value>
+  </data>
+  <data name="StatusPendingReviews" xml:space="preserve">
+    <value>{0} 个待审查 - {1} 个未读</value>
+  </data>
+  <data name="StatusPausedFormat" xml:space="preserve">
+    <value>已暂停 - {0} 个待审查 - {1} 个未读</value>
+  </data>
+  <data name="StatusError" xml:space="preserve">
+    <value>错误: {0}</value>
+  </data>
+  
+  <!-- Detail Text -->
+  <data name="DetailAuthorDateFormat" xml:space="preserve">
+    <value>由 {0} 创建 • {1}</value>
+  </data>
+  
+  <!-- Language Names -->
+  <data name="LanguageEnglish" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="LanguageChinese" xml:space="preserve">
+    <value>中文 (Chinese)</value>
+  </data>
+  
+  <!-- Language Change -->
+  <data name="MessageLanguageChangeRequiresRestart" xml:space="preserve">
+    <value>请重新启动应用程序以使语言更改完全生效。</value>
+  </data>
+</root>

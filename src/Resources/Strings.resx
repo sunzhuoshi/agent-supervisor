@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" use="preserve" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  
+  <!-- Application Identity -->
+  <data name="ApplicationName" xml:space="preserve">
+    <value>Agent Supervisor</value>
+  </data>
+  
+  <!-- Message Box Titles -->
+  <data name="MessageBoxTitleError" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="MessageBoxTitleSuccess" xml:space="preserve">
+    <value>Success</value>
+  </data>
+  <data name="MessageBoxTitleWarning" xml:space="preserve">
+    <value>Configuration Required</value>
+  </data>
+  <data name="MessageBoxTitleAlreadyRunning" xml:space="preserve">
+    <value>Agent Supervisor Already Running</value>
+  </data>
+  <data name="MessageBoxTitleConnectionError" xml:space="preserve">
+    <value>Connection Error</value>
+  </data>
+  <data name="MessageBoxTitleValidationError" xml:space="preserve">
+    <value>Validation Error</value>
+  </data>
+  <data name="MessageBoxTitleUpdateAvailable" xml:space="preserve">
+    <value>Update Available</value>
+  </data>
+  <data name="MessageBoxTitlePreReleaseUpdateAvailable" xml:space="preserve">
+    <value>Pre-Release Update Available</value>
+  </data>
+  <data name="MessageBoxTitleNoUpdatesAvailable" xml:space="preserve">
+    <value>No Updates Available</value>
+  </data>
+  <data name="MessageBoxTitleUpdateCheckFailed" xml:space="preserve">
+    <value>Update Check Failed</value>
+  </data>
+  <data name="MessageBoxTitlePollingStatus" xml:space="preserve">
+    <value>Polling Status</value>
+  </data>
+  <data name="MessageBoxTitlePollingError" xml:space="preserve">
+    <value>Polling Error</value>
+  </data>
+  <data name="MessageBoxTitleConfigurationError" xml:space="preserve">
+    <value>Configuration Error</value>
+  </data>
+  
+  <!-- Message Box Content -->
+  <data name="MessageAlreadyRunning" xml:space="preserve">
+    <value>Agent Supervisor is already running.
+
+Please check the system tray for the application icon.</value>
+  </data>
+  <data name="MessageTokenRequired" xml:space="preserve">
+    <value>Personal Access Token is required to run the application.</value>
+  </data>
+  <data name="MessageConnectionFailed" xml:space="preserve">
+    <value>Failed to connect to GitHub. Please check your Personal Access Token.</value>
+  </data>
+  <data name="MessageTokenValidationFailed" xml:space="preserve">
+    <value>Personal Access Token is required.</value>
+  </data>
+  <data name="MessageProxyValidationFailed" xml:space="preserve">
+    <value>Proxy URL is required when proxy is enabled.</value>
+  </data>
+  <data name="MessageSettingsSaved" xml:space="preserve">
+    <value>Settings saved successfully.</value>
+  </data>
+  <data name="MessageNoUpdatesAvailable" xml:space="preserve">
+    <value>You are running the latest version.</value>
+  </data>
+  <data name="MessagePollingPaused" xml:space="preserve">
+    <value>Data polling paused</value>
+  </data>
+  <data name="MessagePollingResumed" xml:space="preserve">
+    <value>Data polling resumed</value>
+  </data>
+  <data name="MessagePollingNotConfigured" xml:space="preserve">
+    <value>Data polling callback is not configured.</value>
+  </data>
+  
+  <!-- Menu Item Text -->
+  <data name="MenuItemReviewRequests" xml:space="preserve">
+    <value>Review Requests by Copilots</value>
+  </data>
+  <data name="MenuItemPollAtOnce" xml:space="preserve">
+    <value>Poll at Once</value>
+  </data>
+  <data name="MenuItemPausePolling" xml:space="preserve">
+    <value>Pause Polling</value>
+  </data>
+  <data name="MenuItemResumePolling" xml:space="preserve">
+    <value>Resume Polling</value>
+  </data>
+  <data name="MenuItemSettings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="MenuItemAbout" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="MenuItemCheckForUpdates" xml:space="preserve">
+    <value>Check for Updates</value>
+  </data>
+  <data name="MenuItemExit" xml:space="preserve">
+    <value>Exit</value>
+  </data>
+  
+  <!-- Status Messages -->
+  <data name="StatusConnecting" xml:space="preserve">
+    <value>Connecting to GitHub...</value>
+  </data>
+  <data name="StatusMonitoringRestarted" xml:space="preserve">
+    <value>Monitoring restarted</value>
+  </data>
+  <data name="StatusCheckingForUpdates" xml:space="preserve">
+    <value>Checking for updates...</value>
+  </data>
+  <data name="StatusPollingData" xml:space="preserve">
+    <value>Polling data...</value>
+  </data>
+  
+  <!-- Settings Form Labels -->
+  <data name="SettingsFormTitle" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="SettingsLabelToken" xml:space="preserve">
+    <value>GitHub Personal Access Token:</value>
+  </data>
+  <data name="SettingsLabelShowToken" xml:space="preserve">
+    <value>Show token</value>
+  </data>
+  <data name="SettingsLabelPollingInterval" xml:space="preserve">
+    <value>Polling Interval (seconds):</value>
+  </data>
+  <data name="SettingsLabelMaxHistory" xml:space="preserve">
+    <value>Max History Entries:</value>
+  </data>
+  <data name="SettingsLabelEnableNotifications" xml:space="preserve">
+    <value>Enable Desktop Notifications</value>
+  </data>
+  <data name="SettingsLabelProxyGroup" xml:space="preserve">
+    <value>Proxy Settings</value>
+  </data>
+  <data name="SettingsLabelUseProxy" xml:space="preserve">
+    <value>Use Proxy</value>
+  </data>
+  <data name="SettingsLabelProxyUrl" xml:space="preserve">
+    <value>Proxy URL (e.g., http://proxy:8080):</value>
+  </data>
+  <data name="SettingsLabelLanguage" xml:space="preserve">
+    <value>Language:</value>
+  </data>
+  <data name="SettingsButtonSave" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="SettingsButtonCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  
+  <!-- About Form -->
+  <data name="AboutFormTitle" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="AboutDescription" xml:space="preserve">
+    <value>A Windows system tray application that monitors
+GitHub pull request reviews and sends desktop notifications.</value>
+  </data>
+  <data name="AboutVersion" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="AboutCopyright" xml:space="preserve">
+    <value>Agent Supervisor Contributors</value>
+  </data>
+  <data name="AboutButtonOK" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  
+  <!-- Main Window -->
+  <data name="MainWindowTitle" xml:space="preserve">
+    <value>Review Requests by Copilots</value>
+  </data>
+  <data name="MainWindowStatusNoRequests" xml:space="preserve">
+    <value>No review requests</value>
+  </data>
+  <data name="MainWindowStatusFormat" xml:space="preserve">
+    <value>Total: {0} review request(s) | New: {1}</value>
+  </data>
+  <data name="MainWindowButtonMarkAllRead" xml:space="preserve">
+    <value>Mark All as Read</value>
+  </data>
+  <data name="MainWindowContextMenuOpen" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="MainWindowContextMenuMarkAsRead" xml:space="preserve">
+    <value>Mark as read</value>
+  </data>
+  <data name="MainWindowBadgeNew" xml:space="preserve">
+    <value>NEW</value>
+  </data>
+  
+  <!-- Notification Messages -->
+  <data name="NotificationNewPRReview" xml:space="preserve">
+    <value>New PR Review - {0}</value>
+  </data>
+  <data name="NotificationPRFormat" xml:space="preserve">
+    <value>PR #{0} - {1}
+Reviewer: {2}</value>
+  </data>
+  <data name="NotificationUpdateFormat" xml:space="preserve">
+    <value>Version {0} is now available!
+Published: {1}</value>
+  </data>
+  
+  <!-- Status Format Strings -->
+  <data name="StatusConnectedAs" xml:space="preserve">
+    <value>Connected as {0}</value>
+  </data>
+  <data name="StatusPendingReviews" xml:space="preserve">
+    <value>{0} pending review(s) - {1} unread</value>
+  </data>
+  <data name="StatusPausedFormat" xml:space="preserve">
+    <value>Paused - {0} pending review(s) - {1} unread</value>
+  </data>
+  <data name="StatusError" xml:space="preserve">
+    <value>Error: {0}</value>
+  </data>
+  
+  <!-- Detail Text -->
+  <data name="DetailAuthorDateFormat" xml:space="preserve">
+    <value>by {0} • {1}</value>
+  </data>
+  
+  <!-- Language Names -->
+  <data name="LanguageEnglish" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="LanguageChinese" xml:space="preserve">
+    <value>中文 (Chinese)</value>
+  </data>
+  
+  <!-- Language Change -->
+  <data name="MessageLanguageChangeRequiresRestart" xml:space="preserve">
+    <value>Please restart the application for the language change to take full effect.</value>
+  </data>
+</root>

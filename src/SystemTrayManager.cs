@@ -275,7 +275,6 @@ namespace AgentSupervisor
             };
         }
 
-        private Icon CreateCustomIcon()
         /// <summary>
         /// Toggles the pause collection state
         /// This method is only available when ENABLE_CI_FEATURES is defined during compilation

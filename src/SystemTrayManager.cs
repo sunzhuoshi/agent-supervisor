@@ -33,7 +33,7 @@ namespace AgentSupervisor
             Action onSettingsClick,
             Action onExitClick,
             Action<string> onOpenUrlClick,
-            Action onCheckForUpdatesClick)
+            Action onCheckForUpdatesClick,
             Action? onRefreshBadge,
             Action showReviewRequestsForm
 #if ENABLE_CI_FEATURES

@@ -358,8 +358,7 @@ namespace AgentSupervisor
                                   "It may contain bugs or incomplete features.\n\n";
                     }
                     
-                    message += $"Would you like to download and install the update now?\n\n" +
-                              $"The application will restart after the update is installed.";
+                    message += $"Would you like to open the download page in your browser?";
                     
                     // Show dialog with update option
                     var result = MessageBox.Show(
@@ -370,7 +369,8 @@ namespace AgentSupervisor
 
                     if (result == DialogResult.Yes)
                     {
-                        await DownloadAndInstallUpdateAsync(updateInfo);
+                        // Open the release page in the default browser
+                        OnOpenUrlClick(updateInfo.ReleaseUrl);
                     }
                 }
                 else
@@ -408,94 +408,6 @@ namespace AgentSupervisor
                     var username = await _gitHubService!.GetCurrentUserAsync();
                     _systemTrayManager?.UpdateStatus($"Connected as {username}");
                 }
-            }
-        }
-
-        private async Task DownloadAndInstallUpdateAsync(UpdateInfo updateInfo)
-        {
-            try
-            {
-                Logger.LogInfo($"Downloading update: {updateInfo.Version}");
-
-                // Show progress dialog
-                using var progressForm = new Form
-                {
-                    Text = "Downloading Update",
-                    Width = 400,
-                    Height = 150,
-                    FormBorderStyle = FormBorderStyle.FixedDialog,
-                    StartPosition = FormStartPosition.CenterScreen,
-                    MaximizeBox = false,
-                    MinimizeBox = false
-                };
-
-                var progressBar = new ProgressBar
-                {
-                    Location = new System.Drawing.Point(20, 40),
-                    Width = 340,
-                    Height = 30,
-                    Minimum = 0,
-                    Maximum = 100
-                };
-
-                var statusLabel = new Label
-                {
-                    Location = new System.Drawing.Point(20, 15),
-                    Width = 340,
-                    Text = "Downloading update..."
-                };
-
-                progressForm.Controls.Add(statusLabel);
-                progressForm.Controls.Add(progressBar);
-
-                var progress = new Progress<int>(value =>
-                {
-                    if (!progressForm.IsDisposed)
-                    {
-                        progressBar.Value = value;
-                        statusLabel.Text = $"Downloading update... {value}%";
-                    }
-                });
-
-                // Show the form and start download
-                progressForm.Show();
-
-                var success = await _updateService!.DownloadAndInstallUpdateAsync(updateInfo.DownloadUrl, progress);
-
-                progressForm.Close();
-
-                if (success)
-                {
-                    Logger.LogInfo("Update download successful, preparing to exit");
-                    MessageBox.Show(
-                        "Update downloaded successfully!\n\n" +
-                        "The application will now close and the update will be installed automatically.\n" +
-                        "Agent Supervisor will restart after the update is complete.",
-                        "Update Ready",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Information);
-
-                    // Exit the application to allow the update script to run
-                    OnExitClick();
-                }
-                else
-                {
-                    Logger.LogError("Update download failed");
-                    MessageBox.Show(
-                        "Failed to download the update. Please try again later or download manually from GitHub.",
-                        "Update Failed",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Error);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError("Error downloading update", ex);
-                MessageBox.Show(
-                    $"Error downloading update: {ex.Message}",
-                    "Update Failed",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
             }
         }
 

@@ -90,29 +90,17 @@ The application automatically checks for updates from GitHub releases:
 - **Automatic Check**: On startup, the app checks for new releases (can be disabled in config)
 - **Manual Check**: Right-click the tray icon and select "Check for Updates"
 - **Update Notification**: A balloon notification appears when a new version is available
-- **One-Click Update**: Click "Yes" to download and install the update automatically
-- **Data Preservation**: Your configuration and notification history are preserved during the update
-- **Automatic Restart**: The application restarts automatically after the update is installed
+- **Download Link**: Click "Yes" to open the GitHub release page in your browser to download the update manually
+- **Manual Installation**: Download the latest release from GitHub and extract it to replace the old version
 
-The update process:
-1. Downloads the latest release from GitHub
-2. Backs up your configuration files (`config.json`, `notification_history.json`, `review_requests.json`)
-3. **Backs up old version files to `rollback/` directory for rollback capability**
-4. Extracts and installs the new version
-5. Restores your configuration files
-6. Restarts the application
-
-### Rollback to Previous Version
-
-If you encounter issues with a new version, you can manually rollback:
-
-1. Close Agent Supervisor
-2. Navigate to the `rollback/` folder in the application directory
-3. Find the folder for your previous version (e.g., `version_1.0.0_20250113_095830`)
-4. Copy all files from that folder back to the application directory
-5. Restart Agent Supervisor
-
-The rollback directory keeps backups of previous versions, allowing you to restore if needed.
+When an update is available:
+1. A notification appears with version information
+2. Click "Yes" to open the GitHub release page in your default browser
+3. Download the release zip file
+4. Close Agent Supervisor
+5. Extract the downloaded files to the application directory (replacing old files)
+6. Your configuration files (`config.json`, `notification_history.json`, `review_requests.json`) are preserved automatically
+7. Restart Agent Supervisor
 
 ## Configuration
 

@@ -182,6 +182,9 @@ jobs:
         Copy-Item "$buildPath/AgentSupervisor.runtimeconfig.json" -Destination $artifactsPath
         Copy-Item "$buildPath/Octokit.dll" -Destination $artifactsPath
         
+        # Copy resources (app icon)
+        Copy-Item "$buildPath/res" -Destination $artifactsPath -Recurse
+        
         # Copy documentation
         Copy-Item "README.md" -Destination $artifactsPath
         Copy-Item "LICENSE" -Destination $artifactsPath

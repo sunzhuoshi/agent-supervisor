@@ -16,7 +16,7 @@ namespace AgentSupervisor
         private readonly Action _onExitClick;
         private readonly Action<string> _onOpenUrlClick;
         private readonly Action _showReviewRequestsForm;
-#if ENABLE_CI_FEATURES
+#if ENABLE_DEV_FEATURES
         private readonly Action? _onTriggerCollection;
         private readonly Configuration _config;
         private readonly Action? _onConfigChanged;
@@ -32,7 +32,7 @@ namespace AgentSupervisor
             Action onExitClick,
             Action<string> onOpenUrlClick,
             Action showReviewRequestsForm
-#if ENABLE_CI_FEATURES
+#if ENABLE_DEV_FEATURES
             , Action? onTriggerCollection = null
             , Configuration? config = null
             , Action? onConfigChanged = null
@@ -47,7 +47,7 @@ namespace AgentSupervisor
             _onExitClick = onExitClick;
             _onOpenUrlClick = onOpenUrlClick;
             _showReviewRequestsForm = showReviewRequestsForm;
-#if ENABLE_CI_FEATURES
+#if ENABLE_DEV_FEATURES
             _onTriggerCollection = onTriggerCollection;
             _config = config ?? new Configuration();
             _onConfigChanged = onConfigChanged;
@@ -94,20 +94,20 @@ namespace AgentSupervisor
 
             menu.Items.Add(new ToolStripSeparator());
 
-#if ENABLE_CI_FEATURES
-            // CI-only menu item for data collection
+#if ENABLE_DEV_FEATURES
+            // DEV-only menu item for data collection
             var collectDataItem = new ToolStripMenuItem("Collect at Once");
             collectDataItem.Click += (s, e) => CollectData();
             menu.Items.Add(collectDataItem);
             
-            // CI-only menu item for pausing collection
+            // DEV-only menu item for pausing collection
             _pauseCollectionMenuItem = new ToolStripMenuItem(GetPauseMenuText());
             _pauseCollectionMenuItem.Click += (s, e) => TogglePauseCollection();
             menu.Items.Add(_pauseCollectionMenuItem);
             
             menu.Items.Add(new ToolStripSeparator());
             
-            Logger.LogInfo("CI features enabled - 'Collect at Once' and 'Pause Collection' menu items added");
+            Logger.LogInfo("DEV features enabled - 'Collect at Once' and 'Pause Collection' menu items added");
 #endif
 
             var settingsItem = new ToolStripMenuItem("Settings");
@@ -211,16 +211,16 @@ namespace AgentSupervisor
             }
         }
 
-#if ENABLE_CI_FEATURES
+#if ENABLE_DEV_FEATURES
         /// <summary>
         /// Triggers immediate collection of review requests from GitHub
-        /// This method is only available when ENABLE_CI_FEATURES is defined during compilation
+        /// This method is only available when ENABLE_DEV_FEATURES is defined during compilation
         /// </summary>
         private void CollectData()
         {
             try
             {
-                Logger.LogInfo("Triggering immediate data collection (CI build)");
+                Logger.LogInfo("Triggering immediate data collection (DEV build)");
 
                 if (_onTriggerCollection != null)
                 {
@@ -249,7 +249,7 @@ namespace AgentSupervisor
 
         /// <summary>
         /// Toggles the pause collection state
-        /// This method is only available when ENABLE_CI_FEATURES is defined during compilation
+        /// This method is only available when ENABLE_DEV_FEATURES is defined during compilation
         /// </summary>
         private void TogglePauseCollection()
         {

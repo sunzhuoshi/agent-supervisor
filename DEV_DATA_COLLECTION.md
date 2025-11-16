@@ -1,30 +1,30 @@
-# CI Data Collection Feature
+# DEV Data Collection Feature
 
 ## Overview
 
-The Agent Supervisor application includes a special menu item that is only available in CI builds. This feature allows triggering an immediate collection of review requests from GitHub, bypassing the normal scheduled polling interval.
+The Agent Supervisor application includes a special menu item that is only available in DEV builds. This feature allows triggering an immediate collection of review requests from GitHub, bypassing the normal scheduled polling interval.
 
 ## How It Works
 
 ### Build-Time Configuration
 
-This feature is controlled at **compile-time** using conditional compilation. The feature is enabled by defining the `ENABLE_CI_FEATURES` compilation symbol during the build process.
+This feature is controlled at **compile-time** using conditional compilation. The feature is enabled by defining the `ENABLE_DEV_FEATURES` compilation symbol during the build process.
 
-**CI Builds**: Include the `ENABLE_CI_FEATURES` symbol → Data collection menu item is available
+**DEV Builds**: Include the `ENABLE_DEV_FEATURES` symbol → Data collection menu item is available
 **Release Builds**: Do not include the symbol → Data collection menu item is NOT available
 
-This approach ensures that production/release builds never include the CI-specific features, providing a clean separation between testing and production functionality.
+This approach ensures that production/release builds never include the DEV-specific features, providing a clean separation between testing and production functionality.
 
 ### Menu Items
 
-When the application is built with CI features enabled, additional menu items appear in the system tray context menu:
+When the application is built with DEV features enabled, additional menu items appear in the system tray context menu:
 
 ```
 ┌─────────────────────────────────┐
 │ Review Requests by Copilots     │
 ├─────────────────────────────────┤
-│ Collect at Once       ← CI only │
-│ Pause Collection      ← CI only │  
+│ Collect at Once       ← DEV only │
+│ Pause Collection      ← DEV only │  
 ├─────────────────────────────────┤
 │ Settings                        │
 │ About                           │
@@ -63,50 +63,50 @@ The "Pause Collection" menu item allows you to pause and resume the automatic da
 
 The pause state is persisted in the Windows Registry and survives application restarts. This is useful for temporarily stopping data collection during testing or when you want to avoid API rate limits without changing the polling interval.
 
-## Building with CI Features
+## Building with DEV Features
 
 ### GitHub Actions (Automated)
 
-The CI build workflow (`.github/workflows/build.yml`) automatically enables CI features by including the compilation symbol:
+The build workflow (`.github/workflows/build.yml`) automatically enables DEV features by including the compilation symbol:
 
 ```yaml
 - name: Build
-  run: dotnet build --no-restore --configuration Release /p:DefineConstants="ENABLE_CI_FEATURES" ...
+  run: dotnet build --no-restore --configuration Release /p:DefineConstants="ENABLE_DEV_FEATURES" ...
 ```
 
-Builds from the CI workflow will include the "Collect at Once" menu item.
+Builds from the build workflow will include the "Collect at Once" menu item.
 
 ### Local Testing
 
-To build locally with CI features enabled:
+To build locally with DEV features enabled:
 
 **Command Line:**
 ```bash
-dotnet build --configuration Release /p:DefineConstants="ENABLE_CI_FEATURES"
+dotnet build --configuration Release /p:DefineConstants="ENABLE_DEV_FEATURES"
 ```
 
 **Or to run directly:**
 ```bash
-dotnet run --configuration Release /p:DefineConstants="ENABLE_CI_FEATURES"
+dotnet run --configuration Release /p:DefineConstants="ENABLE_DEV_FEATURES"
 ```
 
 ### Release Builds
 
-Release builds (`.github/workflows/release.yml`) do **not** include the `ENABLE_CI_FEATURES` symbol, ensuring that production releases never have the CI-specific menu items.
+Release builds (`.github/workflows/release.yml`) do **not** include the `ENABLE_DEV_FEATURES` symbol, ensuring that production releases never have the DEV-specific menu items.
 
-To build a release version locally without CI features:
+To build a release version locally without DEV features:
 ```bash
 dotnet build --configuration Release
 ```
 
 ## Use Cases
 
-These CI features are useful for:
+These DEV features are useful for:
 
 1. **Immediate Data Refresh** (Collect at Once): Force an immediate fetch of review requests without waiting for the scheduled polling interval
-2. **Testing**: Verify that the GitHub API integration is working correctly during CI builds
+2. **Testing**: Verify that the GitHub API integration is working correctly during development builds
 3. **Debugging**: Quickly check for new review requests during development and testing
-4. **CI/CD Pipeline Testing**: Validate that the application can successfully connect to GitHub and fetch data
+4. **Development/Testing Pipeline**: Validate that the application can successfully connect to GitHub and fetch data
 5. **Pause/Resume Collection** (Pause Collection): Temporarily stop data collection without closing the application or changing polling interval settings
 6. **API Rate Limit Management**: Pause collection when approaching GitHub API rate limits during testing
 7. **Development Workflows**: Pause automatic collection while making code changes or debugging
@@ -121,6 +121,6 @@ These CI features are useful for:
 
 ## Limitations
 
-- These menu items are **only** visible in builds compiled with `ENABLE_CI_FEATURES` defined
+- These menu items are **only** visible in builds compiled with `ENABLE_DEV_FEATURES` defined
 - For regular release builds, these features are not available (by design)
 - Triggering collection requires an active network connection to GitHub

@@ -124,7 +124,7 @@ namespace AgentSupervisor
                     }
                     
                     // Check if the entry has been updated (newer updated_at timestamp)
-                    if (entry.UpdatedAt > existing.UpdatedAt)
+                    if (existing.UpdatedAt != DateTime.MinValue && entry.UpdatedAt > existing.UpdatedAt)
                     {
                         existing.UpdatedAt = entry.UpdatedAt;
                         existing.IsNew = true;

@@ -347,15 +347,26 @@ namespace AgentSupervisor
                     // Show notification
                     _systemTrayManager?.ShowUpdateNotification(updateInfo);
                     
+                    // Build the update message
+                    var message = $"A new version ({updateInfo.Version}) is available!\n\n" +
+                                 $"Published: {updateInfo.PublishedAt:MMMM dd, yyyy}\n\n";
+                    
+                    // Add pre-release warning if applicable
+                    if (updateInfo.IsPreRelease)
+                    {
+                        message += "⚠️ WARNING: This is a pre-release version (alpha/beta).\n" +
+                                  "It may contain bugs or incomplete features.\n\n";
+                    }
+                    
+                    message += $"Would you like to download and install the update now?\n\n" +
+                              $"The application will restart after the update is installed.";
+                    
                     // Show dialog with update option
                     var result = MessageBox.Show(
-                        $"A new version ({updateInfo.Version}) is available!\n\n" +
-                        $"Published: {updateInfo.PublishedAt:MMMM dd, yyyy}\n\n" +
-                        $"Would you like to download and install the update now?\n\n" +
-                        $"The application will restart after the update is installed.",
-                        "Update Available",
+                        message,
+                        updateInfo.IsPreRelease ? "Pre-Release Update Available" : "Update Available",
                         MessageBoxButtons.YesNo,
-                        MessageBoxIcon.Information);
+                        updateInfo.IsPreRelease ? MessageBoxIcon.Warning : MessageBoxIcon.Information);
 
                     if (result == DialogResult.Yes)
                     {

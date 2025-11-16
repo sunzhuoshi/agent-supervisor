@@ -6,6 +6,8 @@
 
 A Windows system tray application that helps improve GitHub Copilot agents workflows by monitoring pull request reviews and sending desktop notifications.
 
+English | [简体中文](README.zh-CN.md)
+
 ## Features
 
 - **Auto-Update**: Automatically checks for new releases from GitHub and prompts to upgrade with one click
@@ -21,6 +23,7 @@ A Windows system tray application that helps improve GitHub Copilot agents workf
 - **Configurable Polling**: Poll GitHub API periodically with configurable interval (default: 60 seconds)
 - **Notification History**: Maintains a persistent history of all notifications
 - **Browser Integration**: Click on notifications to open pull requests in your default browser
+- **Multi-Language Support**: Available in English and Chinese (Simplified), automatically detected based on system locale
 - **Windows Support**: Built specifically for Windows using C# and Windows Forms
 
 ## Requirements
@@ -115,6 +118,7 @@ Configuration is stored in the Windows Registry under `HKEY_CURRENT_USER\Softwar
 | Proxy URL | ProxyUrl | (empty) |
 | Use Proxy | UseProxy | 0 (disabled) |
 | Pause Polling | PausePolling | 0 (disabled) |
+| Language | Language | (auto-detected) |
 
 You can configure settings using the Settings UI (right-click tray icon → Settings).
 
@@ -129,6 +133,15 @@ You can configure settings using the Settings UI (right-click tray icon → Sett
 - `MaxHistoryEntries`: Maximum number of notifications to keep in history (default: 100)
 - `CheckForUpdatesOnStartup`: Whether to check for updates when the app starts (default: true)
 - `LastUpdateCheck`: Timestamp of the last update check (automatically managed)
+- `Language`: UI language preference (en for English, zh-CN for Chinese; auto-detected based on system locale if not set)
+
+## Language Support
+
+Agent Supervisor supports multiple languages:
+- **English** (default)
+- **Chinese (Simplified)** - 中文（简体）
+
+The application automatically detects your system language and uses the appropriate translation. You can also manually change the language in the Settings dialog. After changing the language, restart the application for the changes to take full effect.
 
 ## How It Works
 

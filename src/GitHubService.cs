@@ -79,6 +79,31 @@ namespace AgentSupervisor
             }
         }
 
+        /// <summary>
+        /// Attempts to parse a DateTime from a JSON property.
+        /// </summary>
+        /// <param name="item">The JSON element containing the property</param>
+        /// <param name="propertyName">The name of the property to parse</param>
+        /// <param name="result">The parsed DateTime, or DateTime.UtcNow if parsing fails</param>
+        /// <returns>True if parsing was successful, false otherwise</returns>
+        private static bool TryParseJsonDateTime(JsonElement item, string propertyName, out DateTime result)
+        {
+            result = DateTime.UtcNow;
+            
+            if (item.TryGetProperty(propertyName, out var property) && 
+                property.ValueKind == JsonValueKind.String)
+            {
+                var dateStr = property.GetString();
+                if (!string.IsNullOrEmpty(dateStr) && DateTime.TryParse(dateStr, out var parsed))
+                {
+                    result = parsed;
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
         public async Task<List<PullRequestReview>> GetPendingReviewsAsync()
         {
             var reviews = new List<PullRequestReview>();
@@ -144,27 +169,8 @@ namespace AgentSupervisor
                         var htmlUrl = item.GetProperty("html_url").GetString() ?? "";
                         var title = item.GetProperty("title").GetString() ?? "";
                         
-                        var createdAt = DateTime.UtcNow;
-                        if (item.TryGetProperty("created_at", out var created) && 
-                            created.ValueKind == JsonValueKind.String)
-                        {
-                            var createdStr = created.GetString();
-                            if (!string.IsNullOrEmpty(createdStr) && DateTime.TryParse(createdStr, out var parsedCreated))
-                            {
-                                createdAt = parsedCreated;
-                            }
-                        }
-                        
-                        var updatedAt = DateTime.UtcNow;
-                        if (item.TryGetProperty("updated_at", out var updated) && 
-                            updated.ValueKind == JsonValueKind.String)
-                        {
-                            var updatedStr = updated.GetString();
-                            if (!string.IsNullOrEmpty(updatedStr) && DateTime.TryParse(updatedStr, out var parsedUpdated))
-                            {
-                                updatedAt = parsedUpdated;
-                            }
-                        }
+                        TryParseJsonDateTime(item, "created_at", out var createdAt);
+                        TryParseJsonDateTime(item, "updated_at", out var updatedAt);
                         
                         // Get PR author info if available
                         var authorLogin = "Unknown";

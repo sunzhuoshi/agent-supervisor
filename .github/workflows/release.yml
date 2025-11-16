@@ -27,6 +27,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        token: ${{ github.event_name == 'workflow_dispatch' && secrets.PAT || secrets.GITHUB_TOKEN }}
     
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -68,6 +70,23 @@ jobs:
         Write-Output "Using version: $version"
         Write-Output "Pre-release: $isPrerelease"
     
+    - name: Update version in .csproj for manual release
+      if: github.event_name == 'workflow_dispatch'
+      shell: pwsh
+      run: |
+        $version = "${{ steps.get_version.outputs.version }}"
+        [xml]$csproj = Get-Content AgentSupervisor.csproj
+        
+        # Update all version properties
+        $csproj.Project.PropertyGroup.Version = $version
+        $csproj.Project.PropertyGroup.AssemblyVersion = $version
+        $csproj.Project.PropertyGroup.FileVersion = $version
+        
+        # Save the file
+        $csproj.Save("$PWD/AgentSupervisor.csproj")
+        
+        Write-Output "Updated version to $version in AgentSupervisor.csproj"
+    
     - name: Verify version in source
       shell: pwsh
       run: |
@@ -85,7 +104,7 @@ jobs:
         
         Write-Output "Version verification passed!"
     
-    - name: Create and push tag for manual release
+    - name: Commit version change and create tag for manual release
       if: github.event_name == 'workflow_dispatch'
       shell: pwsh
       run: |
@@ -100,6 +119,15 @@ jobs:
         if ($existingTag) {
           Write-Error "Tag $tag already exists. Cannot create a release for an existing version."
           exit 1
+        }
+        
+        # Commit the version change if there are changes
+        $status = git status --porcelain
+        if ($status) {
+          git add AgentSupervisor.csproj
+          git commit -m "Bump version to $version"
+          git push origin HEAD:${{ github.ref_name }}
+          Write-Output "Committed version change"
         }
         
         # Create and push the tag

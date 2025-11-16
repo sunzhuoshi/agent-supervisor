@@ -62,6 +62,13 @@ namespace AgentSupervisor
 
                 Logger.LogInfo($"Latest release found: {latestVersion} (current: {_currentVersion})");
 
+                // Check if this is a CI build - we don't offer CI builds as updates
+                if (IsCIBuild(latestVersion))
+                {
+                    Logger.LogInfo($"Skipping CI build version: {latestVersion}");
+                    return null;
+                }
+
                 // Find the Windows zip asset
                 string? downloadUrl = null;
                 if (root.TryGetProperty("assets", out var assets))
@@ -135,6 +142,33 @@ namespace AgentSupervisor
             {
                 var semVer = SemanticVersion.Parse(version);
                 return semVer.IsPreRelease;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private bool IsCIBuild(string version)
+        {
+            try
+            {
+                // CI builds have format like 1.0.0.123 (4 parts)
+                // Remove 'v' prefix if present
+                version = version.TrimStart('v', 'V');
+                
+                // Split by '+' and '-' to get the base version
+                var versionWithoutMetadata = version.Split('+')[0].Split('-')[0];
+                
+                // Check if it has 4 or more parts (CI build format)
+                var parts = versionWithoutMetadata.Split('.');
+                if (parts.Length > 3)
+                {
+                    Logger.LogInfo($"Version {version} is a CI build (has {parts.Length} parts)");
+                    return true;
+                }
+                
+                return false;
             }
             catch
             {
@@ -374,6 +408,7 @@ rollback\
             }
 
             // Parse major.minor.patch
+            // Note: CI builds (e.g., 1.0.0.123) are filtered out before comparison
             var numbers = mainVersion.Split('.');
             if (numbers.Length < 3)
                 throw new FormatException($"Version must have at least 3 parts (major.minor.patch): {version}");
@@ -381,6 +416,7 @@ rollback\
             semVer.Major = int.Parse(numbers[0]);
             semVer.Minor = int.Parse(numbers[1]);
             semVer.Patch = int.Parse(numbers[2]);
+            // Ignore any additional parts (e.g., build number in 1.0.0.123)
 
             return semVer;
         }

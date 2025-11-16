@@ -19,6 +19,7 @@ A Windows system tray application that helps improve GitHub Copilot agents workf
 - **Persistent Storage**: Review requests are saved and restored between application restarts
 - **Settings UI**: Easy-to-use GUI for configuring GitHub Personal Access Token and polling interval
 - **Configurable Polling**: Poll GitHub API periodically with configurable interval (default: 60 seconds)
+- **Auto-Adjust Polling Interval**: Dynamically adjusts polling frequency based on GitHub API rate limits to optimize API usage (enabled by default)
 - **Notification History**: Maintains a persistent history of all notifications
 - **Browser Integration**: Click on notifications to open pull requests in your default browser
 - **Windows Support**: Built specifically for Windows using C# and Windows Forms
@@ -110,6 +111,7 @@ Configuration is stored in the Windows Registry under `HKEY_CURRENT_USER\Softwar
 |---------|---------------|---------|
 | GitHub Personal Access Token | PersonalAccessToken | (empty) |
 | Polling Interval (seconds) | PollingIntervalSeconds | 60 |
+| Auto Adjust Polling Interval | AutoAdjustPollingInterval | 1 (enabled) |
 | Max History Entries | MaxHistoryEntries | 100 |
 | Enable Desktop Notifications | EnableDesktopNotifications | 1 (enabled) |
 | Proxy URL | ProxyUrl | (empty) |
@@ -125,7 +127,8 @@ You can configure settings using the Settings UI (right-click tray icon → Sett
 - Standard Windows approach for application settings
 
 - `PersonalAccessToken`: Your GitHub Personal Access Token
-- `PollingIntervalSeconds`: How often to check for new PR reviews (default: 60)
+- `PollingIntervalSeconds`: How often to check for new PR reviews (default: 60). When auto-adjust is disabled, this fixed interval is used.
+- `AutoAdjustPollingInterval`: Automatically adjusts polling interval based on GitHub API rate limits (default: enabled). See [AUTO_POLLING_INTERVAL.md](AUTO_POLLING_INTERVAL.md) for details.
 - `MaxHistoryEntries`: Maximum number of notifications to keep in history (default: 100)
 - `CheckForUpdatesOnStartup`: Whether to check for updates when the app starts (default: true)
 - `LastUpdateCheck`: Timestamp of the last update check (automatically managed)

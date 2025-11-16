@@ -110,7 +110,7 @@ namespace AgentSupervisor
                 OnOpenUrlClick,
                 OnCheckForUpdatesClick,
                 RefreshTaskbarBadge,
-                ShowReviewRequestsForm,
+                ShowReviewRequestsForm
 #if ENABLE_CI_FEATURES
                 , TriggerImmediateCollection
                 , _config

@@ -103,6 +103,7 @@ namespace AgentSupervisor
 
         public void AddOrUpdate(ReviewRequestEntry entry)
         {
+            bool notifyNeeded = false;
             lock (_lockObject)
             {
                 var existing = _requests.FirstOrDefault(r => r.Id == entry.Id);
@@ -119,14 +120,20 @@ namespace AgentSupervisor
                     entry.IsNew = true;
                     entry.AddedAt = DateTime.UtcNow;
                     _requests.Add(entry);
+                    notifyNeeded = true;
                 }
                 Save();
             }
-            NotifyObservers();
+            
+            if (notifyNeeded)
+            {
+                NotifyObservers();
+            }
         }
 
         public void MarkAsRead(string requestId)
         {
+            bool notifyNeeded = false;
             lock (_lockObject)
             {
                 var request = _requests.FirstOrDefault(r => r.Id == requestId);
@@ -134,13 +141,19 @@ namespace AgentSupervisor
                 {
                     request.IsNew = false;
                     Save();
+                    notifyNeeded = true;
                 }
             }
-            NotifyObservers();
+            
+            if (notifyNeeded)
+            {
+                NotifyObservers();
+            }
         }
 
         public void MarkAllAsRead()
         {
+            bool notifyNeeded = false;
             lock (_lockObject)
             {
                 bool changed = false;
@@ -155,9 +168,14 @@ namespace AgentSupervisor
                 if (changed)
                 {
                     Save();
+                    notifyNeeded = true;
                 }
             }
-            NotifyObservers();
+            
+            if (notifyNeeded)
+            {
+                NotifyObservers();
+            }
         }
 
         public List<ReviewRequestEntry> GetAll()
@@ -186,6 +204,7 @@ namespace AgentSupervisor
 
         public void RemoveStaleRequests(List<string> currentRequestIds)
         {
+            bool notifyNeeded = false;
             lock (_lockObject)
             {
                 var initialCount = _requests.Count;
@@ -193,9 +212,14 @@ namespace AgentSupervisor
                 if (_requests.Count != initialCount)
                 {
                     Save();
+                    notifyNeeded = true;
                 }
             }
-            NotifyObservers();
+            
+            if (notifyNeeded)
+            {
+                NotifyObservers();
+            }
         }
     }
 }

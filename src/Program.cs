@@ -413,7 +413,7 @@ namespace AgentSupervisor
             try
             {
                 Logger.LogInfo($"Downloading update: {updateInfo.Version}");
-                
+
                 // Show progress dialog
                 using var progressForm = new Form
                 {
@@ -456,7 +456,7 @@ namespace AgentSupervisor
 
                 // Show the form and start download
                 progressForm.Show();
-                
+
                 var success = await _updateService!.DownloadAndInstallUpdateAsync(updateInfo.DownloadUrl, progress);
 
                 progressForm.Close();
@@ -484,6 +484,15 @@ namespace AgentSupervisor
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
                 }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Error downloading update", ex);
+                MessageBox.Show(
+                    $"Error downloading update: {ex.Message}",
+                    "Update Failed",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
             }
         }
 

@@ -223,6 +223,22 @@ namespace AgentSupervisor
             }
         }
 
+        public void ShowUpdateNotification(UpdateInfo updateInfo)
+        {
+            var title = "Update Available";
+            var message = $"Version {updateInfo.Version} is now available!\n" +
+                         $"Published: {updateInfo.PublishedAt:MMM dd, yyyy}";
+
+            _notifyIcon.ShowBalloonTip(5000, title, message, ToolTipIcon.Info);
+
+            // Store the release URL for the balloon click event
+            var tempUrl = updateInfo.ReleaseUrl;
+            _notifyIcon.BalloonTipClicked += (s, e) =>
+            {
+                _onOpenUrlClick(tempUrl);
+            };
+        }
+
 #if ENABLE_CI_FEATURES
         /// <summary>
         /// Triggers immediate collection of review requests from GitHub
@@ -257,22 +273,6 @@ namespace AgentSupervisor
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
             }
-        }
-
-        public void ShowUpdateNotification(UpdateInfo updateInfo)
-        {
-            var title = "Update Available";
-            var message = $"Version {updateInfo.Version} is now available!\n" +
-                         $"Published: {updateInfo.PublishedAt:MMM dd, yyyy}";
-
-            _notifyIcon.ShowBalloonTip(5000, title, message, ToolTipIcon.Info);
-            
-            // Store the release URL for the balloon click event
-            var tempUrl = updateInfo.ReleaseUrl;
-            _notifyIcon.BalloonTipClicked += (s, e) =>
-            {
-                _onOpenUrlClick(tempUrl);
-            };
         }
 
         /// <summary>

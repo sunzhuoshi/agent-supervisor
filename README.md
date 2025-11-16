@@ -156,8 +156,8 @@ You can configure settings using the Settings UI (right-click tray icon → Sett
 ## Files Created
 
 - `notification_history.json` - Notification history
-- `review_requests.json` - Tracking of review requests to avoid duplicate notifications
 - `review_request_details.json` - PR review requests with new/read status
+- `review_requests.json` - Tracking of review requests to avoid duplicate notifications
 
 These files are excluded from git via `.gitignore`.
 

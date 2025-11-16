@@ -20,10 +20,10 @@ namespace AgentSupervisor
         private readonly Action _showReviewRequestsForm;
 #if ENABLE_DEV_FEATURES
         private readonly Action? _onTriggerPolling;
+#endif
         private readonly Configuration _config;
         private readonly Action? _onConfigChanged;
         private ToolStripMenuItem? _pausePollingMenuItem;
-#endif
         private Icon? _customIcon;
         private AboutForm? _aboutForm;
         private EventHandler? _currentBalloonTipClickedHandler;
@@ -36,12 +36,12 @@ namespace AgentSupervisor
             Action<string> onOpenUrlClick,
             Action onCheckForUpdatesClick,
             Action? onRefreshBadge,
-            Action showReviewRequestsForm
+            Action showReviewRequestsForm,
 #if ENABLE_DEV_FEATURES
-            , Action? onTriggerPolling = null
-            , Configuration? config = null
-            , Action? onConfigChanged = null
+            Action? onTriggerPolling = null,
 #endif
+            Configuration? config = null,
+            Action? onConfigChanged = null
             )
         {
             Logger.LogInfo("Initializing SystemTrayManager");
@@ -56,9 +56,9 @@ namespace AgentSupervisor
             _showReviewRequestsForm = showReviewRequestsForm;
 #if ENABLE_DEV_FEATURES
             _onTriggerPolling = onTriggerPolling;
+#endif
             _config = config ?? new Configuration();
             _onConfigChanged = onConfigChanged;
-#endif
 
             // Create custom icon
             _customIcon = CreateCustomIcon();
@@ -107,15 +107,15 @@ namespace AgentSupervisor
             pollDataItem.Click += (s, e) => PollData();
             menu.Items.Add(pollDataItem);
             
-            // DEV-only menu item for pausing polling
+            Logger.LogInfo("DEV features enabled - 'Poll at Once' menu item added");
+#endif
+            
+            // Pause polling menu item available in all builds
             _pausePollingMenuItem = new ToolStripMenuItem(GetPauseMenuText());
             _pausePollingMenuItem.Click += (s, e) => TogglePausePolling();
             menu.Items.Add(_pausePollingMenuItem);
             
             menu.Items.Add(new ToolStripSeparator());
-            
-            Logger.LogInfo("DEV features enabled - 'Poll at Once' and 'Pause Polling' menu items added");
-#endif
 
             var settingsItem = new ToolStripMenuItem("Settings");
             settingsItem.Click += (s, e) => _onSettingsClick();
@@ -282,10 +282,10 @@ namespace AgentSupervisor
                     MessageBoxIcon.Error);
             }
         }
+#endif
 
         /// <summary>
         /// Toggles the pause polling state
-        /// This method is only available when ENABLE_DEV_FEATURES is defined during compilation
         /// </summary>
         private void TogglePausePolling()
         {
@@ -330,7 +330,6 @@ namespace AgentSupervisor
         {
             return _config.PausePolling ? "Resume Polling" : "Pause Polling";
         }
-#endif
 
         public void Dispose()
         {

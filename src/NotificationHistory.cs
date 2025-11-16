@@ -27,7 +27,7 @@ namespace AgentSupervisor
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error loading notification history: {ex.Message}");
+                    Logger.LogError($"Error loading notification history", ex);
                 }
             }
             return new List<NotificationEntry>();
@@ -45,7 +45,7 @@ namespace AgentSupervisor
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error saving notification history: {ex.Message}");
+                    Logger.LogError($"Error saving notification history", ex);
                 }
             }
         }

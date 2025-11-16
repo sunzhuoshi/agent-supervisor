@@ -1,5 +1,9 @@
 # Agent Supervisor
 
+[![Latest Release](https://img.shields.io/github/v/release/sunzhuoshi/agent-supervisor?label=version)](https://github.com/sunzhuoshi/agent-supervisor/releases/latest)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/sunzhuoshi/agent-supervisor/build.yml?branch=main)](https://github.com/sunzhuoshi/agent-supervisor/actions)
+[![License](https://img.shields.io/github/license/sunzhuoshi/agent-supervisor)](LICENSE)
+
 A Windows system tray application that helps improve GitHub Copilot agents workflows by monitoring pull request reviews and sending desktop notifications.
 
 ## Features
@@ -9,6 +13,10 @@ A Windows system tray application that helps improve GitHub Copilot agents workf
 - **System Tray Application**: Runs in background with system tray icon
 - **Monitor PR Reviews**: Automatically monitors pull request reviews assigned to the current user
 - **Desktop Notifications**: Displays Windows balloon tip notifications when new reviews are detected
+- **PR Review Requests Tracking**: View all review requests with new/read status in a dedicated dialog
+- **Mark as Read**: Double-click review requests to open them and automatically mark as read
+- **Bulk Mark as Read**: Button to mark all review requests as read at once
+- **Persistent Storage**: Review requests are saved and restored between application restarts
 - **Settings UI**: Easy-to-use GUI for configuring GitHub Personal Access Token and polling interval
 - **Configurable Polling**: Poll GitHub API periodically with configurable interval (default: 60 seconds)
 - **Notification History**: Maintains a persistent history of all notifications
@@ -65,12 +73,13 @@ dotnet build --configuration Release
 
 4. **Using the Application**:
    - **Right-click the tray icon** to access the menu:
-     - "Recent Notifications" - View the last 10 notifications
+     - "Review Requests by Copilots" - View all review requests with new/read status
      - "Settings" - Change your configuration
      - "About" - View application information
      - "Check for Updates" - Manually check for application updates
      - "Exit" - Close the application
-   - **Double-click the tray icon** - View recent notifications
+   - **Double-click the tray icon** - View PR review requests
+   - **Double-click a review request** - Opens the PR in your browser and marks it as read
    - **Click a balloon notification** - Opens the PR in your browser
    - **Check the taskbar badge** - See how many reviews are pending at a glance
 
@@ -107,19 +116,25 @@ The rollback directory keeps backups of previous versions, allowing you to resto
 
 ## Configuration
 
-Configuration is stored in `config.json` in the application directory:
+Configuration is stored in the Windows Registry under `HKEY_CURRENT_USER\Software\AgentSupervisor`:
 
-```json
-{
-  "PersonalAccessToken": "your_github_token_here",
-  "PollingIntervalSeconds": 60,
-  "MaxHistoryEntries": 100,
-  "CheckForUpdatesOnStartup": true,
-  "LastUpdateCheck": null
-}
-```
+| Setting | Registry Value | Default |
+|---------|---------------|---------|
+| GitHub Personal Access Token | PersonalAccessToken | (empty) |
+| Polling Interval (seconds) | PollingIntervalSeconds | 60 |
+| Max History Entries | MaxHistoryEntries | 100 |
+| Enable Desktop Notifications | EnableDesktopNotifications | 1 (enabled) |
+| Proxy URL | ProxyUrl | (empty) |
+| Use Proxy | UseProxy | 0 (disabled) |
+| Pause Collection (CI builds only) | PauseCollection | 0 (disabled) |
 
-You can edit this file manually or use the Settings UI (right-click tray icon → Settings).
+You can configure settings using the Settings UI (right-click tray icon → Settings).
+
+**Benefits of Registry Storage:**
+- Configuration persists across different versions of the application
+- No need to manually reconfigure when testing new builds
+- Settings survive application reinstalls (unless uninstalled via Windows Settings)
+- Standard Windows approach for application settings
 
 - `PersonalAccessToken`: Your GitHub Personal Access Token
 - `PollingIntervalSeconds`: How often to check for new PR reviews (default: 60)
@@ -134,16 +149,18 @@ You can edit this file manually or use the Settings UI (right-click tray icon �
 3. **System Tray**: Displays an icon in the Windows notification area
 4. **Balloon Notifications**: When a new PR review is detected, a Windows balloon tip notification appears
 5. **Notification History**: All notifications are saved to `notification_history.json`
-6. **Click to Open**: Click on a notification to open the PR in your default browser
-7. **Auto-Update**: Checks for new releases on startup and notifies when updates are available
+6. **Auto-Update**: Checks for new releases on startup and notifies when updates are available
+7. **Review Request Tracking**: All review requests are saved to `review_request_details.json` with new/read status
+8. **Click to Open**: Click on a notification or double-click a review request to open the PR in your default browser
 
 ## Files Created
 
-- `config.json` - Configuration file (contains your PAT, keep it secure!)
 - `notification_history.json` - Notification history
 - `review_requests.json` - Tracking of review requests to avoid duplicate notifications
+- `review_request_details.json` - PR review requests with new/read status
 
-All files are excluded from git via `.gitignore`.
+These files are excluded from git via `.gitignore`.
+
 
 ## Project Structure
 
@@ -191,7 +208,7 @@ AgentSupervisor/
 ### No notifications appear
 - Check that you're actually requested as a reviewer on open PRs
 - Verify the polling interval - it may not have checked yet
-- Right-click tray icon → Recent Notifications to see history
+- Right-click tray icon → Review Requests by Copilots to see all requests
 - Check that Windows notifications are enabled for the application
 
 ### Can't find the system tray icon
@@ -229,9 +246,46 @@ Releases are automatically created when a version tag is pushed to the repositor
 4. Creates a GitHub release with auto-generated release notes
 5. Uploads a zip file containing the application and dependencies
 
+For detailed information about versioning strategy and release process, see **[VERSIONING.md](VERSIONING.md)**.
+
 ### Creating a Release
 
-To create a new release:
+There are two ways to create a new release:
+
+#### Option 1: Manual Workflow (Recommended)
+
+The easiest way to create a release is using the manual workflow dispatch:
+
+1. Update the version in `AgentSupervisor.csproj`:
+   ```xml
+   <Version>1.0.0</Version>
+   <AssemblyVersion>1.0.0</AssemblyVersion>
+   <FileVersion>1.0.0</FileVersion>
+   ```
+
+2. Commit and push the version change:
+   ```bash
+   git add AgentSupervisor.csproj
+   git commit -m "Bump version to 1.0.0"
+   git push
+   ```
+
+3. Trigger the release manually via GitHub Actions:
+   - Go to the [Actions tab](../../actions/workflows/release.yml) in the GitHub repository
+   - Click on "Release" workflow
+   - Click "Run workflow" button
+   - Enter the version number (e.g., `1.0.0`) without the `v` prefix
+   - Click "Run workflow"
+
+The workflow will:
+- Validate the version format (MAJOR.MINOR.PATCH)
+- Verify that the version matches the version in `AgentSupervisor.csproj`
+- Create and push the corresponding git tag (e.g., `v1.0.0`)
+- Build the application and create the GitHub release
+
+#### Option 2: Push Git Tag
+
+Alternatively, you can create a release by pushing a git tag:
 
 1. Update the version in `AgentSupervisor.csproj`:
    ```xml
@@ -254,3 +308,5 @@ To create a new release:
    ```
 
 The release workflow will automatically run and create a GitHub release with the build artifacts.
+
+See **[VERSIONING.md](VERSIONING.md)** for version numbering rules and guidelines.

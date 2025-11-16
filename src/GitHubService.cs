@@ -7,10 +7,11 @@ namespace AgentSupervisor
     public class GitHubService
     {
         private readonly HttpClient _httpClient;
-        private readonly string _username;
+        private string _username;
         private readonly ReviewRequestHistory _reviewRequestHistory;
+        private readonly ReviewRequestService? _reviewRequestService;
 
-        public GitHubService(string personalAccessToken, string? proxyUrl = null)
+        public GitHubService(string personalAccessToken, string? proxyUrl = null, ReviewRequestService? reviewRequestService = null)
         {
             var handler = new HttpClientHandler();
             
@@ -40,6 +41,7 @@ namespace AgentSupervisor
 
             _username = string.Empty;
             _reviewRequestHistory = new ReviewRequestHistory();
+            _reviewRequestService = reviewRequestService;
             Logger.LogInfo("GitHubService initialized");
         }
 
@@ -66,8 +68,9 @@ namespace AgentSupervisor
                 var json = await response.Content.ReadAsStringAsync();
                 using var doc = JsonDocument.Parse(json);
                 var login = doc.RootElement.GetProperty("login").GetString();
-                Logger.LogInfo($"Current user: {login}");
-                return login ?? string.Empty;
+                _username = login ?? string.Empty;
+                Logger.LogInfo($"Current user: {_username}");
+                return _username;
             }
             catch (Exception ex)
             {
@@ -122,40 +125,58 @@ namespace AgentSupervisor
                 {
                     try
                     {
-                        var pullRequestUrl = item.GetProperty("pull_request").GetProperty("url").GetString();
-                        if (string.IsNullOrEmpty(pullRequestUrl))
+                        // Extract all necessary data directly from the search result
+                        // This avoids making an additional API call for each PR
+                        
+                        // Get repository full name from repository_url
+                        // Format: "https://api.github.com/repos/owner/repo"
+                        var repositoryUrl = item.GetProperty("repository_url").GetString();
+                        if (string.IsNullOrEmpty(repositoryUrl))
                         {
                             continue;
                         }
-
-                        // Get PR details
-                        Logger.LogInfo($"HTTP GET {pullRequestUrl}");
-                        startTime = DateTime.UtcNow;
-                        var prResponse = await _httpClient.GetAsync(pullRequestUrl);
-                        elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
-                        Logger.LogInfo($"HTTP Response: {(int)prResponse.StatusCode} {prResponse.StatusCode} | {elapsed:F0}ms | {pullRequestUrl}");
                         
-                        if (!prResponse.IsSuccessStatusCode)
-                        {
-                            continue;
-                        }
-
-                        var prJson = await prResponse.Content.ReadAsStringAsync();
-                        using var prDoc = JsonDocument.Parse(prJson);
+                        // Parse repository full name from the URL
+                        var repoFullName = repositoryUrl.Replace("https://api.github.com/repos/", "");
                         
-                        var repoFullName = prDoc.RootElement.GetProperty("base")
-                            .GetProperty("repo").GetProperty("full_name").GetString() ?? "";
-                        var prNumber = prDoc.RootElement.GetProperty("number").GetInt32();
-                        var prId = prDoc.RootElement.GetProperty("id").GetInt64();
-                        var htmlUrl = prDoc.RootElement.GetProperty("html_url").GetString() ?? "";
-                        var title = prDoc.RootElement.GetProperty("title").GetString() ?? "";
-                        var createdAt = prDoc.RootElement.TryGetProperty("created_at", out var created)
+                        var prNumber = item.GetProperty("number").GetInt32();
+                        var prId = item.GetProperty("id").GetInt64();
+                        var htmlUrl = item.GetProperty("html_url").GetString() ?? "";
+                        var title = item.GetProperty("title").GetString() ?? "";
+                        var createdAt = item.TryGetProperty("created_at", out var created)
                             ? DateTime.Parse(created.GetString() ?? DateTime.UtcNow.ToString())
                             : DateTime.UtcNow;
+                        
+                        // Get PR author info if available
+                        var authorLogin = "Unknown";
+                        var authorHtmlUrl = "";
+                        if (item.TryGetProperty("user", out var userElement))
+                        {
+                            authorLogin = userElement.GetProperty("login").GetString() ?? "Unknown";
+                            authorHtmlUrl = userElement.TryGetProperty("html_url", out var userUrl)
+                                ? userUrl.GetString() ?? ""
+                                : "";
+                        }
                         
                         // Create unique identifier for this review request
                         var requestId = $"{repoFullName}#{prNumber}";
                         currentRequestIds.Add(requestId);
+                        
+                        // Add to ReviewRequestService if available
+                        if (_reviewRequestService != null)
+                        {
+                            var entry = new ReviewRequestEntry
+                            {
+                                Id = requestId,
+                                Repository = repoFullName,
+                                PullRequestNumber = prNumber,
+                                HtmlUrl = htmlUrl,
+                                Title = title,
+                                Author = authorLogin,
+                                CreatedAt = createdAt
+                            };
+                            _reviewRequestService.AddOrUpdate(entry);
+                        }
                         
                         // Check if this is a new review request
                         if (!_reviewRequestHistory.HasBeenSeen(requestId))
@@ -172,17 +193,12 @@ namespace AgentSupervisor
                                 PullRequestNumber = prNumber
                             };
                             
-                            // Get PR author info if available
-                            if (prDoc.RootElement.TryGetProperty("user", out var userElement))
+                            // Set PR author info
+                            review.User = new User
                             {
-                                review.User = new User
-                                {
-                                    Login = userElement.GetProperty("login").GetString() ?? "",
-                                    HtmlUrl = userElement.TryGetProperty("html_url", out var userHtmlUrl)
-                                        ? userHtmlUrl.GetString() ?? ""
-                                        : ""
-                                };
-                            }
+                                Login = authorLogin,
+                                HtmlUrl = authorHtmlUrl
+                            };
                             
                             reviews.Add(review);
                             Logger.LogInfo($"New review request found: {repoFullName} PR#{prNumber}");
@@ -197,6 +213,12 @@ namespace AgentSupervisor
                 // Save all current request IDs to persistent storage
                 _reviewRequestHistory.MarkMultipleAsSeen(currentRequestIds);
                 
+                // Remove stale requests from ReviewRequestService
+                if (_reviewRequestService != null)
+                {
+                    _reviewRequestService.RemoveStaleRequests(currentRequestIds);
+                }
+                
                 Logger.LogInfo($"Fetched {reviews.Count} new review requests");
             }
             catch (Exception ex)
@@ -205,53 +227,6 @@ namespace AgentSupervisor
             }
 
             return reviews;
-        }
-
-        public async Task<int> GetPendingReviewCountAsync()
-        {
-            try
-            {
-                Logger.LogInfo("Fetching pending review count");
-                var username = await GetCurrentUserAsync();
-                if (string.IsNullOrEmpty(username))
-                {
-                    Logger.LogWarning("Unable to get current username for count");
-                    return 0;
-                }
-
-                // Get count of all pull requests where the user is requested as a reviewer
-                var searchUrl = $"https://api.github.com/search/issues?q=type:pr+review-requested:{username}+state:open&per_page=1";
-                Logger.LogInfo($"HTTP GET {searchUrl}");
-                
-                var startTime = DateTime.UtcNow;
-                var response = await _httpClient.GetAsync(searchUrl);
-                var elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
-                
-                Logger.LogInfo($"HTTP Response: {(int)response.StatusCode} {response.StatusCode} | {elapsed:F0}ms | {searchUrl}");
-                
-                if (!response.IsSuccessStatusCode)
-                {
-                    Logger.LogError($"Error fetching PR count: {response.StatusCode}");
-                    return 0;
-                }
-
-                var json = await response.Content.ReadAsStringAsync();
-                using var doc = JsonDocument.Parse(json);
-                
-                if (doc.RootElement.TryGetProperty("total_count", out var totalCount))
-                {
-                    var count = totalCount.GetInt32();
-                    Logger.LogInfo($"Total pending review count: {count}");
-                    return count;
-                }
-
-                return 0;
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError("Error fetching pending review count", ex);
-                return 0;
-            }
         }
     }
 }

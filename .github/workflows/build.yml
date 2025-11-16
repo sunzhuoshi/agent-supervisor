@@ -6,8 +6,12 @@ on:
   pull_request:
     branches: [ main ]
 
+# Concurrency configuration:
+# - For pull requests: Each PR gets its own group (using PR number), allowing multiple PRs to run in parallel
+# - For branch pushes: Uses the branch ref, ensuring only one build runs per branch at a time
+# - cancel-in-progress: Cancels old runs when new commits are pushed to the same PR or branch
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -22,11 +26,22 @@ jobs:
       with:
         dotnet-version: '8.0.x'
     
+    - name: Set build version
+      id: set_version
+      shell: pwsh
+      run: |
+        [xml]$csproj = Get-Content AgentSupervisor.csproj
+        $baseVersion = $csproj.Project.PropertyGroup.Version
+        $buildVersion = "$baseVersion.${{ github.run_number }}"
+        Write-Output "version=$buildVersion" >> $env:GITHUB_OUTPUT
+        Write-Output "base_version=$baseVersion" >> $env:GITHUB_OUTPUT
+        Write-Output "Build version: $buildVersion"
+    
     - name: Restore dependencies
       run: dotnet restore
     
     - name: Build
-      run: dotnet build --no-restore --configuration Release
+      run: dotnet build --no-restore --configuration Release /p:DefineConstants="ENABLE_CI_FEATURES" /p:InformationalVersion="${{ steps.set_version.outputs.version }}" /p:FileVersion="${{ steps.set_version.outputs.version }}" /p:AssemblyVersion="${{ steps.set_version.outputs.version }}"
     
     - name: Check for vulnerabilities
       run: dotnet list package --vulnerable --include-transitive
@@ -34,6 +49,6 @@ jobs:
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: AgentSupervisor-Release
+        name: AgentSupervisor-${{ steps.set_version.outputs.version }}
         path: bin/Release/net8.0-windows/
         if-no-files-found: error

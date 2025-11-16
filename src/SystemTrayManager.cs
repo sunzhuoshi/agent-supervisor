@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 using AgentSupervisor.Models;
 
@@ -10,26 +11,53 @@ namespace AgentSupervisor
         private readonly NotifyIcon _notifyIcon;
         private readonly ContextMenuStrip _contextMenu;
         private readonly NotificationHistory _notificationHistory;
+        private readonly ReviewRequestService _reviewRequestService;
         private readonly Action _onSettingsClick;
         private readonly Action _onExitClick;
         private readonly Action<string> _onOpenUrlClick;
         private readonly Action _onCheckForUpdatesClick;
+        private readonly Action? _onRefreshBadge;
+        private readonly Action _showReviewRequestsForm;
+#if ENABLE_CI_FEATURES
+        private readonly Action? _onTriggerCollection;
+        private readonly Configuration _config;
+        private readonly Action? _onConfigChanged;
+        private ToolStripMenuItem? _pauseCollectionMenuItem;
+#endif
         private Icon? _customIcon;
+        private AboutForm? _aboutForm;
 
         public SystemTrayManager(
             NotificationHistory notificationHistory,
+            ReviewRequestService reviewRequestService,
             Action onSettingsClick,
             Action onExitClick,
             Action<string> onOpenUrlClick,
             Action onCheckForUpdatesClick)
+            Action? onRefreshBadge,
+            Action showReviewRequestsForm
+#if ENABLE_CI_FEATURES
+            , Action? onTriggerCollection = null
+            , Configuration? config = null
+            , Action? onConfigChanged = null
+#endif
+            )
         {
             Logger.LogInfo("Initializing SystemTrayManager");
             
             _notificationHistory = notificationHistory;
+            _reviewRequestService = reviewRequestService;
             _onSettingsClick = onSettingsClick;
             _onExitClick = onExitClick;
             _onOpenUrlClick = onOpenUrlClick;
             _onCheckForUpdatesClick = onCheckForUpdatesClick;
+            _onRefreshBadge = onRefreshBadge;
+            _showReviewRequestsForm = showReviewRequestsForm;
+#if ENABLE_CI_FEATURES
+            _onTriggerCollection = onTriggerCollection;
+            _config = config ?? new Configuration();
+            _onConfigChanged = onConfigChanged;
+#endif
 
             // Create custom icon
             _customIcon = CreateCustomIcon();
@@ -51,7 +79,7 @@ namespace AgentSupervisor
                 Text = "Agent Supervisor"
             };
             icon.ContextMenuStrip = _contextMenu;
-            icon.DoubleClick += (s, e) => ShowRecentNotifications();
+            icon.DoubleClick += (s, e) => _showReviewRequestsForm();
             
             // Ensure icon is shown (workaround for Windows 11 issues)
             icon.Visible = false;
@@ -66,11 +94,27 @@ namespace AgentSupervisor
         {
             var menu = new ContextMenuStrip();
 
-            var recentItem = new ToolStripMenuItem("Recent Notifications");
-            recentItem.Click += (s, e) => ShowRecentNotifications();
+            var recentItem = new ToolStripMenuItem("Review Requests by Copilots");
+            recentItem.Click += (s, e) => _showReviewRequestsForm();
             menu.Items.Add(recentItem);
 
             menu.Items.Add(new ToolStripSeparator());
+
+#if ENABLE_CI_FEATURES
+            // CI-only menu item for data collection
+            var collectDataItem = new ToolStripMenuItem("Collect at Once");
+            collectDataItem.Click += (s, e) => CollectData();
+            menu.Items.Add(collectDataItem);
+            
+            // CI-only menu item for pausing collection
+            _pauseCollectionMenuItem = new ToolStripMenuItem(GetPauseMenuText());
+            _pauseCollectionMenuItem.Click += (s, e) => TogglePauseCollection();
+            menu.Items.Add(_pauseCollectionMenuItem);
+            
+            menu.Items.Add(new ToolStripSeparator());
+            
+            Logger.LogInfo("CI features enabled - 'Collect at Once' and 'Pause Collection' menu items added");
+#endif
 
             var settingsItem = new ToolStripMenuItem("Settings");
             settingsItem.Click += (s, e) => _onSettingsClick();
@@ -111,43 +155,108 @@ namespace AgentSupervisor
             };
         }
 
-        private void ShowRecentNotifications()
+        private void ShowAbout()
         {
-            var recent = _notificationHistory.GetRecent(10);
-            
-            if (recent.Count == 0)
+            // If form exists and is not disposed, bring it to front
+            if (_aboutForm != null && !_aboutForm.IsDisposed)
             {
-                MessageBox.Show("No recent notifications.", "Recent Notifications", 
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                _aboutForm.Activate();
+                _aboutForm.BringToFront();
                 return;
             }
 
-            var message = "Recent Notifications:\n\n";
-            foreach (var entry in recent)
-            {
-                message += $"• {entry.Repository} PR#{entry.PullRequestNumber}\n";
-                message += $"  {entry.State} by {entry.Reviewer}\n";
-                message += $"  {entry.NotifiedAt:MM/dd HH:mm}\n\n";
-            }
-
-            var result = MessageBox.Show(message, "Recent Notifications", 
-                MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
-            
-            if (result == DialogResult.OK && recent.Count > 0)
-            {
-                _onOpenUrlClick(recent[0].HtmlUrl);
-            }
-        }
-
-        private void ShowAbout()
-        {
-            var aboutForm = new AboutForm();
-            aboutForm.ShowDialog();
+            // Create new form instance
+            _aboutForm = new AboutForm();
+            _aboutForm.FormClosed += (s, e) => _aboutForm = null;
+            _aboutForm.ShowDialog();
         }
 
         public void UpdateStatus(string status)
         {
             _notifyIcon.Text = $"Agent Supervisor\n{status}";
+        }
+
+        private Icon CreateCustomIcon()
+        {
+            try
+            {
+                // Load app_icon.ico for the system tray
+                var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "res", "app_icon.ico");
+                if (File.Exists(iconPath))
+                {
+                    var icon = new Icon(iconPath, 16, 16);
+                    Logger.LogInfo("Custom icon loaded from app_icon.ico");
+                    return icon;
+                }
+                else
+                {
+                    Logger.LogWarning($"app_icon.ico not found at {iconPath}, using fallback");
+                    // Fallback: Create a simple custom icon with GitHub Copilot colors
+                    using var bitmap = new Bitmap(16, 16);
+                    using var graphics = Graphics.FromImage(bitmap);
+                    
+                    // Fill with a gradient from purple to blue (GitHub Copilot colors)
+                    using var brush = new System.Drawing.Drawing2D.LinearGradientBrush(
+                        new Rectangle(0, 0, 16, 16),
+                        Color.FromArgb(138, 43, 226), // Purple
+                        Color.FromArgb(0, 122, 204),   // Blue
+                        45f);
+                    
+                    graphics.FillEllipse(brush, 0, 0, 16, 16);
+                    
+                    // Draw a simple "A" in white for "Agent"
+                    using var font = new Font("Arial", 9, FontStyle.Bold);
+                    using var textBrush = new SolidBrush(Color.White);
+                    graphics.DrawString("A", font, textBrush, -1, 1);
+                    
+                    var hIcon = bitmap.GetHicon();
+                    var icon = Icon.FromHandle(hIcon);
+                    
+                    Logger.LogInfo("Fallback icon created");
+                    return icon;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Failed to create custom icon, using default", ex);
+                return SystemIcons.Information;
+            }
+        }
+
+#if ENABLE_CI_FEATURES
+        /// <summary>
+        /// Triggers immediate collection of review requests from GitHub
+        /// This method is only available when ENABLE_CI_FEATURES is defined during compilation
+        /// </summary>
+        private void CollectData()
+        {
+            try
+            {
+                Logger.LogInfo("Triggering immediate data collection (CI build)");
+
+                if (_onTriggerCollection != null)
+                {
+                    _onTriggerCollection();
+                }
+                else
+                {
+                    Logger.LogWarning("Collection callback not configured");
+                    MessageBox.Show(
+                        "Data collection callback is not configured.",
+                        "Configuration Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Error triggering data collection", ex);
+                MessageBox.Show(
+                    $"Error triggering data collection:\n\n{ex.Message}",
+                    "Collection Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
         }
 
         public void ShowUpdateNotification(UpdateInfo updateInfo)
@@ -167,42 +276,58 @@ namespace AgentSupervisor
         }
 
         private Icon CreateCustomIcon()
+        /// <summary>
+        /// Toggles the pause collection state
+        /// This method is only available when ENABLE_CI_FEATURES is defined during compilation
+        /// </summary>
+        private void TogglePauseCollection()
         {
             try
             {
-                // Create a simple custom icon with GitHub Copilot colors
-                using var bitmap = new Bitmap(16, 16);
-                using var graphics = Graphics.FromImage(bitmap);
+                _config.PauseCollection = !_config.PauseCollection;
+                _config.Save();
                 
-                // Fill with a gradient from purple to blue (GitHub Copilot colors)
-                using var brush = new System.Drawing.Drawing2D.LinearGradientBrush(
-                    new Rectangle(0, 0, 16, 16),
-                    Color.FromArgb(138, 43, 226), // Purple
-                    Color.FromArgb(0, 122, 204),   // Blue
-                    45f);
+                // Update menu item text
+                if (_pauseCollectionMenuItem != null)
+                {
+                    _pauseCollectionMenuItem.Text = GetPauseMenuText();
+                }
                 
-                graphics.FillEllipse(brush, 0, 0, 16, 16);
+                // Notify the application of the configuration change
+                _onConfigChanged?.Invoke();
                 
-                // Draw a simple "A" in white for "Agent"
-                using var font = new Font("Arial", 9, FontStyle.Bold);
-                using var textBrush = new SolidBrush(Color.White);
-                graphics.DrawString("A", font, textBrush, -1, 1);
+                var statusMessage = _config.PauseCollection ? "Data collection paused" : "Data collection resumed";
+                Logger.LogInfo($"Pause collection toggled: {statusMessage}");
                 
-                var hIcon = bitmap.GetHicon();
-                var icon = Icon.FromHandle(hIcon);
-                
-                Logger.LogInfo("Custom icon created successfully");
-                return icon;
+                MessageBox.Show(
+                    statusMessage,
+                    "Collection Status",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                Logger.LogError("Failed to create custom icon, using default", ex);
-                return SystemIcons.Information;
+                Logger.LogError("Error toggling pause collection", ex);
+                MessageBox.Show(
+                    $"Error toggling pause collection:\n\n{ex.Message}",
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
             }
         }
 
+        /// <summary>
+        /// Gets the menu text for the pause collection menu item based on current state
+        /// </summary>
+        private string GetPauseMenuText()
+        {
+            return _config.PauseCollection ? "Resume Collection" : "Pause Collection";
+        }
+#endif
+
         public void Dispose()
         {
+            _aboutForm?.Dispose();
             _notifyIcon?.Dispose();
             _contextMenu?.Dispose();
             _customIcon?.Dispose();

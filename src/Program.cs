@@ -483,6 +483,10 @@ namespace AgentSupervisor
                         "Update Failed",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
+                }
+            }
+        }
+
         private void RefreshTaskbarBadge()
         {
             try

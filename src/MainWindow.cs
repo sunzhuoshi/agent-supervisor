@@ -12,21 +12,25 @@ namespace AgentSupervisor
         private readonly Action<string> _onOpenUrlClick;
         private readonly Action _onMarkAllAsRead;
         private readonly Action? _onRefreshBadge;
+        private readonly Configuration _configuration;
         private ListBox _listBox = null!;
         private Button _markAllReadButton = null!;
         private Label _statusLabel = null!;
         private ContextMenuStrip _contextMenu = null!;
+        private Font _listFont = null!;
 
         public MainWindow(
             ReviewRequestService reviewRequestService,
             Action<string> onOpenUrlClick,
             Action onMarkAllAsRead,
-            Action onRefreshBadge)
+            Action onRefreshBadge,
+            Configuration configuration)
         {
             _reviewRequestService = reviewRequestService;
             _onOpenUrlClick = onOpenUrlClick;
             _onMarkAllAsRead = onMarkAllAsRead;
             _onRefreshBadge = onRefreshBadge;
+            _configuration = configuration;
 
             InitializeComponent();
             LoadRequests();
@@ -92,13 +96,32 @@ namespace AgentSupervisor
             markAsReadMenuItem.Click += ContextMenu_MarkAsRead_Click;
             _contextMenu.Items.Add(markAsReadMenuItem);
 
+            // Load font from configuration
+            try
+            {
+                _listFont = new Font(_configuration.FontFamily, _configuration.FontSize);
+            }
+            catch
+            {
+                _listFont = new Font("Segoe UI", 9.0f);
+            }
+
+            // Calculate item height based on font size
+            // Base formula: (titleHeight + repoHeight + detailHeight) + paddings
+            // Title: font size * 1.2 + 5 (top padding)
+            // Repository: font size * 1.2
+            // Detail: font size * 1.2 + 5 (bottom padding)
+            // Spacing between lines: font size * 0.4 for each gap (2 gaps)
+            int itemHeight = (int)(_listFont.Size * 3.6 + _listFont.Size * 0.8 + 10);
+            itemHeight = Math.Max(itemHeight, 50); // Minimum height
+
             // ListBox for review requests
             _listBox = new ListBox
             {
                 Dock = DockStyle.Fill,
                 DrawMode = DrawMode.OwnerDrawFixed,
-                ItemHeight = 70,
-                Font = new Font(Font.FontFamily, 9),
+                ItemHeight = itemHeight,
+                Font = _listFont,
                 SelectionMode = SelectionMode.One,
                 ContextMenuStrip = _contextMenu
             };
@@ -300,17 +323,22 @@ namespace AgentSupervisor
                 ? SystemColors.HighlightText
                 : SystemColors.WindowText;
 
+            var baseFontSize = _listFont.Size;
             var x = e.Bounds.X + 10;
             var y = e.Bounds.Y + 5;
+
+            // Calculate badge font size (slightly smaller than base font)
+            var badgeFontSize = Math.Max(baseFontSize * 0.8f, 7.0f);
+            var badgeHeight = (int)(badgeFontSize * 2.2);
 
             // Draw "NEW" badge if applicable
             if (request.IsNew)
             {
                 using var newBadgeBrush = new SolidBrush(Color.FromArgb(220, 53, 69));
-                using var newBadgeFont = new Font(e.Font?.FontFamily ?? SystemFonts.DefaultFont.FontFamily, 8, FontStyle.Bold);
+                using var newBadgeFont = new Font(_listFont.FontFamily, badgeFontSize, FontStyle.Bold);
                 using var newBadgeTextBrush = new SolidBrush(Color.White);
                 
-                var badgeRect = new Rectangle(e.Bounds.Right - 60, y, 50, 20);
+                var badgeRect = new Rectangle(e.Bounds.Right - 60, y, 50, badgeHeight);
                 e.Graphics.FillRectangle(newBadgeBrush, badgeRect);
                 
                 var badgeText = "NEW";
@@ -320,24 +348,27 @@ namespace AgentSupervisor
                 e.Graphics.DrawString(badgeText, newBadgeFont, newBadgeTextBrush, badgeTextX, badgeTextY);
             }
 
-            // Draw title
-            using var titleFont = new Font(e.Font?.FontFamily ?? SystemFonts.DefaultFont.FontFamily, 9, FontStyle.Bold);
+            // Calculate spacing based on font size
+            var lineSpacing = (int)(baseFontSize * 1.2);
+
+            // Draw title (bold)
+            using var titleFont = new Font(_listFont, FontStyle.Bold);
             using var textBrush = new SolidBrush(textColor);
             var titleMaxWidth = e.Bounds.Width - 80;
-            var title = request.Title.Length > 70 ? request.Title.Substring(0, 70) + "..." : request.Title;
+            var maxTitleChars = (int)(60 * (baseFontSize / 9.0f)); // Scale with font size
+            var title = request.Title.Length > maxTitleChars ? request.Title.Substring(0, maxTitleChars) + "..." : request.Title;
             e.Graphics.DrawString(title, titleFont, textBrush, new RectangleF(x, y, titleMaxWidth, 30));
 
             // Draw repository and PR number
-            y += 20;
+            y += lineSpacing;
             var repoText = $"{request.Repository} PR#{request.PullRequestNumber}";
-            e.Graphics.DrawString(repoText, e.Font ?? SystemFonts.DefaultFont, textBrush, x, y);
+            e.Graphics.DrawString(repoText, _listFont, textBrush, x, y);
 
-            // Draw author and date
-            y += 20;
-            using var detailFont = new Font(e.Font?.FontFamily ?? SystemFonts.DefaultFont.FontFamily, 9);
-            using var detailBrush = new SolidBrush(e.State.HasFlag(DrawItemState.Selected) ? textColor : Color.FromArgb(80, 80, 80));
+            // Draw author and date (same size as base font)
+            y += lineSpacing;
+            using var detailBrush = new SolidBrush(e.State.HasFlag(DrawItemState.Selected) ? textColor : Color.Gray);
             var detailText = $"by {request.Author} • {request.CreatedAt:MMM dd, yyyy HH:mm}";
-            e.Graphics.DrawString(detailText, detailFont, detailBrush, x, y);
+            e.Graphics.DrawString(detailText, _listFont, detailBrush, x, y);
 
             // Draw focus rectangle
             e.DrawFocusRectangle();

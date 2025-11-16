@@ -95,7 +95,8 @@ namespace AgentSupervisor
                 _reviewRequestService,
                 OnOpenUrlClick,
                 () => _reviewRequestService.MarkAllAsRead(),
-                RefreshTaskbarBadge);
+                RefreshTaskbarBadge,
+                _config);
             // Required to be shown in task bar
             _mainWindow.Show();
             _badgeManager = new TaskbarBadgeManager(_mainWindow);

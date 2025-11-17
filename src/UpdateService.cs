@@ -9,17 +9,17 @@ namespace AgentSupervisor
         private readonly string _currentVersion;
         private readonly GitHubService _gitHubService;
 
-        public UpdateService(string currentVersion, GitHubService gitHubService)
+        public UpdateService(GitHubService gitHubService)
         {
-            _currentVersion = currentVersion;
+            _currentVersion = Program.GetInformationalVersion();
             _gitHubService = gitHubService;
             
             // HttpClient is still needed for downloading release assets (non-API)
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.UserAgent.Add(
-                new ProductInfoHeaderValue(Constants.ProductName.Replace(" ", ""), currentVersion));
+                new ProductInfoHeaderValue(Constants.ProductName.Replace(" ", ""), _currentVersion));
             
-            Logger.LogInfo($"UpdateService initialized with current version: {currentVersion}");
+            Logger.LogInfo($"UpdateService initialized with current version: {_currentVersion}");
         }
 
         public async Task<UpdateInfo?> CheckForUpdatesAsync()
@@ -42,13 +42,6 @@ namespace AgentSupervisor
                 var publishedAt = releaseInfo.PublishedAt;
 
                 Logger.LogInfo($"Latest release found: {latestVersion} (current: {_currentVersion})");
-
-                // Check if this is a CI build - we don't offer CI builds as updates
-                if (IsCIBuild(latestVersion))
-                {
-                    Logger.LogInfo($"Skipping CI build version: {latestVersion}");
-                    return null;
-                }
 
                 // Find the Windows zip asset
                 string? downloadUrl = null;
@@ -126,32 +119,6 @@ namespace AgentSupervisor
             }
         }
 
-        private bool IsCIBuild(string version)
-        {
-            try
-            {
-                // CI builds have format like 1.0.0.123 (4 parts)
-                // Remove 'v' prefix if present
-                version = version.TrimStart('v', 'V');
-                
-                // Split by '+' and '-' to get the base version
-                var versionWithoutMetadata = version.Split('+')[0].Split('-')[0];
-                
-                // Check if it has 4 or more parts (CI build format)
-                var parts = versionWithoutMetadata.Split('.');
-                if (parts.Length > Constants.CIBuildVersionPartThreshold)
-                {
-                    Logger.LogInfo($"Version {version} is a CI build (has {parts.Length} parts)");
-                    return true;
-                }
-                
-                return false;
-            }
-            catch
-            {
-                return false;
-            }
-        }
     }
 
     public class UpdateInfo

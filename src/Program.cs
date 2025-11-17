@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace AgentSupervisor
 {
@@ -43,6 +44,16 @@ namespace AgentSupervisor
                 _mutex?.ReleaseMutex();
                 _mutex?.Dispose();
             }
+        }
+
+        public static string GetInformationalVersion()
+        {
+            var infoVersion = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+            if (string.IsNullOrEmpty(infoVersion))
+            {
+                infoVersion = "";
+            }
+            return infoVersion;
         }
     }
 
@@ -124,8 +135,7 @@ namespace AgentSupervisor
             _gitHubService = new GitHubService(_config.PersonalAccessToken, proxyUrl, _reviewRequestService);
 
             // Initialize update service with GitHubService
-            var currentVersion = typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "1.0.0";
-            _updateService = new UpdateService(currentVersion, _gitHubService);
+            _updateService = new UpdateService(_gitHubService);
 
             // Verify GitHub connection
             _systemTrayManager.UpdateStatus(Constants.StatusConnecting);
@@ -273,8 +283,7 @@ namespace AgentSupervisor
             _gitHubService = new GitHubService(_config!.PersonalAccessToken, proxyUrl, _reviewRequestService);
 
             // Re-initialize update service with the new GitHubService
-            var currentVersion = typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "1.0.0";
-            _updateService = new UpdateService(currentVersion, _gitHubService);
+            _updateService = new UpdateService(_gitHubService);
 
             // Re-subscribe views to the new service instance
             if (_mainWindow != null && !_mainWindow.IsDisposed)

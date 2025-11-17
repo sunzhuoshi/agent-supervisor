@@ -137,6 +137,5 @@ namespace AgentSupervisor
         
         // Version Format
         public const int SemanticVersionPartCount = 3; // Major.Minor.Patch
-        public const int CIBuildVersionPartThreshold = 3; // CI builds have more than 3 parts
     }
 }

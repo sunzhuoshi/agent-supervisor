@@ -234,16 +234,6 @@ namespace AgentSupervisor
                 var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
                 var versionRollbackDir = Path.Combine(rollbackDir, $"version_{_currentVersion}_{timestamp}");
                 
-                // Backup config.json before update
-                var configPath = Path.Combine(currentDirectory, Constants.ConfigFileName);
-                var configBackupPath = Path.Combine(tempDir, Constants.ConfigFileName + Constants.ConfigBackupExtension);
-                
-                if (File.Exists(configPath))
-                {
-                    File.Copy(configPath, configBackupPath, true);
-                    Logger.LogInfo($"Config backed up to: {configBackupPath}");
-                }
-
                 // Backup notification_history.json before update
                 var historyPath = Path.Combine(currentDirectory, Constants.NotificationHistoryFileName);
                 var historyBackupPath = Path.Combine(tempDir, Constants.NotificationHistoryFileName + Constants.ConfigBackupExtension);
@@ -268,7 +258,7 @@ namespace AgentSupervisor
                 // 1. Wait for the application to close
                 // 2. Backup old version files to rollback directory
                 // 3. Copy new files to application directory
-                // 4. Restore config.json, notification_history.json, and review_requests.json
+                // 4. Restore notification_history.json and review_requests.json
                 // 5. Restart the application
                 var updateScript = $@"@echo off
 echo Waiting for Agent Supervisor to close...
@@ -283,11 +273,6 @@ xcopy /E /I /Y /EXCLUDE:""{Path.Combine(tempDir, "exclude.txt")}"" ""{currentDir
 
 echo Installing update...
 xcopy /E /I /Y ""{extractPath}\*"" ""{currentDirectory}""
-
-echo Restoring configuration...
-if exist ""{configBackupPath}"" (
-    copy /Y ""{configBackupPath}"" ""{configPath}""
-)
 
 echo Restoring notification history...
 if exist ""{historyBackupPath}"" (
@@ -326,8 +311,7 @@ rd /s /q ""{tempDir}""
 
                 // Create exclude list for backup to avoid backing up user data and rollback folders
                 var excludeListPath = Path.Combine(tempDir, Constants.UpdateExcludeListFileName);
-                var excludeList = $@"{Constants.ConfigFileName}
-{Constants.NotificationHistoryFileName}
+                var excludeList = $@"{Constants.NotificationHistoryFileName}
 {Constants.ReviewRequestHistoryFileName}
 {Constants.RollbackFolderName}\
 ";

@@ -32,7 +32,6 @@ namespace AgentSupervisor
         public const string NotificationHistoryFileName = "notification_history.json";
         public const string ReviewRequestHistoryFileName = "review_requests.json";
         public const string ReviewRequestDetailsFileName = "review_request_details.json";
-        public const string ConfigFileName = "config.json";
         public const string LogFileName = "AgentSupervisor.log";
         public const string AppIconFileName = "app_icon.ico";
         public const string IconResourcePath = "res";

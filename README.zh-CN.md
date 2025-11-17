@@ -113,8 +113,6 @@ dotnet build --configuration Release
 
 ## 安全注意事项
 
-- **切勿提交您的 `config.json`** - 它包含您的个人访问令牌
-- `.gitignore` 文件默认排除敏感文件
 - 安全存储您的令牌，切勿分享
 - 使用具有最小所需权限的令牌
 - 定期轮换您的令牌

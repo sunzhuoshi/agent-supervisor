@@ -117,8 +117,7 @@ namespace AgentSupervisor
                 TriggerImmediatePolling,
 #endif
                 _config,
-                OnConfigChanged,
-                _mainWindow
+                OnConfigChanged
                 );
 
             var proxyUrl = _config.UseProxy ? _config.ProxyUrl : null;
@@ -135,7 +134,7 @@ namespace AgentSupervisor
             if (string.IsNullOrEmpty(username))
             {
                 Logger.LogError("Failed to connect to GitHub");
-                MessageBox.Show(_mainWindow, Constants.MessageConnectionFailed, 
+                MessageBox.Show(Constants.MessageConnectionFailed, 
                     Constants.MessageBoxTitleConnectionError, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 OnSettingsClick();
                 return;
@@ -315,7 +314,7 @@ namespace AgentSupervisor
             catch (Exception ex)
             {
                 Logger.LogError($"Error opening URL: {url}", ex);
-                MessageBox.Show(_mainWindow, $"Error opening browser: {ex.Message}", Constants.MessageBoxTitleError, 
+                MessageBox.Show($"Error opening browser: {ex.Message}", Constants.MessageBoxTitleError, 
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -371,7 +370,6 @@ namespace AgentSupervisor
                     
                     // Show dialog with update option
                     var result = MessageBox.Show(
-                        _mainWindow,
                         message,
                         updateInfo.IsPreRelease ? Constants.MessageBoxTitlePreReleaseUpdateAvailable : Constants.MessageBoxTitleUpdateAvailable,
                         MessageBoxButtons.YesNo,
@@ -397,7 +395,6 @@ namespace AgentSupervisor
                     if (manualCheck)
                     {
                         MessageBox.Show(
-                            _mainWindow,
                             Constants.MessageNoUpdatesAvailable,
                             Constants.MessageBoxTitleNoUpdatesAvailable,
                             MessageBoxButtons.OK,
@@ -412,7 +409,6 @@ namespace AgentSupervisor
                 if (manualCheck)
                 {
                     MessageBox.Show(
-                        _mainWindow,
                         $"Error checking for updates: {ex.Message}",
                         Constants.MessageBoxTitleUpdateCheckFailed,
                         MessageBoxButtons.OK,

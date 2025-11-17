@@ -20,6 +20,7 @@ namespace AgentSupervisor
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.StartPosition = FormStartPosition.CenterScreen;
+            this.ShowInTaskbar = false;
 
             // Application Name Label
             var appNameLabel = new Label
@@ -87,7 +88,7 @@ namespace AgentSupervisor
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(this, $"Error opening link: {ex.Message}", Constants.MessageBoxTitleError,
+                    MessageBox.Show($"Error opening link: {ex.Message}", Constants.MessageBoxTitleError,
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             };

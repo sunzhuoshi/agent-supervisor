@@ -23,7 +23,6 @@ namespace AgentSupervisor
 #endif
         private readonly Configuration _config;
         private readonly Action? _onConfigChanged;
-        private readonly IWin32Window? _ownerWindow;
         private ToolStripMenuItem? _pausePollingMenuItem;
         private Icon? _customIcon;
         private AboutForm? _aboutForm;
@@ -42,8 +41,7 @@ namespace AgentSupervisor
             Action? onTriggerPolling = null,
 #endif
             Configuration? config = null,
-            Action? onConfigChanged = null,
-            IWin32Window? ownerWindow = null
+            Action? onConfigChanged = null
             )
         {
             Logger.LogInfo("Initializing SystemTrayManager");
@@ -61,7 +59,6 @@ namespace AgentSupervisor
 #endif
             _config = config ?? new Configuration();
             _onConfigChanged = onConfigChanged;
-            _ownerWindow = ownerWindow;
 
             // Create custom icon
             _customIcon = CreateCustomIcon();
@@ -272,7 +269,6 @@ namespace AgentSupervisor
                 {
                     Logger.LogWarning("Polling callback not configured");
                     MessageBox.Show(
-                        _ownerWindow,
                         Constants.MessagePollingNotConfigured,
                         Constants.MessageBoxTitleConfigurationError,
                         MessageBoxButtons.OK,
@@ -283,7 +279,6 @@ namespace AgentSupervisor
             {
                 Logger.LogError("Error triggering data polling", ex);
                 MessageBox.Show(
-                    _ownerWindow,
                     $"Error triggering data polling:\n\n{ex.Message}",
                     Constants.MessageBoxTitlePollingError,
                     MessageBoxButtons.OK,
@@ -315,7 +310,6 @@ namespace AgentSupervisor
                 Logger.LogInfo($"Pause polling toggled: {statusMessage}");
                 
                 MessageBox.Show(
-                    _ownerWindow,
                     statusMessage,
                     Constants.MessageBoxTitlePollingStatus,
                     MessageBoxButtons.OK,
@@ -325,7 +319,6 @@ namespace AgentSupervisor
             {
                 Logger.LogError("Error toggling pause polling", ex);
                 MessageBox.Show(
-                    _ownerWindow,
                     $"Error toggling pause polling:\n\n{ex.Message}",
                     Constants.MessageBoxTitleError,
                     MessageBoxButtons.OK,

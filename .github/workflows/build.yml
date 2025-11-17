@@ -3,6 +3,11 @@ name: Build and Test
 on:
   push:
     branches: [ main, develop ]
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - '.github/**'
+      - '!.github/workflows/build.yml'
   pull_request:
     branches: [ main ]
     paths-ignore:

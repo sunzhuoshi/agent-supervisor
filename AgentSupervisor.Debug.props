@@ -1,0 +1,5 @@
+<Project>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>$(DefineConstants);ENABLE_DEV_FEATURES</DefineConstants>
+  </PropertyGroup>
+</Project>

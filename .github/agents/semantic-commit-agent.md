@@ -12,5 +12,5 @@ PR descriptions are enriched with summaries and changelog updates, helping revie
 **Features:**
 - Auto-detects commit type and scope
 - Enforces semantic commit standards
-- Enriches PR body with change log and context
+- Enriches PR body with changelog and context
 - Supports better release and changelog workflows

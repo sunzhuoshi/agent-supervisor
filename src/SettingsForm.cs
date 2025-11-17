@@ -236,7 +236,7 @@ namespace AgentSupervisor
         {
             if (string.IsNullOrWhiteSpace(_tokenTextBox.Text))
             {
-                MessageBox.Show(Constants.MessageTokenValidationFailed, Constants.MessageBoxTitleValidationError, 
+                MessageBox.Show(this, Constants.MessageTokenValidationFailed, Constants.MessageBoxTitleValidationError, 
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 this.DialogResult = DialogResult.None;
                 return;
@@ -244,7 +244,7 @@ namespace AgentSupervisor
 
             if (_useProxyCheckBox.Checked && string.IsNullOrWhiteSpace(_proxyUrlTextBox.Text))
             {
-                MessageBox.Show(Constants.MessageProxyValidationFailed, Constants.MessageBoxTitleValidationError, 
+                MessageBox.Show(this, Constants.MessageProxyValidationFailed, Constants.MessageBoxTitleValidationError, 
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 this.DialogResult = DialogResult.None;
                 return;
@@ -266,6 +266,7 @@ namespace AgentSupervisor
                 {
                     Localization.SetCulture(selectedLanguage.Code);
                     MessageBox.Show(
+                        this,
                         Localization.GetString("MessageSettingsSaved") + "\n\n" + 
                         Localization.GetString("MessageLanguageChangeRequiresRestart"),
                         Constants.MessageBoxTitleSuccess, 
@@ -274,13 +275,13 @@ namespace AgentSupervisor
                 }
                 else
                 {
-                    MessageBox.Show(Constants.MessageSettingsSaved, Constants.MessageBoxTitleSuccess, 
+                    MessageBox.Show(this, Constants.MessageSettingsSaved, Constants.MessageBoxTitleSuccess, 
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
             else
             {
-                MessageBox.Show(Constants.MessageSettingsSaved, Constants.MessageBoxTitleSuccess, 
+                MessageBox.Show(this, Constants.MessageSettingsSaved, Constants.MessageBoxTitleSuccess, 
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }

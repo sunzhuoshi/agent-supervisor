@@ -95,7 +95,7 @@ namespace AgentSupervisor
             Size = new Size(Constants.MainWindowDefaultWidth, Constants.MainWindowDefaultHeight);
             StartPosition = FormStartPosition.CenterScreen;
             MinimumSize = new Size(Constants.MainWindowMinWidth, Constants.MainWindowMinHeight);
-            ShowInTaskbar = false;
+            ShowInTaskbar = true;
             FormBorderStyle = FormBorderStyle.Sizable;
 
             // Status label at top

@@ -87,7 +87,7 @@ namespace AgentSupervisor
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error opening link: {ex.Message}", Constants.MessageBoxTitleError,
+                    MessageBox.Show(this, $"Error opening link: {ex.Message}", Constants.MessageBoxTitleError,
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             };

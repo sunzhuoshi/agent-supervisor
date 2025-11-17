@@ -102,7 +102,7 @@ When an update is available:
 3. Download the release zip file
 4. Close Agent Supervisor
 5. Extract the downloaded files to the application directory (replacing old files)
-6. Your configuration files (`config.json`, `notification_history.json`, `review_requests.json`) are preserved automatically
+6. Your configuration files (`notification_history.json`, `review_requests.json`) are preserved automatically
 7. Restart Agent Supervisor
 
 ## Configuration
@@ -189,8 +189,6 @@ AgentSupervisor/
 
 ## Security Considerations
 
-- **Never commit your `config.json`** - It contains your Personal Access Token
-- The `.gitignore` file excludes sensitive files by default
 - Store your token securely and never share it
 - Use tokens with minimal required permissions
 - Rotate your token periodically

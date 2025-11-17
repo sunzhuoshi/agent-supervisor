@@ -202,7 +202,7 @@ jobs:
         
         # Copy all PDB files maintaining relative structure
         Get-ChildItem -Path $buildPath -Filter "*.pdb" -Recurse | ForEach-Object {
-          $relativePath = $_.FullName.Replace("$buildPathFull" + [IO.Path]::DirectorySeparatorChar, "")
+          $relativePath = $_.FullName.Substring($buildPathFull.Length + 1)
           $targetPath = Join-Path $symbolsPath $relativePath
           $targetDir = Split-Path -Parent $targetPath
           if (-not (Test-Path $targetDir)) {

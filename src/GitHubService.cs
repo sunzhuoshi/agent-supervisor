@@ -260,8 +260,8 @@ namespace AgentSupervisor
         /// </summary>
         /// <param name="owner">The repository owner</param>
         /// <param name="repo">The repository name</param>
-        /// <returns>A dictionary containing release information, or null if no release is found or an error occurs</returns>
-        public async Task<Dictionary<string, object>?> GetLatestReleaseAsync(string owner, string repo)
+        /// <returns>Release information, or null if no release is found or an error occurs</returns>
+        public async Task<ReleaseInfo?> GetLatestReleaseAsync(string owner, string repo)
         {
             try
             {
@@ -289,46 +289,44 @@ namespace AgentSupervisor
                 using var doc = JsonDocument.Parse(json);
                 var root = doc.RootElement;
 
-                var releaseInfo = new Dictionary<string, object>();
-                
-                // Extract basic release information
-                releaseInfo["tag_name"] = root.GetProperty("tag_name").GetString() ?? "";
-                releaseInfo["html_url"] = root.GetProperty("html_url").GetString() ?? "";
+                var releaseInfo = new ReleaseInfo
+                {
+                    TagName = root.GetProperty("tag_name").GetString() ?? "",
+                    HtmlUrl = root.GetProperty("html_url").GetString() ?? ""
+                };
                 
                 if (root.TryGetProperty("published_at", out var published))
                 {
                     var publishedStr = published.GetString();
                     if (!string.IsNullOrEmpty(publishedStr) && DateTime.TryParse(publishedStr, out var publishedAt))
                     {
-                        releaseInfo["published_at"] = publishedAt;
+                        releaseInfo.PublishedAt = publishedAt;
                     }
                     else
                     {
-                        releaseInfo["published_at"] = DateTime.UtcNow;
+                        releaseInfo.PublishedAt = DateTime.UtcNow;
                     }
                 }
                 else
                 {
-                    releaseInfo["published_at"] = DateTime.UtcNow;
+                    releaseInfo.PublishedAt = DateTime.UtcNow;
                 }
 
                 // Extract assets information
-                var assets = new List<Dictionary<string, string>>();
                 if (root.TryGetProperty("assets", out var assetsArray))
                 {
                     foreach (var asset in assetsArray.EnumerateArray())
                     {
-                        var assetInfo = new Dictionary<string, string>
+                        var assetInfo = new ReleaseAsset
                         {
-                            ["name"] = asset.GetProperty("name").GetString() ?? "",
-                            ["browser_download_url"] = asset.GetProperty("browser_download_url").GetString() ?? ""
+                            Name = asset.GetProperty("name").GetString() ?? "",
+                            BrowserDownloadUrl = asset.GetProperty("browser_download_url").GetString() ?? ""
                         };
-                        assets.Add(assetInfo);
+                        releaseInfo.Assets.Add(assetInfo);
                     }
                 }
-                releaseInfo["assets"] = assets;
 
-                Logger.LogInfo($"Latest release found: {releaseInfo["tag_name"]}");
+                Logger.LogInfo($"Latest release found: {releaseInfo.TagName}");
                 return releaseInfo;
             }
             catch (Exception ex)

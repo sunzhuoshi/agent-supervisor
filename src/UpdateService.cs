@@ -38,10 +38,10 @@ namespace AgentSupervisor
                     return null;
                 }
 
-                var tagName = releaseInfo["tag_name"] as string ?? "";
+                var tagName = releaseInfo.TagName;
                 var latestVersion = tagName.TrimStart('v');
-                var releaseUrl = releaseInfo["html_url"] as string ?? "";
-                var publishedAt = releaseInfo["published_at"] as DateTime? ?? DateTime.UtcNow;
+                var releaseUrl = releaseInfo.HtmlUrl;
+                var publishedAt = releaseInfo.PublishedAt;
 
                 Logger.LogInfo($"Latest release found: {latestVersion} (current: {_currentVersion})");
 
@@ -54,18 +54,13 @@ namespace AgentSupervisor
 
                 // Find the Windows zip asset
                 string? downloadUrl = null;
-                var assets = releaseInfo["assets"] as List<Dictionary<string, string>>;
-                if (assets != null)
+                foreach (var asset in releaseInfo.Assets)
                 {
-                    foreach (var asset in assets)
+                    if (asset.Name.EndsWith(Constants.WindowsZipAssetSuffix, StringComparison.OrdinalIgnoreCase))
                     {
-                        var assetName = asset["name"];
-                        if (assetName.EndsWith(Constants.WindowsZipAssetSuffix, StringComparison.OrdinalIgnoreCase))
-                        {
-                            downloadUrl = asset["browser_download_url"];
-                            Logger.LogInfo($"Found Windows asset: {assetName}");
-                            break;
-                        }
+                        downloadUrl = asset.BrowserDownloadUrl;
+                        Logger.LogInfo($"Found Windows asset: {asset.Name}");
+                        break;
                     }
                 }
 

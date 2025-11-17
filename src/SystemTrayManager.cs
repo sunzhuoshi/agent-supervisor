@@ -142,9 +142,11 @@ namespace AgentSupervisor
 
         public void ShowNotification(PullRequestReview review)
         {
-            var title = $"New PR Review - {review.RepositoryName}";
-            var message = $"PR #{review.PullRequestNumber} - {review.State}\n" +
-                         $"Reviewer: {review.User?.Login ?? "Unknown"}";
+            var title = Localization.GetString("NotificationNewPRReview", review.RepositoryName);
+            var message = Localization.GetString("NotificationPRFormat", 
+                review.PullRequestNumber, 
+                review.State, 
+                review.User?.Login ?? "Unknown");
 
             _notifyIcon.ShowBalloonTip(Constants.NotificationTimeoutMilliseconds, title, message, ToolTipIcon.Info);
             
@@ -227,8 +229,9 @@ namespace AgentSupervisor
         public void ShowUpdateNotification(UpdateInfo updateInfo)
         {
             var title = Constants.MessageBoxTitleUpdateAvailable;
-            var message = $"Version {updateInfo.Version} is now available!\n" +
-                         $"Published: {updateInfo.PublishedAt:MMM dd, yyyy}";
+            var message = Localization.GetString("NotificationUpdateFormat", 
+                updateInfo.Version, 
+                updateInfo.PublishedAt.ToString("MMM dd, yyyy"));
 
             _notifyIcon.ShowBalloonTip(Constants.NotificationTimeoutMilliseconds, title, message, ToolTipIcon.Info);
 

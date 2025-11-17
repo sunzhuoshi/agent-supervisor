@@ -14,7 +14,7 @@ namespace AgentSupervisor
 
         private void InitializeComponents()
         {
-            this.Text = $"About {Constants.ApplicationName}";
+            this.Text = $"{Localization.GetString("AboutFormTitle")} {Constants.ApplicationName}";
             this.Size = new Size(Constants.AboutFormWidth, Constants.AboutFormHeight);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -40,7 +40,7 @@ namespace AgentSupervisor
             
             var versionLabel = new Label
             {
-                Text = $"Version {versionText}",
+                Text = $"{Localization.GetString("AboutVersion")} {versionText}",
                 Location = new Point(20, 55),
                 Size = new Size(410, 20),
                 TextAlign = ContentAlignment.MiddleCenter
@@ -50,7 +50,7 @@ namespace AgentSupervisor
             // Description Label
             var descriptionLabel = new Label
             {
-                Text = "A Windows system tray application that monitors\nGitHub pull request reviews and sends desktop notifications.",
+                Text = Localization.GetString("AboutDescription"),
                 Location = new Point(20, 90),
                 Size = new Size(410, 40),
                 TextAlign = ContentAlignment.MiddleCenter
@@ -60,7 +60,7 @@ namespace AgentSupervisor
             // Copyright Label
             var copyrightLabel = new Label
             {
-                Text = $"© {DateTime.Now.Year} {Constants.ApplicationName} Contributors",
+                Text = $"© {DateTime.Now.Year} {Localization.GetString("AboutCopyright")}",
                 Location = new Point(20, 140),
                 Size = new Size(410, 20),
                 TextAlign = ContentAlignment.MiddleCenter
@@ -96,7 +96,7 @@ namespace AgentSupervisor
             // OK Button
             var okButton = new Button
             {
-                Text = "OK",
+                Text = Localization.GetString("AboutButtonOK"),
                 Location = new Point(175, 210),
                 Size = new Size(100, 30),
                 DialogResult = DialogResult.OK

@@ -69,5 +69,45 @@ namespace AgentSupervisor
                 // Silent fail - error will be shown in UI if needed
             }
         }
+
+        /// <summary>
+        /// Loads the language preference from Registry
+        /// </summary>
+        public static string LoadLanguage()
+        {
+            try
+            {
+                using var key = Registry.CurrentUser.OpenSubKey(Constants.RegistryKeyPath);
+                if (key != null)
+                {
+                    return key.GetValue("Language") as string ?? string.Empty;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Failed to load language from Registry", ex);
+            }
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Saves the language preference to Registry
+        /// </summary>
+        public static void SaveLanguage(string language)
+        {
+            try
+            {
+                using var key = Registry.CurrentUser.CreateSubKey(Constants.RegistryKeyPath);
+                if (key != null)
+                {
+                    key.SetValue("Language", language);
+                    Logger.LogInfo($"Language preference saved: {language}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Failed to save language to Registry", ex);
+            }
+        }
     }
 }

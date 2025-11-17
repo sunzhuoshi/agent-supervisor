@@ -137,7 +137,7 @@ namespace AgentSupervisor
                 return;
             }
 
-            _systemTrayManager.UpdateStatus($"Connected as {username}");
+            _systemTrayManager.UpdateStatus(Localization.GetString("StatusConnectedAs", username));
             Logger.LogInfo($"Connected to GitHub as {username}");
 
             // Check for updates on startup if enabled
@@ -164,7 +164,7 @@ namespace AgentSupervisor
                     {
                         var currentUnreadCount = _reviewRequestService!.GetNewCount();
                         var currentTotalCount = _reviewRequestService!.GetTotalCount();
-                        _systemTrayManager!.UpdateStatus($"Paused - {currentTotalCount} pending review(s) - {currentUnreadCount} unread");
+                        _systemTrayManager!.UpdateStatus(Localization.GetString("StatusPausedFormat", currentTotalCount, currentUnreadCount));
                         Logger.LogInfo("Data polling is paused, skipping this cycle");
                         
                         // Skip to the delay without polling data
@@ -216,12 +216,12 @@ namespace AgentSupervisor
                     // Update status with current counts
                     var unreadCount = _reviewRequestService!.GetNewCount();
                     var totalPendingCount = _reviewRequestService!.GetTotalCount();
-                    _systemTrayManager!.UpdateStatus($"{totalPendingCount} pending review(s) - {unreadCount} unread");
+                    _systemTrayManager!.UpdateStatus(Localization.GetString("StatusPendingReviews", totalPendingCount, unreadCount));
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError("Error during monitoring", ex);
-                    _systemTrayManager?.UpdateStatus($"Error: {ex.Message}");
+                    _systemTrayManager?.UpdateStatus(Localization.GetString("StatusError", ex.Message));
                 }
 
                 try
@@ -418,7 +418,7 @@ namespace AgentSupervisor
                 {
                     // Restore previous status
                     var username = await _gitHubService!.GetCurrentUserAsync();
-                    _systemTrayManager?.UpdateStatus($"Connected as {username}");
+                    _systemTrayManager?.UpdateStatus(Localization.GetString("StatusConnectedAs", username));
                 }
             }
         }
@@ -478,14 +478,14 @@ namespace AgentSupervisor
                 // Update status
                 var unreadCount = _reviewRequestService!.GetNewCount();
                 var totalPendingCount = _reviewRequestService!.GetTotalCount();
-                _systemTrayManager?.UpdateStatus($"{totalPendingCount} pending review(s) - {unreadCount} unread");
+                _systemTrayManager?.UpdateStatus(Localization.GetString("StatusPendingReviews", totalPendingCount, unreadCount));
                 
                 Logger.LogInfo($"Immediate polling completed: {totalPendingCount} total, {unreadCount} unread");
             }
             catch (Exception ex)
             {
                 Logger.LogError("Error during immediate polling", ex);
-                _systemTrayManager?.UpdateStatus($"Error: {ex.Message}");
+                _systemTrayManager?.UpdateStatus(Localization.GetString("StatusError", ex.Message));
             }
         }
 #endif
@@ -508,11 +508,11 @@ namespace AgentSupervisor
                 
                 if (_config.PausePolling)
                 {
-                    _systemTrayManager?.UpdateStatus($"Paused - {totalPendingCount} pending review(s) - {unreadCount} unread");
+                    _systemTrayManager?.UpdateStatus(Localization.GetString("StatusPausedFormat", totalPendingCount, unreadCount));
                 }
                 else
                 {
-                    _systemTrayManager?.UpdateStatus($"{totalPendingCount} pending review(s) - {unreadCount} unread");
+                    _systemTrayManager?.UpdateStatus(Localization.GetString("StatusPendingReviews", totalPendingCount, unreadCount));
                 }
             }
             catch (Exception ex)

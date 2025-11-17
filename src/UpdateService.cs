@@ -11,7 +11,7 @@ namespace AgentSupervisor
 
         public UpdateService(GitHubService gitHubService)
         {
-            _currentVersion = Program.GetInformationalVersion() ?? "unknown";
+            _currentVersion = Program.GetInformationalVersion() ?? "0.0.0";
             _gitHubService = gitHubService;
             
             // HttpClient is still needed for downloading release assets (non-API)

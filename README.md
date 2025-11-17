@@ -146,6 +146,7 @@ You can configure settings using the Settings UI (right-click tray icon → Sett
 - `notification_history.json` - Notification history
 - `review_request_details.json` - PR review requests with new/read status
 - `review_requests.json` - Tracking of review requests to avoid duplicate notifications
+- `CrashDumps/` - Crash dump files and exception reports (created when the application crashes)
 
 These files are excluded from git via `.gitignore`.
 
@@ -165,6 +166,7 @@ AgentSupervisor/
 │   ├── GitHubService.cs         # GitHub API integration
 │   ├── UpdateService.cs         # Auto-update functionality
 │   ├── NotificationHistory.cs   # Persistent notification storage
+│   ├── CrashDumpHandler.cs      # Crash dump generation for diagnostics
 │   ├── Configuration.cs         # Configuration management
 │   └── Models/
 │       ├── PullRequestReview.cs # PR review data model
@@ -206,6 +208,15 @@ AgentSupervisor/
 ### Build errors
 - Ensure .NET 8.0 SDK is installed: `dotnet --version`
 - Try cleaning the build: `dotnet clean` then `dotnet build`
+
+### Application crashes
+- When the application crashes, it automatically creates dump files in the `CrashDumps/` folder
+- Each crash generates two files:
+  - `AgentSupervisor_Crash_[timestamp].dmp` - Binary memory dump for detailed analysis
+  - `AgentSupervisor_Exception_[timestamp].txt` - Human-readable exception details
+- These files can be used to diagnose the crash
+- The application keeps the last 10 crash dumps and automatically deletes older ones
+- To analyze .dmp files, use tools like Visual Studio, WinDbg, or dotnet-dump
 
 ## Differences from Console Version
 

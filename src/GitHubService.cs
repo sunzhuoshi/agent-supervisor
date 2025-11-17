@@ -32,7 +32,7 @@ namespace AgentSupervisor
 
             _httpClient = new HttpClient(handler);
             _httpClient.DefaultRequestHeaders.UserAgent.Add(
-                new ProductInfoHeaderValue(Constants.ApplicationName.Replace(" ", ""), Constants.ApplicationVersion));
+                new ProductInfoHeaderValue(Constants.ProductName.Replace(" ", ""), Constants.ApplicationVersion));
             _httpClient.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", personalAccessToken);
             _httpClient.DefaultRequestHeaders.Accept.Add(

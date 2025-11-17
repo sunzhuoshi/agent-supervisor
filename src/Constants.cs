@@ -5,6 +5,10 @@ namespace AgentSupervisor
     /// </summary>
     public static class Constants
     {
+        // The product name used for HTTP User-Agent and other non-localized references.
+        // This value is not localized.
+        public const string ProductName = "AgentSupervisor";
+
         // Application Identity
         public static string ApplicationName => Localization.GetString("ApplicationName");
         public const string ApplicationVersion = "1.0";

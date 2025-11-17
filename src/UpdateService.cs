@@ -15,7 +15,7 @@ namespace AgentSupervisor
             _currentVersion = currentVersion;
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.UserAgent.Add(
-                new ProductInfoHeaderValue(Constants.ApplicationName.Replace(" ", ""), currentVersion));
+                new ProductInfoHeaderValue(Constants.ProductName.Replace(" ", ""), currentVersion));
             _httpClient.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue(Constants.GitHubAcceptHeader));
             _httpClient.DefaultRequestHeaders.Add("X-GitHub-Api-Version", Constants.GitHubApiVersion);

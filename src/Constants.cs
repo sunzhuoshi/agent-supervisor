@@ -36,11 +36,15 @@ namespace AgentSupervisor
         public const string LogFileName = "AgentSupervisor.log";
         public const string AppIconFileName = "app_icon.ico";
         public const string IconResourcePath = "res";
+        public const string CrashDumpFolder = "CrashDumps";
         
         // Logger Settings
         public const int MaxLogSizeBytes = 10 * 1024 * 1024; // 10 MB
         public const int MaxLogBackupCount = 5;
         public const string LogTimestampFormat = "yyyy-MM-dd HH:mm:ss.fff";
+        
+        // Crash Dump Settings
+        public const int MaxCrashDumpCount = 10;
         
         // UI Dimensions - Main Window
         public const int MainWindowDefaultWidth = 600;

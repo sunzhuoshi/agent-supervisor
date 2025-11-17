@@ -48,12 +48,7 @@ namespace AgentSupervisor
 
         public static string GetInformationalVersion()
         {
-            var infoVersion = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-            if (string.IsNullOrEmpty(infoVersion))
-            {
-                infoVersion = "";
-            }
-            return infoVersion;
+            return Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "";
         }
     }
 

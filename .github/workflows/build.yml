@@ -8,6 +8,8 @@ on:
     paths-ignore:
       - '**.md'
       - 'LICENSE'
+      - '.github/**'
+      - '!.github/workflows/build.yml'
 
 # Concurrency configuration:
 # - For pull requests: Each PR gets its own group (using PR number), allowing multiple PRs to run in parallel

@@ -254,7 +254,9 @@ Releases are automatically created when a version tag is pushed to the repositor
 2. Builds the application in Release configuration
 3. Checks for security vulnerabilities
 4. Creates a GitHub release with auto-generated release notes
-5. Uploads a zip file containing the application and dependencies
+5. Uploads two zip files to the release:
+   - **AgentSupervisor-{version}-windows.zip**: Main application package with binaries and dependencies
+   - **AgentSupervisor-{version}-symbols.zip**: Debug symbols package (PDB files) for troubleshooting
 
 For detailed information about versioning strategy and release process, see **[VERSIONING.md](VERSIONING.md)**.
 

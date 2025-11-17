@@ -1,0 +1,5 @@
+<Project>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <DefineConstants>$(DefineConstants);ENABLE_DEV_FEATURES</DefineConstants>
+  </PropertyGroup>
+</Project>

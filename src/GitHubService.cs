@@ -254,6 +254,87 @@ namespace AgentSupervisor
 
             return reviews;
         }
+
+        /// <summary>
+        /// Checks for the latest release from the GitHub repository.
+        /// </summary>
+        /// <param name="owner">The repository owner</param>
+        /// <param name="repo">The repository name</param>
+        /// <returns>Release information, or null if no release is found or an error occurs</returns>
+        public async Task<ReleaseInfo?> GetLatestReleaseAsync(string owner, string repo)
+        {
+            try
+            {
+                Logger.LogInfo("Checking for latest release from GitHub");
+                var url = $"{Constants.GitHubApiBaseUrl}/repos/{owner}/{repo}/releases/latest";
+                
+                var startTime = DateTime.UtcNow;
+                var response = await _httpClient.GetAsync(url);
+                var elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
+                
+                Logger.LogInfo($"HTTP Response: {(int)response.StatusCode} {response.StatusCode} | {elapsed:F0}ms | {url}");
+                
+                if (!response.IsSuccessStatusCode)
+                {
+                    if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    {
+                        Logger.LogInfo("No releases found");
+                        return null;
+                    }
+                    Logger.LogError($"Error checking for updates: {response.StatusCode}");
+                    return null;
+                }
+
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                var releaseInfo = new ReleaseInfo
+                {
+                    TagName = root.GetProperty("tag_name").GetString() ?? "",
+                    HtmlUrl = root.GetProperty("html_url").GetString() ?? ""
+                };
+                
+                if (root.TryGetProperty("published_at", out var published))
+                {
+                    var publishedStr = published.GetString();
+                    if (!string.IsNullOrEmpty(publishedStr) && DateTime.TryParse(publishedStr, out var publishedAt))
+                    {
+                        releaseInfo.PublishedAt = publishedAt;
+                    }
+                    else
+                    {
+                        releaseInfo.PublishedAt = DateTime.UtcNow;
+                    }
+                }
+                else
+                {
+                    releaseInfo.PublishedAt = DateTime.UtcNow;
+                }
+
+                // Extract assets information
+                if (root.TryGetProperty("assets", out var assetsArray))
+                {
+                    foreach (var asset in assetsArray.EnumerateArray())
+                    {
+                        var assetInfo = new ReleaseAsset
+                        {
+                            Name = asset.GetProperty("name").GetString() ?? "",
+                            BrowserDownloadUrl = asset.GetProperty("browser_download_url").GetString() ?? ""
+                        };
+                        releaseInfo.Assets.Add(assetInfo);
+                    }
+                }
+
+                Logger.LogInfo($"Latest release found: {releaseInfo.TagName}");
+                return releaseInfo;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Error fetching latest release", ex);
+                return null;
+            }
+        }
     }
 }
 

@@ -123,9 +123,9 @@ namespace AgentSupervisor
             var proxyUrl = _config.UseProxy ? _config.ProxyUrl : null;
             _gitHubService = new GitHubService(_config.PersonalAccessToken, proxyUrl, _reviewRequestService);
 
-            // Initialize update service
+            // Initialize update service with GitHubService
             var currentVersion = typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "1.0.0";
-            _updateService = new UpdateService(currentVersion);
+            _updateService = new UpdateService(currentVersion, _gitHubService);
 
             // Verify GitHub connection
             _systemTrayManager.UpdateStatus(Constants.StatusConnecting);
@@ -271,6 +271,10 @@ namespace AgentSupervisor
             _notificationHistory = new NotificationHistory(_config.MaxHistoryEntries);
             _reviewRequestService = new ReviewRequestService();
             _gitHubService = new GitHubService(_config!.PersonalAccessToken, proxyUrl, _reviewRequestService);
+
+            // Re-initialize update service with the new GitHubService
+            var currentVersion = typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "1.0.0";
+            _updateService = new UpdateService(currentVersion, _gitHubService);
 
             // Re-subscribe views to the new service instance
             if (_mainWindow != null && !_mainWindow.IsDisposed)

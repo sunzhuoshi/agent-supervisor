@@ -9,16 +9,17 @@ namespace AgentSupervisor
     {
         private readonly HttpClient _httpClient;
         private readonly string _currentVersion;
+        private readonly GitHubService _gitHubService;
 
-        public UpdateService(string currentVersion)
+        public UpdateService(string currentVersion, GitHubService gitHubService)
         {
             _currentVersion = currentVersion;
+            _gitHubService = gitHubService;
+            
+            // HttpClient is still needed for downloading release assets (non-API)
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.UserAgent.Add(
                 new ProductInfoHeaderValue(Constants.ProductName.Replace(" ", ""), currentVersion));
-            _httpClient.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue(Constants.GitHubAcceptHeader));
-            _httpClient.DefaultRequestHeaders.Add("X-GitHub-Api-Version", Constants.GitHubApiVersion);
             
             Logger.LogInfo($"UpdateService initialized with current version: {currentVersion}");
         }
@@ -28,35 +29,19 @@ namespace AgentSupervisor
             try
             {
                 Logger.LogInfo("Checking for updates from GitHub releases");
-                var url = $"{Constants.GitHubApiBaseUrl}/repos/{Constants.GitHubOwner}/{Constants.GitHubRepo}/releases/latest";
                 
-                var startTime = DateTime.UtcNow;
-                var response = await _httpClient.GetAsync(url);
-                var elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
+                // Use GitHubService to fetch the latest release
+                var releaseInfo = await _gitHubService.GetLatestReleaseAsync(Constants.GitHubOwner, Constants.GitHubRepo);
                 
-                Logger.LogInfo($"HTTP Response: {(int)response.StatusCode} {response.StatusCode} | {elapsed:F0}ms | {url}");
-                
-                if (!response.IsSuccessStatusCode)
+                if (releaseInfo == null)
                 {
-                    if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-                    {
-                        Logger.LogInfo("No releases found");
-                        return null;
-                    }
-                    Logger.LogError($"Error checking for updates: {response.StatusCode}");
                     return null;
                 }
 
-                var json = await response.Content.ReadAsStringAsync();
-                using var doc = JsonDocument.Parse(json);
-                var root = doc.RootElement;
-
-                var tagName = root.GetProperty("tag_name").GetString() ?? "";
+                var tagName = releaseInfo.TagName;
                 var latestVersion = tagName.TrimStart('v');
-                var releaseUrl = root.GetProperty("html_url").GetString() ?? "";
-                var publishedAt = root.TryGetProperty("published_at", out var published)
-                    ? DateTime.Parse(published.GetString() ?? DateTime.UtcNow.ToString())
-                    : DateTime.UtcNow;
+                var releaseUrl = releaseInfo.HtmlUrl;
+                var publishedAt = releaseInfo.PublishedAt;
 
                 Logger.LogInfo($"Latest release found: {latestVersion} (current: {_currentVersion})");
 
@@ -69,17 +54,13 @@ namespace AgentSupervisor
 
                 // Find the Windows zip asset
                 string? downloadUrl = null;
-                if (root.TryGetProperty("assets", out var assets))
+                foreach (var asset in releaseInfo.Assets)
                 {
-                    foreach (var asset in assets.EnumerateArray())
+                    if (asset.Name.EndsWith(Constants.WindowsZipAssetSuffix, StringComparison.OrdinalIgnoreCase))
                     {
-                        var assetName = asset.GetProperty("name").GetString() ?? "";
-                        if (assetName.EndsWith(Constants.WindowsZipAssetSuffix, StringComparison.OrdinalIgnoreCase))
-                        {
-                            downloadUrl = asset.GetProperty("browser_download_url").GetString();
-                            Logger.LogInfo($"Found Windows asset: {assetName}");
-                            break;
-                        }
+                        downloadUrl = asset.BrowserDownloadUrl;
+                        Logger.LogInfo($"Found Windows asset: {asset.Name}");
+                        break;
                     }
                 }
 

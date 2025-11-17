@@ -278,6 +278,10 @@ namespace AgentSupervisor
             {
                 _reviewRequestService.Subscribe(_badgeManager);
             }
+            if (_systemTrayManager != null)
+            {
+                _reviewRequestService.Subscribe(_systemTrayManager);
+            }
 
             _cts = new CancellationTokenSource();
             _monitoringTask = Task.Run(() => MonitorReviews(_cts.Token));

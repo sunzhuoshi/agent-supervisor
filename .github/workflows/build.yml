@@ -5,6 +5,9 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
 
 # Concurrency configuration:
 # - For pull requests: Each PR gets its own group (using PR number), allowing multiple PRs to run in parallel

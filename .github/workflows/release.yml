@@ -165,31 +165,66 @@ jobs:
       if: github.event_name == 'push'
       shell: pwsh
       run: |
+        $buildPath = "bin/Release/net8.0-windows"
+        $buildPathFull = Resolve-Path $buildPath
+        $version = "${{ steps.get_version.outputs.version }}"
+        
+        # Create main release artifacts (without PDB files)
         $artifactsPath = "release-artifacts"
         New-Item -ItemType Directory -Path $artifactsPath -Force
         
-        # Copy all files and folders from build path
-        $buildPath = "bin/Release/net8.0-windows"
-        
-        # Copy all build outputs recursively
-        Copy-Item "$buildPath/*" -Destination $artifactsPath -Recurse
+        # Copy all build outputs recursively, excluding PDB files
+        Get-ChildItem -Path $buildPath -Recurse | Where-Object { $_.Extension -ne '.pdb' } | ForEach-Object {
+          $targetPath = $_.FullName.Replace($buildPath, $artifactsPath)
+          if ($_.PSIsContainer) {
+            New-Item -ItemType Directory -Path $targetPath -Force | Out-Null
+          } else {
+            $targetDir = Split-Path -Parent $targetPath
+            if (-not (Test-Path $targetDir)) {
+              New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+            }
+            Copy-Item $_.FullName -Destination $targetPath
+          }
+        }
         
         # Copy documentation
         Copy-Item "README.md" -Destination $artifactsPath
         Copy-Item "LICENSE" -Destination $artifactsPath
         
-        # Create a zip archive
-        $zipName = "AgentSupervisor-${{ steps.get_version.outputs.version }}-windows.zip"
+        # Create main release zip archive
+        $zipName = "AgentSupervisor-$version-windows.zip"
         Compress-Archive -Path "$artifactsPath/*" -DestinationPath $zipName
-        
         Write-Output "Created release artifact: $zipName"
+        
+        # Create symbols package (PDB files only)
+        $symbolsPath = "symbols"
+        New-Item -ItemType Directory -Path $symbolsPath -Force
+        
+        # Copy all PDB files maintaining relative structure
+        Get-ChildItem -Path $buildPath -Filter "*.pdb" -Recurse | ForEach-Object {
+          $relativePath = $_.FullName.Replace("$buildPathFull" + [IO.Path]::DirectorySeparatorChar, "")
+          $targetPath = Join-Path $symbolsPath $relativePath
+          $targetDir = Split-Path -Parent $targetPath
+          if (-not (Test-Path $targetDir)) {
+            New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+          }
+          Copy-Item $_.FullName -Destination $targetPath
+          Write-Output "Added to symbols package: $relativePath"
+        }
+        
+        # Create symbols zip archive
+        $symbolsZipName = "AgentSupervisor-$version-symbols.zip"
+        Compress-Archive -Path "$symbolsPath/*" -DestinationPath $symbolsZipName
+        Write-Output "Created symbols artifact: $symbolsZipName"
     
     - name: Create GitHub Release
       if: github.event_name == 'push'
       uses: softprops/action-gh-release@v2
       with:
         tag_name: v${{ steps.get_version.outputs.version }}
-        files: AgentSupervisor-${{ steps.get_version.outputs.version }}-windows.zip
+        files: |
+          AgentSupervisor-${{ steps.get_version.outputs.version }}-windows.zip
+          AgentSupervisor-${{ steps.get_version.outputs.version }}-symbols.zip
         generate_release_notes: true
         draft: false
         prerelease: ${{ steps.get_version.outputs.is_prerelease }}

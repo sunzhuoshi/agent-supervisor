@@ -46,9 +46,9 @@ namespace AgentSupervisor
             }
         }
 
-        public static string GetInformationalVersion()
+        public static string? GetInformationalVersion()
         {
-            return Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "";
+            return Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
         }
     }
 

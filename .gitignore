@@ -112,3 +112,8 @@ review_request_details.json
 # Log files
 *.log
 *.log.*.bak
+
+# Crash dump files
+CrashDumps/
+*.dmp
+

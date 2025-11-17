@@ -13,6 +13,9 @@ namespace AgentSupervisor
         [STAThread]
         static void Main(string[] args)
         {
+            // Initialize crash dump handler early to catch any startup crashes
+            CrashDumpHandler.Initialize();
+            
             // Check for single instance
             _mutex = new Mutex(true, Constants.SingleInstanceMutexName, out bool createdNew);
             

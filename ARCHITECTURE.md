@@ -109,6 +109,10 @@ The application uses the Observer pattern to maintain separation between the dat
 - Manages the background monitoring loop
 - Coordinates between all components
 - Handles application shutdown
+- Provides centralized version retrieval via `GetInformationalVersion()`
+
+**Key Methods**:
+- `GetInformationalVersion()`: Returns the assembly's informational version string
 
 ### 2. MainWindow.cs
 **Responsibility**: Windows Forms window with taskbar presence (View/Observer)
@@ -214,6 +218,19 @@ The application uses the Observer pattern to maintain separation between the dat
 - Keeps last 5 backup files
 - Thread-safe logging operations
 
+### 13. UpdateService.cs
+**Responsibility**: Auto-update functionality
+- Checks for new releases from GitHub
+- Compares current version with latest release using semantic versioning
+- Uses `Program.GetInformationalVersion()` to retrieve current version
+- Integrates with GitHubService for release information
+- Identifies appropriate Windows download assets
+
+**Key Methods**:
+- `CheckForUpdatesAsync()`: Checks for available updates and returns update information
+- `IsNewerVersion()`: Compares version strings using semantic versioning
+- `IsPreRelease()`: Determines if a version is a pre-release
+
 ## Data Flow
 
 1. **Initialization**:
@@ -255,17 +272,18 @@ The application uses the Observer pattern to maintain separation between the dat
 
 ### Source Files
 - `src/`: Source code directory
-  - `Program.cs`: Main entry point and AppApplicationContext
+  - `Program.cs`: Main entry point, AppApplicationContext, and version retrieval
   - `MainWindow.cs`: Hidden window with review list UI (implements IReviewRequestObserver)
   - `TaskbarBadgeManager.cs`: Badge overlay management (implements IReviewRequestObserver)
   - `SystemTrayManager.cs`: System tray icon and notifications
   - `GitHubService.cs`: GitHub API integration
+  - `UpdateService.cs`: Auto-update functionality with semantic versioning
   - `ReviewRequestService.cs`: Review request tracking (observable model)
   - `ReviewRequestHistory.cs`: Simple ID tracking
   - `NotificationHistory.cs`: Notification history management
   - `Configuration.cs`: Registry-based configuration
   - `SettingsForm.cs`: Settings dialog UI
-  - `AboutForm.cs`: About dialog UI
+  - `AboutForm.cs`: About dialog UI (uses Program.GetInformationalVersion())
   - `Logger.cs`: File-based logging
   - `IReviewRequestObserver.cs`: Observer pattern interface
   - `Models/`: Data models

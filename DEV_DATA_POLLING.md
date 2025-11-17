@@ -61,7 +61,7 @@ The "Pause Polling" menu item allows you to pause and resume the automatic data 
   - Data polling from GitHub continues as configured
   - System tray status returns to normal
 
-The pause state is persisted in the Windows Registry and survives application restarts. This is useful for temporarily stopping data polling during testing or when you want to avoid API rate limits without changing the polling interval. **This feature is particularly useful when polling is paused with a CI build, as it can be resumed with a formal release build.**
+The pause state is persisted in the Windows Registry and survives application restarts. This is useful for temporarily stopping data polling during testing or when you want to avoid API rate limits without changing the polling interval.
 
 ## Building with DEV Features
 

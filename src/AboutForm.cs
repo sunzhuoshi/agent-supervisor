@@ -20,6 +20,7 @@ namespace AgentSupervisor
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.StartPosition = FormStartPosition.CenterScreen;
+            this.ShowInTaskbar = false;
 
             // Application Name Label
             var appNameLabel = new Label

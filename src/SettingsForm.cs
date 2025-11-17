@@ -31,6 +31,7 @@ namespace AgentSupervisor
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.StartPosition = FormStartPosition.CenterScreen;
+            this.ShowInTaskbar = false;
 
             // Token Label
             var tokenLabel = new Label

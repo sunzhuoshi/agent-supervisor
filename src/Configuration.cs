@@ -77,7 +77,7 @@ namespace AgentSupervisor
         {
             try
             {
-                using var key = Registry.CurrentUser.OpenSubKey(@"Software\AgentSupervisor");
+                using var key = Registry.CurrentUser.OpenSubKey(Constants.RegistryKeyPath);
                 if (key != null)
                 {
                     return key.GetValue("Language") as string ?? string.Empty;
@@ -97,7 +97,7 @@ namespace AgentSupervisor
         {
             try
             {
-                using var key = Registry.CurrentUser.CreateSubKey(@"Software\AgentSupervisor");
+                using var key = Registry.CurrentUser.CreateSubKey(Constants.RegistryKeyPath);
                 if (key != null)
                 {
                     key.SetValue("Language", language);

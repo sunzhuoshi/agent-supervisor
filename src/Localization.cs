@@ -11,32 +11,45 @@ namespace AgentSupervisor
     public static class Localization
     {
         private static ResourceManager? _resourceManager;
-        private static CultureInfo _currentCulture;
+        private static CultureInfo? _currentCulture;
+        private static bool _isInitialized = false;
+        private static readonly object _initLock = new object();
 
-        static Localization()
+        /// <summary>
+        /// Ensures localization is initialized
+        /// </summary>
+        private static void EnsureInitialized()
         {
-            // Initialize resource manager
-            _resourceManager = new ResourceManager("AgentSupervisor.Resources.Strings", typeof(Localization).Assembly);
-            
-            // Load saved language preference or use system default
-            var savedLanguage = Configuration.LoadLanguage();
-            if (!string.IsNullOrEmpty(savedLanguage))
+            if (_isInitialized) return;
+
+            lock (_initLock)
             {
-                try
+                if (_isInitialized) return;
+
+                // Initialize resource manager
+                _resourceManager = new ResourceManager("AgentSupervisor.Resources.Strings", typeof(Localization).Assembly);
+
+                // Load saved language preference or use system default
+                var savedLanguage = Configuration.LoadLanguage();
+                if (!string.IsNullOrEmpty(savedLanguage))
                 {
-                    _currentCulture = CultureInfo.GetCultureInfo(savedLanguage);
+                    try
+                    {
+                        _currentCulture = CultureInfo.GetCultureInfo(savedLanguage);
+                    }
+                    catch
+                    {
+                        _currentCulture = GetDefaultCulture();
+                    }
                 }
-                catch
+                else
                 {
                     _currentCulture = GetDefaultCulture();
                 }
+
+                ApplyCulture(_currentCulture);
+                _isInitialized = true;
             }
-            else
-            {
-                _currentCulture = GetDefaultCulture();
-            }
-            
-            ApplyCulture(_currentCulture);
         }
 
         /// <summary>
@@ -61,6 +74,8 @@ namespace AgentSupervisor
         /// </summary>
         public static string GetString(string key)
         {
+            EnsureInitialized();
+
             try
             {
                 var value = _resourceManager?.GetString(key, _currentCulture);
@@ -93,6 +108,8 @@ namespace AgentSupervisor
         /// </summary>
         public static void SetCulture(string cultureName)
         {
+            EnsureInitialized();
+
             try
             {
                 var culture = CultureInfo.GetCultureInfo(cultureName);
@@ -122,12 +139,26 @@ namespace AgentSupervisor
         /// <summary>
         /// Gets the current culture name
         /// </summary>
-        public static string CurrentCultureName => _currentCulture.Name;
+        public static string CurrentCultureName
+        {
+            get
+            {
+                EnsureInitialized();
+                return _currentCulture?.Name ?? "en";
+            }
+        }
 
         /// <summary>
         /// Gets the current culture
         /// </summary>
-        public static CultureInfo CurrentCulture => _currentCulture;
+        public static CultureInfo CurrentCulture
+        {
+            get
+            {
+                EnsureInitialized();
+                return _currentCulture ?? CultureInfo.GetCultureInfo("en");
+            }
+        }
 
         /// <summary>
         /// Gets available languages

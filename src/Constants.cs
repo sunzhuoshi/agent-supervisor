@@ -68,19 +68,11 @@ namespace AgentSupervisor
         
         // Timeouts
         public const int ShutdownTimeoutSeconds = 5;
-        public const int UpdateWaitTimeoutSeconds = 2;
         
         // Update Service
-        public const string UpdateTempFolderName = "AgentSupervisor-Update";
-        public const string UpdateZipFileName = "update.zip";
-        public const string UpdateScriptFileName = "update.bat";
-        public const string UpdateExcludeListFileName = "exclude.txt";
-        public const string UpdateExtractFolderName = "extracted";
-        public const string RollbackFolderName = "rollback";
         public const string WindowsZipAssetSuffix = "-windows.zip";
         
         // Backup File Extensions
-        public const string ConfigBackupExtension = ".backup";
         public const string LogBackupExtension = ".bak";
         
         // Message Box Titles

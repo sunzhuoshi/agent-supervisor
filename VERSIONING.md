@@ -124,7 +124,9 @@ The GitHub Actions workflow will:
 - For manual workflow dispatch: Create git tag and push commit and tag
 - Build the application
 - Check for security vulnerabilities
-- Create GitHub release with artifacts
+- Create GitHub release with two artifact packages:
+  - **Main package**: Application binaries and dependencies (without PDB files)
+  - **Symbols package**: Debug symbols (PDB files) for troubleshooting
 
 ## Version History
 

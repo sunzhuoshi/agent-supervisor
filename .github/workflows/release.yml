@@ -175,7 +175,7 @@ jobs:
         
         # Copy all build outputs recursively, excluding PDB files
         Get-ChildItem -Path $buildPath -Recurse | Where-Object { $_.Extension -ne '.pdb' } | ForEach-Object {
-          $targetPath = $_.FullName.Replace($buildPath, $artifactsPath)
+          $targetPath = $_.FullName.Replace($buildPathFull, $artifactsPath)
           if ($_.PSIsContainer) {
             New-Item -ItemType Directory -Path $targetPath -Force | Out-Null
           } else {

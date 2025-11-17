@@ -168,22 +168,11 @@ jobs:
         $artifactsPath = "release-artifacts"
         New-Item -ItemType Directory -Path $artifactsPath -Force
         
-        # Copy the main executable and required files
+        # Copy all files and folders from build path
         $buildPath = "bin/Release/net8.0-windows"
         
-        # Copy executable (will be .exe on Windows)
-        if (Test-Path "$buildPath/AgentSupervisor.exe") {
-          Copy-Item "$buildPath/AgentSupervisor.exe" -Destination $artifactsPath
-        }
-        
-        # Copy all required runtime files
-        Copy-Item "$buildPath/AgentSupervisor.dll" -Destination $artifactsPath
-        Copy-Item "$buildPath/AgentSupervisor.deps.json" -Destination $artifactsPath
-        Copy-Item "$buildPath/AgentSupervisor.runtimeconfig.json" -Destination $artifactsPath
-        Copy-Item "$buildPath/Octokit.dll" -Destination $artifactsPath
-        
-        # Copy resources (app icon)
-        Copy-Item "$buildPath/res" -Destination $artifactsPath -Recurse
+        # Copy all build outputs recursively
+        Copy-Item "$buildPath/*" -Destination $artifactsPath -Recurse
         
         # Copy documentation
         Copy-Item "README.md" -Destination $artifactsPath

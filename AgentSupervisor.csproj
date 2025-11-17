@@ -23,18 +23,18 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Compile Update="src/Resources/Strings.Designer.cs">
+    <Compile Update="Resources/Strings.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>Strings.resx</DependentUpon>
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Update="src/Resources/Strings.resx">
+    <EmbeddedResource Update="Resources/Strings.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Strings.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <EmbeddedResource Update="src/Resources/Strings.zh-CN.resx">
+    <EmbeddedResource Update="Resources/Strings.zh-CN.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
     </EmbeddedResource>
   </ItemGroup>

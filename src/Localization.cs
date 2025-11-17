@@ -16,7 +16,7 @@ namespace AgentSupervisor
         static Localization()
         {
             // Initialize resource manager
-            _resourceManager = new ResourceManager("AgentSupervisor.src.Resources.Strings", typeof(Localization).Assembly);
+            _resourceManager = new ResourceManager("AgentSupervisor.Resources.Strings", typeof(Localization).Assembly);
             
             // Load saved language preference or use system default
             var savedLanguage = Configuration.LoadLanguage();

@@ -6,7 +6,7 @@ using AgentSupervisor.Models;
 
 namespace AgentSupervisor
 {
-    public class SystemTrayManager : IDisposable
+    public class SystemTrayManager : IDisposable, IReviewRequestObserver
     {
         private readonly NotifyIcon _notifyIcon;
         private readonly ContextMenuStrip _contextMenu;
@@ -66,7 +66,28 @@ namespace AgentSupervisor
             _contextMenu = CreateContextMenu();
             _notifyIcon = CreateNotifyIcon();
             
+            // Subscribe to review request changes
+            _reviewRequestService.Subscribe(this);
+            
             Logger.LogInfo("SystemTrayManager initialized successfully");
+        }
+
+        /// <summary>
+        /// Observer callback - automatically called when review requests change
+        /// </summary>
+        public void OnReviewRequestsChanged()
+        {
+            UpdateStatusFromReviewRequests();
+        }
+
+        /// <summary>
+        /// Update the system tray status based on current review request counts
+        /// </summary>
+        private void UpdateStatusFromReviewRequests()
+        {
+            var unreadCount = _reviewRequestService.GetNewCount();
+            var totalCount = _reviewRequestService.GetTotalCount();
+            UpdateStatus(Localization.GetString("StatusPendingReviews", totalCount, unreadCount));
         }
 
         private NotifyIcon CreateNotifyIcon()
@@ -336,6 +357,7 @@ namespace AgentSupervisor
 
         public void Dispose()
         {
+            _reviewRequestService.Unsubscribe(this);
             _aboutForm?.Dispose();
             _notifyIcon?.Dispose();
             _contextMenu?.Dispose();

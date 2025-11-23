@@ -164,10 +164,7 @@ namespace AgentSupervisor
         private void OnFormActivated(object? sender, EventArgs e)
         {
             // Refresh the list when the form is activated (e.g., restored from minimized)
-            if (WindowState != FormWindowState.Minimized)
-            {
-                LoadRequests();
-            }
+            LoadRequests();
         }
 
         private void OnForm_Resize(object? sender, EventArgs e)

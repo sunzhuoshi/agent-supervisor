@@ -368,8 +368,9 @@ namespace AgentSupervisor
                     _systemTrayManager?.ShowUpdateNotification(updateInfo);
                     
                     // Build the update message
+                    var formattedDate = updateInfo.PublishedAt.ToString("MMMM dd, yyyy", Localization.CurrentCulture);
                     var message = Localization.GetString("UpdateMessageNewVersionAvailable", updateInfo.Version) + "\n\n" +
-                                 Localization.GetString("UpdateMessagePublishedDate", updateInfo.PublishedAt.ToString("MMMM dd, yyyy", Localization.CurrentCulture)) + "\n\n";
+                                 Localization.GetString("UpdateMessagePublishedDate", formattedDate) + "\n\n";
                     
                     // Add pre-release warning if applicable
                     if (updateInfo.IsPreRelease)

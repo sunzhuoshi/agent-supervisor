@@ -302,4 +302,21 @@ Published: {1}</value>
   <data name="MessageLanguageChangeRequiresRestart" xml:space="preserve">
     <value>Please restart the application for the language change to take full effect.</value>
   </data>
+  
+  <!-- Update Dialog Messages -->
+  <data name="UpdateMessageNewVersionAvailable" xml:space="preserve">
+    <value>A new version ({0}) is available!</value>
+  </data>
+  <data name="UpdateMessagePublishedDate" xml:space="preserve">
+    <value>Published: {0}</value>
+  </data>
+  <data name="UpdateMessagePreReleaseWarning" xml:space="preserve">
+    <value>⚠️ WARNING: This is a pre-release version (alpha/beta).</value>
+  </data>
+  <data name="UpdateMessagePreReleaseDetails" xml:space="preserve">
+    <value>It may contain bugs or incomplete features.</value>
+  </data>
+  <data name="UpdateMessageDownloadPrompt" xml:space="preserve">
+    <value>Would you like to open the download page in your browser?</value>
+  </data>
 </root>

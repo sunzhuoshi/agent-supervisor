@@ -368,17 +368,17 @@ namespace AgentSupervisor
                     _systemTrayManager?.ShowUpdateNotification(updateInfo);
                     
                     // Build the update message
-                    var message = $"A new version ({updateInfo.Version}) is available!\n\n" +
-                                 $"Published: {updateInfo.PublishedAt:MMMM dd, yyyy}\n\n";
+                    var message = Localization.GetString("UpdateMessageNewVersionAvailable", updateInfo.Version) + "\n\n" +
+                                 Localization.GetString("UpdateMessagePublishedDate", updateInfo.PublishedAt.ToString("MMMM dd, yyyy", Localization.CurrentCulture)) + "\n\n";
                     
                     // Add pre-release warning if applicable
                     if (updateInfo.IsPreRelease)
                     {
-                        message += "⚠️ WARNING: This is a pre-release version (alpha/beta).\n" +
-                                  "It may contain bugs or incomplete features.\n\n";
+                        message += Localization.GetString("UpdateMessagePreReleaseWarning") + "\n" +
+                                  Localization.GetString("UpdateMessagePreReleaseDetails") + "\n\n";
                     }
                     
-                    message += $"Would you like to open the download page in your browser?";
+                    message += Localization.GetString("UpdateMessageDownloadPrompt");
                     
                     // Show dialog with update option
                     var result = MessageBox.Show(

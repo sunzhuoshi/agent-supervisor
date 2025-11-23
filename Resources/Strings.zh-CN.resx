@@ -302,4 +302,21 @@ GitHub 拉取请求审查并发送桌面通知。</value>
   <data name="MessageLanguageChangeRequiresRestart" xml:space="preserve">
     <value>请重新启动应用程序以使语言更改完全生效。</value>
   </data>
+  
+  <!-- Update Dialog Messages -->
+  <data name="UpdateMessageNewVersionAvailable" xml:space="preserve">
+    <value>有新版本 ({0}) 可用！</value>
+  </data>
+  <data name="UpdateMessagePublishedDate" xml:space="preserve">
+    <value>发布时间: {0}</value>
+  </data>
+  <data name="UpdateMessagePreReleaseWarning" xml:space="preserve">
+    <value>⚠️ 警告: 这是一个预发布版本（alpha/beta）。</value>
+  </data>
+  <data name="UpdateMessagePreReleaseDetails" xml:space="preserve">
+    <value>可能包含错误或不完整的功能。</value>
+  </data>
+  <data name="UpdateMessageDownloadPrompt" xml:space="preserve">
+    <value>您想在浏览器中打开下载页面吗？</value>
+  </data>
 </root>

@@ -116,3 +116,4 @@ review_request_details.json
 CrashDumps/
 *.dmp
 
+*.sln

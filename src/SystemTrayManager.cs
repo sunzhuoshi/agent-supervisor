@@ -171,12 +171,19 @@ namespace AgentSupervisor
 
             _notifyIcon.ShowBalloonTip(Constants.NotificationTimeoutMilliseconds, title, message, ToolTipIcon.Info);
             
+            // Remove previous handler if it exists
+            if (_currentBalloonTipClickedHandler != null)
+            {
+                _notifyIcon.BalloonTipClicked -= _currentBalloonTipClickedHandler;
+            }
+
             // Store the URL for the balloon click event
             var tempUrl = review.HtmlUrl;
-            _notifyIcon.BalloonTipClicked += (s, e) =>
+            _currentBalloonTipClickedHandler = (s, e) =>
             {
                 _onOpenUrlClick(tempUrl);
             };
+            _notifyIcon.BalloonTipClicked += _currentBalloonTipClickedHandler;
         }
 
         private void ShowAbout()

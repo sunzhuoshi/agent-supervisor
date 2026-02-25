@@ -33,5 +33,25 @@ namespace AgentSupervisor.Models
 
         [JsonPropertyName("added_at")]
         public DateTime AddedAt { get; set; }
+
+        /// <summary>
+        /// Creates a shallow clone of this entry for use in UI snapshots.
+        /// </summary>
+        public ReviewRequestEntry Clone()
+        {
+            return new ReviewRequestEntry
+            {
+                Id = Id,
+                Repository = Repository,
+                PullRequestNumber = PullRequestNumber,
+                HtmlUrl = HtmlUrl,
+                Title = Title,
+                Author = Author,
+                CreatedAt = CreatedAt,
+                UpdatedAt = UpdatedAt,
+                IsNew = IsNew,
+                AddedAt = AddedAt
+            };
+        }
     }
 }

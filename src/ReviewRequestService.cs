@@ -204,7 +204,7 @@ namespace AgentSupervisor
         {
             lock (_lockObject)
             {
-                return new List<ReviewRequestEntry>(_requests.OrderByDescending(r => r.AddedAt));
+                return _requests.OrderByDescending(r => r.AddedAt).Select(r => r.Clone()).ToList();
             }
         }
 
@@ -222,6 +222,20 @@ namespace AgentSupervisor
             {
                 return _requests.Count;
             }
+        }
+
+        /// <summary>
+        /// Reload the review requests from persistent storage.
+        /// Used when restarting monitoring to reset in-memory state.
+        /// </summary>
+        public void Reload()
+        {
+            lock (_lockObject)
+            {
+                _requests.Clear();
+                _requests.AddRange(Load());
+            }
+            NotifyObservers();
         }
 
         public void RemoveStaleRequests(List<string> currentRequestIds)

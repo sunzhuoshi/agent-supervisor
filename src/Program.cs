@@ -274,25 +274,11 @@ namespace AgentSupervisor
 
             var proxyUrl = _config!.UseProxy ? _config.ProxyUrl : null;
             _notificationHistory = new NotificationHistory(_config.MaxHistoryEntries);
-            _reviewRequestService = new ReviewRequestService();
+            _reviewRequestService!.Reload();
             _gitHubService = new GitHubService(_config!.PersonalAccessToken, proxyUrl, _reviewRequestService);
 
             // Re-initialize update service with the new GitHubService
             _updateService = new UpdateService(_gitHubService);
-
-            // Re-subscribe views to the new service instance
-            if (_mainWindow != null && !_mainWindow.IsDisposed)
-            {
-                _reviewRequestService.Subscribe(_mainWindow);
-            }
-            if (_badgeManager != null)
-            {
-                _reviewRequestService.Subscribe(_badgeManager);
-            }
-            if (_systemTrayManager != null)
-            {
-                _reviewRequestService.Subscribe(_systemTrayManager);
-            }
 
             _cts = new CancellationTokenSource();
             _monitoringTask = Task.Run(() => MonitorReviews(_cts.Token));

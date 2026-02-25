@@ -71,16 +71,6 @@ namespace AgentSupervisor
         /// </summary>
         public void OnReviewRequestsChanged()
         {
-            // Update badge
-            if (_badgeManager != null)
-            {
-                var unreadCount = _reviewRequestService.GetNewCount();
-                if (!IsDisposed)
-                {
-                    BeginInvoke(() => _badgeManager.UpdateBadgeCount(unreadCount));
-                }
-            }
-
             // Refresh UI if visible
             if (!IsDisposed)
             {
@@ -293,7 +283,7 @@ namespace AgentSupervisor
         private void UpdateStatus()
         {
             var newCount = _reviewRequestService.GetNewCount();
-            var totalCount = _listBox.Items.Count;
+            var totalCount = _reviewRequestService.GetTotalCount();
 
             if (totalCount == 0)
             {

@@ -77,7 +77,7 @@ namespace AgentSupervisor
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError($"Error loading review request details: {ex.Message}", ex);
+                    Logger.LogError("Error loading review request details", ex);
                 }
             }
             return new List<ReviewRequestEntry>();
@@ -95,7 +95,7 @@ namespace AgentSupervisor
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError($"Error saving review request details: {ex.Message}", ex);
+                    Logger.LogError("Error saving review request details", ex);
                 }
             }
         }

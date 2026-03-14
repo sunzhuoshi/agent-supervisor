@@ -24,7 +24,7 @@ namespace AgentSupervisor
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError($"Error loading review request history: {ex.Message}", ex);
+                    Logger.LogError("Error loading review request history", ex);
                 }
             }
             return new HashSet<string>();

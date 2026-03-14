@@ -12,7 +12,7 @@ namespace AgentSupervisor
     {
         private static ResourceManager? _resourceManager;
         private static CultureInfo? _currentCulture;
-        private static bool _isInitialized = false;
+        private static volatile bool _isInitialized = false;
         private static readonly object _initLock = new object();
 
         /// <summary>

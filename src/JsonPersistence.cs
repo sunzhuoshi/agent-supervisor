@@ -4,9 +4,10 @@ namespace AgentSupervisor
 {
     /// <summary>
     /// Provides shared JSON file persistence helpers used by history classes.
-    /// Thread-safety must be managed by callers: <see cref="Load{T}"/> is stateless w.r.t. in-memory state, but
-    /// concurrent reads during a <see cref="Save{T}"/> call can observe partial file writes. Callers should
-    /// coordinate reads and writes under a shared lock for consistent results.
+    /// Thread-safety must be managed by callers: <see cref="Save{T}"/> writes atomically (via a sibling
+    /// <c>.tmp</c> file), so concurrent readers will observe either the previous or the new file — never
+    /// a partially-written one. Callers should still coordinate reads and writes under a shared lock to
+    /// avoid logical races (e.g., reading stale data immediately after a write).
     /// </summary>
     internal static class JsonPersistence
     {
@@ -46,10 +47,18 @@ namespace AgentSupervisor
                 var json = JsonSerializer.Serialize(data, _writeOptions);
                 File.WriteAllText(tempPath, json);
                 File.Move(tempPath, filePath, overwrite: true);
+                tempPath = null; // moved successfully; nothing to clean up
             }
             catch (Exception ex)
             {
                 Logger.LogError($"Error saving {context}", ex);
+            }
+            finally
+            {
+                if (tempPath != null)
+                {
+                    try { File.Delete(tempPath); } catch { /* best-effort cleanup */ }
+                }
             }
         }
     }

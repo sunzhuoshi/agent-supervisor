@@ -19,11 +19,17 @@ namespace AgentSupervisor
             return JsonPersistence.Load<List<NotificationEntry>>(Constants.NotificationHistoryFileName, "notification history");
         }
 
+        // Must be called while holding _lockObject.
+        private void SaveUnlocked()
+        {
+            JsonPersistence.Save(Constants.NotificationHistoryFileName, _entries, "notification history");
+        }
+
         public void Save()
         {
             lock (_lockObject)
             {
-                JsonPersistence.Save(Constants.NotificationHistoryFileName, _entries, "notification history");
+                SaveUnlocked();
             }
         }
 
@@ -47,7 +53,7 @@ namespace AgentSupervisor
                     _entries.RemoveRange(0, _entries.Count - _maxEntries);
                 }
                 
-                Save();
+                SaveUnlocked();
             }
         }
 

@@ -16,12 +16,10 @@ namespace AgentSupervisor
             return new HashSet<string>(list);
         }
 
+        // Must be called while holding _lockObject.
         private void Save()
         {
-            lock (_lockObject)
-            {
-                JsonPersistence.Save(Constants.ReviewRequestHistoryFileName, _seenRequestIds.ToList(), "review request history");
-            }
+            JsonPersistence.Save(Constants.ReviewRequestHistoryFileName, _seenRequestIds.ToList(), "review request history");
         }
 
         public bool HasBeenSeen(string requestId)

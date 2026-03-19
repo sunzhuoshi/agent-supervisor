@@ -34,15 +34,18 @@ namespace AgentSupervisor
         }
 
         /// <summary>
-        /// Serializes <paramref name="data"/> to indented JSON and writes it to <paramref name="filePath"/>.
+        /// Serializes <paramref name="data"/> to indented JSON and atomically writes it to <paramref name="filePath"/>
+        /// (via a sibling <c>.tmp</c> file that is moved over the target on success).
         /// The caller is responsible for acquiring any necessary lock before calling this method.
         /// </summary>
         internal static void Save<T>(string filePath, T data, string context)
         {
+            var tempPath = filePath + ".tmp";
             try
             {
                 var json = JsonSerializer.Serialize(data, _writeOptions);
-                File.WriteAllText(filePath, json);
+                File.WriteAllText(tempPath, json);
+                File.Move(tempPath, filePath, overwrite: true);
             }
             catch (Exception ex)
             {

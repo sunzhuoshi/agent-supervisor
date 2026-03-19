@@ -1,4 +1,3 @@
-using System.Text.Json;
 using AgentSupervisor.Models;
 
 namespace AgentSupervisor
@@ -17,35 +16,20 @@ namespace AgentSupervisor
 
         private List<NotificationEntry> Load()
         {
-            if (File.Exists(Constants.NotificationHistoryFileName))
-            {
-                try
-                {
-                    var json = File.ReadAllText(Constants.NotificationHistoryFileName);
-                    return JsonSerializer.Deserialize<List<NotificationEntry>>(json) ?? new List<NotificationEntry>();
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError($"Error loading notification history", ex);
-                }
-            }
-            return new List<NotificationEntry>();
+            return JsonPersistence.Load<List<NotificationEntry>>(Constants.NotificationHistoryFileName, "notification history");
+        }
+
+        // Must be called while holding _lockObject.
+        private void SaveUnlocked()
+        {
+            JsonPersistence.Save(Constants.NotificationHistoryFileName, _entries, "notification history");
         }
 
         public void Save()
         {
             lock (_lockObject)
             {
-                try
-                {
-                    var options = new JsonSerializerOptions { WriteIndented = true };
-                    var json = JsonSerializer.Serialize(_entries, options);
-                    File.WriteAllText(Constants.NotificationHistoryFileName, json);
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError($"Error saving notification history", ex);
-                }
+                SaveUnlocked();
             }
         }
 
@@ -69,7 +53,7 @@ namespace AgentSupervisor
                     _entries.RemoveRange(0, _entries.Count - _maxEntries);
                 }
                 
-                Save();
+                SaveUnlocked();
             }
         }
 

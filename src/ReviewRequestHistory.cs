@@ -13,7 +13,7 @@ namespace AgentSupervisor
         private HashSet<string> Load()
         {
             var list = JsonPersistence.Load<List<string>>(Constants.ReviewRequestHistoryFileName, "review request history");
-            return new HashSet<string>(list ?? new List<string>());
+            return new HashSet<string>(list);
         }
 
         private void Save()

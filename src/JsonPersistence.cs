@@ -4,7 +4,9 @@ namespace AgentSupervisor
 {
     /// <summary>
     /// Provides shared JSON file persistence helpers used by history classes.
-    /// Thread-safety for <see cref="Save{T}"/> must be managed by callers; <see cref="Load{T}"/> is stateless and safe to call concurrently.
+    /// Thread-safety must be managed by callers: <see cref="Load{T}"/> is stateless w.r.t. in-memory state, but
+    /// concurrent reads during a <see cref="Save{T}"/> call can observe partial file writes. Callers should
+    /// coordinate reads and writes under a shared lock for consistent results.
     /// </summary>
     internal static class JsonPersistence
     {

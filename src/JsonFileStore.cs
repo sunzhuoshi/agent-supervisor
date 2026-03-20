@@ -15,19 +15,19 @@ namespace AgentSupervisor
         /// </summary>
         internal static List<T> LoadList<T>(string filePath, string errorContext)
         {
-            if (File.Exists(filePath))
+            if (!File.Exists(filePath))
+                return new List<T>();
+
+            try
             {
-                try
-                {
-                    var json = File.ReadAllText(filePath);
-                    return JsonSerializer.Deserialize<List<T>>(json) ?? new List<T>();
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError($"Error loading {errorContext}", ex);
-                }
+                var json = File.ReadAllText(filePath);
+                return JsonSerializer.Deserialize<List<T>>(json) ?? new List<T>();
             }
-            return new List<T>();
+            catch (Exception ex)
+            {
+                Logger.LogError($"Error loading {errorContext}", ex);
+                return new List<T>();
+            }
         }
 
         /// <summary>

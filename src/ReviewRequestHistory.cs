@@ -1,5 +1,3 @@
-using System.Text.Json;
-
 namespace AgentSupervisor
 {
     public class ReviewRequestHistory
@@ -14,37 +12,18 @@ namespace AgentSupervisor
 
         private HashSet<string> Load()
         {
-            if (File.Exists(Constants.ReviewRequestHistoryFileName))
-            {
-                try
-                {
-                    var json = File.ReadAllText(Constants.ReviewRequestHistoryFileName);
-                    var list = JsonSerializer.Deserialize<List<string>>(json);
-                    return list != null ? new HashSet<string>(list) : new HashSet<string>();
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError($"Error loading review request history: {ex.Message}", ex);
-                }
-            }
-            return new HashSet<string>();
+            var list = JsonFileHelper.Load<List<string>>(
+                Constants.ReviewRequestHistoryFileName,
+                "review request history",
+                new List<string>());
+            return new HashSet<string>(list);
         }
 
         private void Save()
         {
             lock (_lockObject)
             {
-                try
-                {
-                    var options = new JsonSerializerOptions { WriteIndented = true };
-                    var list = _seenRequestIds.ToList();
-                    var json = JsonSerializer.Serialize(list, options);
-                    File.WriteAllText(Constants.ReviewRequestHistoryFileName, json);
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError($"Error saving review request history: {ex.Message}", ex);
-                }
+                JsonFileHelper.Save(Constants.ReviewRequestHistoryFileName, _seenRequestIds.ToList(), "review request history");
             }
         }
 

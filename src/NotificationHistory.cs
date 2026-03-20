@@ -1,4 +1,3 @@
-using System.Text.Json;
 using AgentSupervisor.Models;
 
 namespace AgentSupervisor
@@ -8,44 +7,20 @@ namespace AgentSupervisor
         private readonly List<NotificationEntry> _entries;
         private readonly int _maxEntries;
         private readonly object _lockObject = new object();
+        private readonly JsonFileStore<List<NotificationEntry>> _store =
+            new JsonFileStore<List<NotificationEntry>>(Constants.NotificationHistoryFileName);
 
         public NotificationHistory(int maxEntries = Constants.DefaultMaxHistoryEntries)
         {
             _maxEntries = maxEntries;
-            _entries = Load();
-        }
-
-        private List<NotificationEntry> Load()
-        {
-            if (File.Exists(Constants.NotificationHistoryFileName))
-            {
-                try
-                {
-                    var json = File.ReadAllText(Constants.NotificationHistoryFileName);
-                    return JsonSerializer.Deserialize<List<NotificationEntry>>(json) ?? new List<NotificationEntry>();
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError($"Error loading notification history", ex);
-                }
-            }
-            return new List<NotificationEntry>();
+            _entries = _store.Load(() => new List<NotificationEntry>());
         }
 
         public void Save()
         {
             lock (_lockObject)
             {
-                try
-                {
-                    var options = new JsonSerializerOptions { WriteIndented = true };
-                    var json = JsonSerializer.Serialize(_entries, options);
-                    File.WriteAllText(Constants.NotificationHistoryFileName, json);
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError($"Error saving notification history", ex);
-                }
+                _store.Save(_entries);
             }
         }
 

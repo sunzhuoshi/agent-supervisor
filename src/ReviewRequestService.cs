@@ -1,4 +1,3 @@
-using System.Text.Json;
 using AgentSupervisor.Models;
 
 namespace AgentSupervisor
@@ -8,10 +7,12 @@ namespace AgentSupervisor
         private readonly List<ReviewRequestEntry> _requests;
         private readonly object _lockObject = new object();
         private readonly List<IReviewRequestObserver> _observers = new List<IReviewRequestObserver>();
+        private readonly JsonFileStore<List<ReviewRequestEntry>> _store =
+            new JsonFileStore<List<ReviewRequestEntry>>(Constants.ReviewRequestDetailsFileName);
 
         public ReviewRequestService()
         {
-            _requests = Load();
+            _requests = _store.Load(() => new List<ReviewRequestEntry>());
         }
 
         /// <summary>
@@ -66,54 +67,43 @@ namespace AgentSupervisor
             }
         }
 
-        private List<ReviewRequestEntry> Load()
-        {
-            if (File.Exists(Constants.ReviewRequestDetailsFileName))
-            {
-                try
-                {
-                    var json = File.ReadAllText(Constants.ReviewRequestDetailsFileName);
-                    return JsonSerializer.Deserialize<List<ReviewRequestEntry>>(json) ?? new List<ReviewRequestEntry>();
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError($"Error loading review request details: {ex.Message}", ex);
-                }
-            }
-            return new List<ReviewRequestEntry>();
-        }
-
         private void Save()
         {
+            // Always called from within _lockObject; JsonFileStore uses its own lock for file I/O.
+            _store.Save(_requests);
+        }
+
+        /// <summary>
+        /// Runs <paramref name="action"/> inside a lock and calls <see cref="NotifyObservers"/>
+        /// if the action returns <c>true</c>.
+        /// </summary>
+        private void ExecuteAndNotify(Func<bool> action)
+        {
+            bool notifyNeeded;
             lock (_lockObject)
             {
-                try
-                {
-                    var options = new JsonSerializerOptions { WriteIndented = true };
-                    var json = JsonSerializer.Serialize(_requests, options);
-                    File.WriteAllText(Constants.ReviewRequestDetailsFileName, json);
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError($"Error saving review request details: {ex.Message}", ex);
-                }
+                notifyNeeded = action();
+            }
+            if (notifyNeeded)
+            {
+                NotifyObservers();
             }
         }
 
         public void AddOrUpdate(ReviewRequestEntry entry)
         {
-            bool notifyNeeded = false;
-            bool saveNeeded = false;
-            lock (_lockObject)
+            ExecuteAndNotify(() =>
             {
+                bool notifyNeeded = false;
+                bool saveNeeded = false;
                 var existing = _requests.FirstOrDefault(r => r.Id == entry.Id);
                 if (existing != null)
                 {
                     // Update existing entry
-                    bool hasChanges = existing.Title != entry.Title || 
-                                     existing.Author != entry.Author || 
+                    bool hasChanges = existing.Title != entry.Title ||
+                                     existing.Author != entry.Author ||
                                      existing.HtmlUrl != entry.HtmlUrl;
-                    
+
                     if (hasChanges)
                     {
                         existing.Title = entry.Title;
@@ -121,7 +111,7 @@ namespace AgentSupervisor
                         existing.HtmlUrl = entry.HtmlUrl;
                         saveNeeded = true;
                     }
-                    
+
                     // Check if the entry has been updated (newer updated_at timestamp)
                     if (entry.UpdatedAt > existing.UpdatedAt)
                     {
@@ -140,43 +130,33 @@ namespace AgentSupervisor
                     notifyNeeded = true;
                     saveNeeded = true;
                 }
-                
+
                 if (saveNeeded)
                 {
                     Save();
                 }
-            }
-            
-            if (notifyNeeded)
-            {
-                NotifyObservers();
-            }
+                return notifyNeeded;
+            });
         }
 
         public void MarkAsRead(string requestId)
         {
-            bool notifyNeeded = false;
-            lock (_lockObject)
+            ExecuteAndNotify(() =>
             {
                 var request = _requests.FirstOrDefault(r => r.Id == requestId);
                 if (request != null && request.IsNew)
                 {
                     request.IsNew = false;
                     Save();
-                    notifyNeeded = true;
+                    return true;
                 }
-            }
-            
-            if (notifyNeeded)
-            {
-                NotifyObservers();
-            }
+                return false;
+            });
         }
 
         public void MarkAllAsRead()
         {
-            bool notifyNeeded = false;
-            lock (_lockObject)
+            ExecuteAndNotify(() =>
             {
                 bool changed = false;
                 foreach (var request in _requests)
@@ -190,14 +170,9 @@ namespace AgentSupervisor
                 if (changed)
                 {
                     Save();
-                    notifyNeeded = true;
                 }
-            }
-            
-            if (notifyNeeded)
-            {
-                NotifyObservers();
-            }
+                return changed;
+            });
         }
 
         public List<ReviewRequestEntry> GetAll()
@@ -230,32 +205,27 @@ namespace AgentSupervisor
         /// </summary>
         public void Reload()
         {
-            lock (_lockObject)
+            ExecuteAndNotify(() =>
             {
                 _requests.Clear();
-                _requests.AddRange(Load());
-            }
-            NotifyObservers();
+                _requests.AddRange(_store.Load(() => new List<ReviewRequestEntry>()));
+                return true;
+            });
         }
 
         public void RemoveStaleRequests(List<string> currentRequestIds)
         {
-            bool notifyNeeded = false;
-            lock (_lockObject)
+            ExecuteAndNotify(() =>
             {
                 var initialCount = _requests.Count;
                 _requests.RemoveAll(r => !currentRequestIds.Contains(r.Id));
                 if (_requests.Count != initialCount)
                 {
                     Save();
-                    notifyNeeded = true;
+                    return true;
                 }
-            }
-            
-            if (notifyNeeded)
-            {
-                NotifyObservers();
-            }
+                return false;
+            });
         }
     }
 }

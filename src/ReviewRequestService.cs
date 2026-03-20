@@ -1,4 +1,3 @@
-using System.Text.Json;
 using AgentSupervisor.Models;
 
 namespace AgentSupervisor
@@ -68,35 +67,14 @@ namespace AgentSupervisor
 
         private List<ReviewRequestEntry> Load()
         {
-            if (File.Exists(Constants.ReviewRequestDetailsFileName))
-            {
-                try
-                {
-                    var json = File.ReadAllText(Constants.ReviewRequestDetailsFileName);
-                    return JsonSerializer.Deserialize<List<ReviewRequestEntry>>(json) ?? new List<ReviewRequestEntry>();
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError($"Error loading review request details: {ex.Message}", ex);
-                }
-            }
-            return new List<ReviewRequestEntry>();
+            return JsonFileStore.Load<List<ReviewRequestEntry>>(Constants.ReviewRequestDetailsFileName, new List<ReviewRequestEntry>());
         }
 
         private void Save()
         {
             lock (_lockObject)
             {
-                try
-                {
-                    var options = new JsonSerializerOptions { WriteIndented = true };
-                    var json = JsonSerializer.Serialize(_requests, options);
-                    File.WriteAllText(Constants.ReviewRequestDetailsFileName, json);
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError($"Error saving review request details: {ex.Message}", ex);
-                }
+                JsonFileStore.Save(Constants.ReviewRequestDetailsFileName, _requests);
             }
         }
 

@@ -1,51 +1,22 @@
-using System.Text.Json;
-
 namespace AgentSupervisor
 {
     public class ReviewRequestHistory
     {
         private readonly HashSet<string> _seenRequestIds;
         private readonly object _lockObject = new object();
+        private readonly JsonFileStore<List<string>> _store =
+            new JsonFileStore<List<string>>(Constants.ReviewRequestHistoryFileName);
 
         public ReviewRequestHistory()
         {
-            _seenRequestIds = Load();
-        }
-
-        private HashSet<string> Load()
-        {
-            if (File.Exists(Constants.ReviewRequestHistoryFileName))
-            {
-                try
-                {
-                    var json = File.ReadAllText(Constants.ReviewRequestHistoryFileName);
-                    var list = JsonSerializer.Deserialize<List<string>>(json);
-                    return list != null ? new HashSet<string>(list) : new HashSet<string>();
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError($"Error loading review request history: {ex.Message}", ex);
-                }
-            }
-            return new HashSet<string>();
+            var list = _store.Load(() => new List<string>());
+            _seenRequestIds = new HashSet<string>(list);
         }
 
         private void Save()
         {
-            lock (_lockObject)
-            {
-                try
-                {
-                    var options = new JsonSerializerOptions { WriteIndented = true };
-                    var list = _seenRequestIds.ToList();
-                    var json = JsonSerializer.Serialize(list, options);
-                    File.WriteAllText(Constants.ReviewRequestHistoryFileName, json);
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError($"Error saving review request history: {ex.Message}", ex);
-                }
-            }
+            // Always called from within _lockObject; JsonFileStore uses its own lock for file I/O.
+            _store.Save(_seenRequestIds.ToList());
         }
 
         public bool HasBeenSeen(string requestId)

@@ -1,21 +1,35 @@
+using System.Collections.Concurrent;
 using System.Text.Json;
 
 namespace AgentSupervisor
 {
     internal static class JsonFileStore
     {
+        private static readonly ConcurrentDictionary<string, object> FileLocks = new();
+        private static readonly JsonSerializerOptions WriteOptions = new() { WriteIndented = true };
+
+        private static object GetFileLock(string filePath)
+        {
+            var fullPath = Path.GetFullPath(filePath);
+            return FileLocks.GetOrAdd(fullPath, _ => new object());
+        }
+
         public static T Load<T>(string filePath, T defaultValue)
         {
-            if (File.Exists(filePath))
+            var fileLock = GetFileLock(filePath);
+            lock (fileLock)
             {
-                try
+                if (File.Exists(filePath))
                 {
-                    var json = File.ReadAllText(filePath);
-                    return JsonSerializer.Deserialize<T>(json) ?? defaultValue;
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError($"Error loading {filePath}", ex);
+                    try
+                    {
+                        var json = File.ReadAllText(filePath);
+                        return JsonSerializer.Deserialize<T>(json) ?? defaultValue;
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogError($"Error loading {filePath}", ex);
+                    }
                 }
             }
             return defaultValue;
@@ -23,19 +37,22 @@ namespace AgentSupervisor
 
         /// <summary>
         /// Serializes <paramref name="data"/> to JSON and writes it to <paramref name="filePath"/>.
-        /// Callers are responsible for synchronization when concurrent access is possible.
+        /// Access is synchronized with <see cref="Load{T}(string, T)"/> on a per-file basis.
         /// </summary>
         public static void Save<T>(string filePath, T data)
         {
-            try
+            var fileLock = GetFileLock(filePath);
+            lock (fileLock)
             {
-                var options = new JsonSerializerOptions { WriteIndented = true };
-                var json = JsonSerializer.Serialize(data, options);
-                File.WriteAllText(filePath, json);
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError($"Error saving {filePath}", ex);
+                try
+                {
+                    var json = JsonSerializer.Serialize(data, WriteOptions);
+                    File.WriteAllText(filePath, json);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError($"Error saving {filePath}", ex);
+                }
             }
         }
     }

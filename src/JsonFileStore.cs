@@ -15,7 +15,7 @@ namespace AgentSupervisor
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError($"Error loading {filePath}: {ex.Message}", ex);
+                    Logger.LogError($"Error loading {filePath}", ex);
                 }
             }
             return defaultValue;
@@ -35,7 +35,7 @@ namespace AgentSupervisor
             }
             catch (Exception ex)
             {
-                Logger.LogError($"Error saving {filePath}: {ex.Message}", ex);
+                Logger.LogError($"Error saving {filePath}", ex);
             }
         }
     }

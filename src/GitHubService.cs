@@ -52,10 +52,10 @@ namespace AgentSupervisor
         private async Task<HttpResponseMessage> SendTimedGetAsync(string url)
         {
             Logger.LogInfo($"HTTP GET {url}");
-            var startTime = DateTime.UtcNow;
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             var response = await _httpClient.GetAsync(url);
-            var elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
-            Logger.LogInfo($"HTTP Response: {(int)response.StatusCode} {response.StatusCode} | {elapsed:F0}ms | {url}");
+            stopwatch.Stop();
+            Logger.LogInfo($"HTTP Response: {(int)response.StatusCode} {response.StatusCode} | {stopwatch.ElapsedMilliseconds}ms | {url}");
             return response;
         }
 

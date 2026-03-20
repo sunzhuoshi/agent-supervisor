@@ -10,6 +10,8 @@ namespace AgentSupervisor
     {
         private readonly string _filePath;
         private readonly object _lockObject = new object();
+        private static readonly JsonSerializerOptions SerializerOptions =
+            new JsonSerializerOptions { WriteIndented = true };
 
         public JsonFileStore(string filePath)
         {
@@ -29,7 +31,7 @@ namespace AgentSupervisor
                     try
                     {
                         var json = File.ReadAllText(_filePath);
-                        return JsonSerializer.Deserialize<T>(json) ?? defaultFactory();
+                        return JsonSerializer.Deserialize<T>(json, SerializerOptions) ?? defaultFactory();
                     }
                     catch (Exception ex)
                     {
@@ -49,8 +51,7 @@ namespace AgentSupervisor
             {
                 try
                 {
-                    var options = new JsonSerializerOptions { WriteIndented = true };
-                    var json = JsonSerializer.Serialize(data, options);
+                    var json = JsonSerializer.Serialize(data, SerializerOptions);
                     File.WriteAllText(_filePath, json);
                 }
                 catch (Exception ex)

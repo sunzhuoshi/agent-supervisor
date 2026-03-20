@@ -32,7 +32,7 @@ All commits and pull request titles must follow the [Conventional Commits](https
 
 ### Rules
 
-- The description must be in lowercase and not end with a period.
+- The description must be in lowercase (except for proper nouns and acronyms) and not end with a period.
 - Use the imperative mood in the description (e.g., "add feature" not "added feature").
 - A `!` after the type/scope indicates a **breaking change** (e.g., `feat!: drop support for X`).
 - Breaking changes must also include a footer starting with `BREAKING CHANGE:`.
@@ -44,7 +44,7 @@ feat(notifications): add balloon tip for new PR reviews
 fix(github): handle rate limit errors gracefully
 docs: update README with proxy configuration steps
 chore: bump .NET SDK to 8.0.4
-ci: add codeql security scanning workflow
+ci: add CodeQL security scanning workflow
 refactor(settings): extract registry helpers into Configuration class
 feat!: remove legacy JSON config file support
 

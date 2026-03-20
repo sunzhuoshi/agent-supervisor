@@ -1,50 +1,22 @@
-using System.Text.Json;
-
 namespace AgentSupervisor
 {
     public class ReviewRequestHistory
     {
         private readonly HashSet<string> _seenRequestIds;
         private readonly object _lockObject = new object();
+        private readonly JsonFilePersistence<List<string>> _persistence;
 
         public ReviewRequestHistory()
         {
-            _seenRequestIds = Load();
-        }
-
-        private HashSet<string> Load()
-        {
-            if (File.Exists(Constants.ReviewRequestHistoryFileName))
-            {
-                try
-                {
-                    var json = File.ReadAllText(Constants.ReviewRequestHistoryFileName);
-                    var list = JsonSerializer.Deserialize<List<string>>(json);
-                    return list != null ? new HashSet<string>(list) : new HashSet<string>();
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError($"Error loading review request history: {ex.Message}", ex);
-                }
-            }
-            return new HashSet<string>();
+            _persistence = new JsonFilePersistence<List<string>>(Constants.ReviewRequestHistoryFileName);
+            _seenRequestIds = new HashSet<string>(_persistence.Load(new List<string>()));
         }
 
         private void Save()
         {
             lock (_lockObject)
             {
-                try
-                {
-                    var options = new JsonSerializerOptions { WriteIndented = true };
-                    var list = _seenRequestIds.ToList();
-                    var json = JsonSerializer.Serialize(list, options);
-                    File.WriteAllText(Constants.ReviewRequestHistoryFileName, json);
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError($"Error saving review request history: {ex.Message}", ex);
-                }
+                _persistence.Save(_seenRequestIds.ToList());
             }
         }
 

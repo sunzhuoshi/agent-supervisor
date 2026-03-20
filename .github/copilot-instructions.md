@@ -7,7 +7,7 @@ All commits and pull request titles must follow the [Conventional Commits](https
 ### Format
 
 ```
-<type>[optional scope]: <description>
+<type>[(<scope>)][!]: <description>
 
 [optional body]
 
@@ -44,7 +44,7 @@ feat(notifications): add balloon tip for new PR reviews
 fix(github): handle rate limit errors gracefully
 docs: update README with proxy configuration steps
 chore: bump .NET SDK to 8.0.4
-ci: add CodeQL security scanning workflow
+ci: add codeql security scanning workflow
 refactor(settings): extract registry helpers into Configuration class
 feat!: remove legacy JSON config file support
 

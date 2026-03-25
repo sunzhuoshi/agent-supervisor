@@ -1,6 +1,5 @@
 using System;
 using System.Drawing;
-using System.IO;
 using System.Windows.Forms;
 using AgentSupervisor.Models;
 
@@ -209,49 +208,29 @@ namespace AgentSupervisor
 
         private Icon CreateCustomIcon()
         {
-            try
+            return IconLoader.LoadWithFallback(Constants.AppIconFileName, Constants.SystemTrayIconSize, size =>
             {
-                // Load app_icon.ico for the system tray
-                var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.IconResourcePath, Constants.AppIconFileName);
-                if (File.Exists(iconPath))
-                {
-                    var icon = new Icon(iconPath, Constants.SystemTrayIconSize, Constants.SystemTrayIconSize);
-                    Logger.LogInfo("Custom icon loaded from app_icon.ico");
-                    return icon;
-                }
-                else
-                {
-                    Logger.LogWarning($"app_icon.ico not found at {iconPath}, using fallback");
-                    // Fallback: Create a simple custom icon with GitHub Copilot colors
-                    using var bitmap = new Bitmap(Constants.SystemTrayIconSize, Constants.SystemTrayIconSize);
-                    using var graphics = Graphics.FromImage(bitmap);
-                    
-                    // Fill with a gradient from purple to blue (GitHub Copilot colors)
-                    using var brush = new System.Drawing.Drawing2D.LinearGradientBrush(
-                        new Rectangle(0, 0, Constants.SystemTrayIconSize, Constants.SystemTrayIconSize),
-                        Color.FromArgb(Constants.IconGradientStartColorArgb),
-                        Color.FromArgb(Constants.IconGradientEndColorArgb),
-                        Constants.IconGradientAngle);
-                    
-                    graphics.FillEllipse(brush, 0, 0, Constants.SystemTrayIconSize, Constants.SystemTrayIconSize);
-                    
-                    // Draw a simple "A" in white for "Agent"
-                    using var font = new Font("Arial", 9, FontStyle.Bold);
-                    using var textBrush = new SolidBrush(Color.White);
-                    graphics.DrawString("A", font, textBrush, -1, 1);
-                    
-                    var hIcon = bitmap.GetHicon();
-                    var icon = Icon.FromHandle(hIcon);
-                    
-                    Logger.LogInfo("Fallback icon created");
-                    return icon;
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError("Failed to create custom icon, using default", ex);
-                return SystemIcons.Information;
-            }
+                // Fallback: Create a simple custom icon with GitHub Copilot colors
+                using var bitmap = new Bitmap(size, size);
+                using var graphics = Graphics.FromImage(bitmap);
+
+                // Fill with a gradient from purple to blue (GitHub Copilot colors)
+                using var brush = new System.Drawing.Drawing2D.LinearGradientBrush(
+                    new Rectangle(0, 0, size, size),
+                    Color.FromArgb(Constants.IconGradientStartColorArgb),
+                    Color.FromArgb(Constants.IconGradientEndColorArgb),
+                    Constants.IconGradientAngle);
+
+                graphics.FillEllipse(brush, 0, 0, size, size);
+
+                // Draw a simple "A" in white for "Agent"
+                using var font = new Font("Arial", 9, FontStyle.Bold);
+                using var textBrush = new SolidBrush(Color.White);
+                graphics.DrawString("A", font, textBrush, -1, 1);
+
+                Logger.LogInfo("Fallback icon created");
+                return IconLoader.CreateIconFromBitmap(bitmap);
+            });
         }
 
         public void ShowUpdateNotification(UpdateInfo updateInfo)

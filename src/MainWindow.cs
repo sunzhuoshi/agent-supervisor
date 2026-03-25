@@ -1,6 +1,4 @@
-using System;
 using System.Drawing;
-using System.IO;
 using System.Windows.Forms;
 using AgentSupervisor.Models;
 
@@ -30,18 +28,7 @@ namespace AgentSupervisor
             _reviewRequestService.Subscribe(this);
             
             // Load and set the application icon
-            try
-            {
-                var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.IconResourcePath, Constants.AppIconFileName);
-                if (File.Exists(iconPath))
-                {
-                    Icon = new Icon(iconPath);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError("Failed to load application icon", ex);
-            }
+            Icon = IconLoader.TryLoadDefault(Constants.AppIconFileName) ?? SystemIcons.Application;
             
             // Prevent closing - minimize to taskbar instead
             FormClosing += OnFormClosing;

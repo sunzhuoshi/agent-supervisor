@@ -104,8 +104,6 @@ namespace AgentSupervisor
                     if (entry.UpdatedAt > existing.UpdatedAt)
                     {
                         existing.UpdatedAt = entry.UpdatedAt;
-                        existing.IsNew = true;
-                        notifyNeeded = true;
                         saveNeeded = true;
                     }
                     

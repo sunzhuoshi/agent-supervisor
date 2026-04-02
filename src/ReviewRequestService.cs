@@ -108,6 +108,20 @@ namespace AgentSupervisor
                         notifyNeeded = true;
                         saveNeeded = true;
                     }
+                    
+                    // Check if commit count has changed (increase or decrease due to new commits,
+                    // force push, or rebase are all meaningful changes worth notifying about)
+                    if (entry.CommitCount > 0 && existing.CommitCount != entry.CommitCount)
+                    {
+                        bool shouldNotify = existing.CommitCount > 0; // Only notify if we had a previous known count
+                        existing.CommitCount = entry.CommitCount;
+                        if (shouldNotify)
+                        {
+                            existing.IsNew = true;
+                            notifyNeeded = true;
+                        }
+                        saveNeeded = true;
+                    }
                 }
                 else
                 {

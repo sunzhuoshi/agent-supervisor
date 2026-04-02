@@ -104,6 +104,43 @@ namespace AgentSupervisor
             return false;
         }
 
+        /// <summary>
+        /// Fetches the commit count for a given pull request.
+        /// </summary>
+        private async Task<int> GetPullRequestCommitCountAsync(string repoFullName, int prNumber)
+        {
+            try
+            {
+                var url = $"{Constants.GitHubApiBaseUrl}/repos/{repoFullName}/pulls/{prNumber}";
+                Logger.LogInfo($"HTTP GET {url}");
+
+                var startTime = DateTime.UtcNow;
+                var response = await _httpClient.GetAsync(url);
+                var elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
+
+                Logger.LogInfo($"HTTP Response: {(int)response.StatusCode} {response.StatusCode} | {elapsed:F0}ms | {url}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return 0;
+                }
+
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+
+                if (doc.RootElement.TryGetProperty("commits", out var commitsElement))
+                {
+                    return commitsElement.GetInt32();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Error fetching commit count for {repoFullName}#{prNumber}", ex);
+            }
+
+            return 0;
+        }
+
         public async Task<List<PullRequestReview>> GetPendingReviewsAsync()
         {
             var reviews = new List<PullRequestReview>();
@@ -190,6 +227,7 @@ namespace AgentSupervisor
                         // Add to ReviewRequestService if available
                         if (_reviewRequestService != null)
                         {
+                            var commitCount = await GetPullRequestCommitCountAsync(repoFullName, prNumber);
                             var entry = new ReviewRequestEntry
                             {
                                 Id = requestId,
@@ -199,7 +237,8 @@ namespace AgentSupervisor
                                 Title = title,
                                 Author = authorLogin,
                                 CreatedAt = createdAt,
-                                UpdatedAt = updatedAt
+                                UpdatedAt = updatedAt,
+                                CommitCount = commitCount
                             };
                             _reviewRequestService.AddOrUpdate(entry);
                         }

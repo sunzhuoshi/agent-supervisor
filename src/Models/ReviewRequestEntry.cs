@@ -34,6 +34,9 @@ namespace AgentSupervisor.Models
         [JsonPropertyName("added_at")]
         public DateTime AddedAt { get; set; }
 
+        [JsonPropertyName("commit_count")]
+        public int CommitCount { get; set; }
+
         /// <summary>
         /// Creates a shallow clone of this entry for use in UI snapshots.
         /// </summary>
@@ -50,7 +53,8 @@ namespace AgentSupervisor.Models
                 CreatedAt = CreatedAt,
                 UpdatedAt = UpdatedAt,
                 IsNew = IsNew,
-                AddedAt = AddedAt
+                AddedAt = AddedAt,
+                CommitCount = CommitCount
             };
         }
     }

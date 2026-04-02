@@ -55,13 +55,7 @@ namespace AgentSupervisor
             try
             {
                 var url = $"{Constants.GitHubApiBaseUrl}/user";
-                Logger.LogInfo($"HTTP GET {url}");
-                
-                var startTime = DateTime.UtcNow;
-                var response = await _httpClient.GetAsync(url);
-                var elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
-                
-                Logger.LogInfo($"HTTP Response: {(int)response.StatusCode} {response.StatusCode} | {elapsed:F0}ms | {url}");
+                var response = await GetWithLoggingAsync(url);
                 
                 response.EnsureSuccessStatusCode();
                 
@@ -121,13 +115,7 @@ namespace AgentSupervisor
 
                 // Get all pull requests where the user is requested as a reviewer
                 var searchUrl = $"{Constants.GitHubApiBaseUrl}/search/issues?q=type:pr+review-requested:{username}+state:open&sort=updated&per_page={Constants.GitHubSearchMaxResults}";
-                Logger.LogInfo($"HTTP GET {searchUrl}");
-                
-                var startTime = DateTime.UtcNow;
-                var response = await _httpClient.GetAsync(searchUrl);
-                var elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
-                
-                Logger.LogInfo($"HTTP Response: {(int)response.StatusCode} {response.StatusCode} | {elapsed:F0}ms | {searchUrl}");
+                var response = await GetWithLoggingAsync(searchUrl);
                 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -267,12 +255,7 @@ namespace AgentSupervisor
             {
                 Logger.LogInfo("Checking for latest release from GitHub");
                 var url = $"{Constants.GitHubApiBaseUrl}/repos/{owner}/{repo}/releases/latest";
-                
-                var startTime = DateTime.UtcNow;
-                var response = await _httpClient.GetAsync(url);
-                var elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
-                
-                Logger.LogInfo($"HTTP Response: {(int)response.StatusCode} {response.StatusCode} | {elapsed:F0}ms | {url}");
+                var response = await GetWithLoggingAsync(url);
                 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -334,6 +317,16 @@ namespace AgentSupervisor
                 Logger.LogError("Error fetching latest release", ex);
                 return null;
             }
+        }
+
+        private async Task<HttpResponseMessage> GetWithLoggingAsync(string url)
+        {
+            Logger.LogInfo($"HTTP GET {url}");
+            var startTime = DateTime.UtcNow;
+            var response = await _httpClient.GetAsync(url);
+            var elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
+            Logger.LogInfo($"HTTP Response: {(int)response.StatusCode} {response.StatusCode} | {elapsed:F0}ms | {url}");
+            return response;
         }
     }
 }

@@ -225,11 +225,12 @@ namespace AgentSupervisor
                         var requestId = $"{repoFullName}#{prNumber}";
                         currentRequestIds.Add(requestId);
                         
-                        // Add to ReviewRequestService if available, fetching commit count with an additional API call per PR
+                        // Add to ReviewRequestService if available, fetching commit count with an additional API call per tracked PR
                         if (_reviewRequestService != null)
                         {
-                            // Only fetch commit count for already-tracked PRs to avoid an extra API call
-                            // per PR on every poll; new PRs are marked IsNew on first add regardless.
+                            // Fetch commit count only for already-tracked PRs. This still makes one extra
+                            // commit-count API call per tracked PR on each poll; new/untracked PRs skip
+                            // that call on first add because they are marked IsNew regardless.
                             int? commitCount = _reviewRequestService.Contains(requestId)
                                 ? await GetPullRequestCommitCountAsync(repoFullName, prNumber)
                                 : null;

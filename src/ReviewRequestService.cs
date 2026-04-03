@@ -202,6 +202,14 @@ namespace AgentSupervisor
             }
         }
 
+        public DateTime? GetUpdatedAt(string requestId)
+        {
+            lock (_lockObject)
+            {
+                return _requests.FirstOrDefault(r => r.Id == requestId)?.UpdatedAt;
+            }
+        }
+
         public int GetNewCount()
         {
             lock (_lockObject)

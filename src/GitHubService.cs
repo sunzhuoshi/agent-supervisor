@@ -106,8 +106,9 @@ namespace AgentSupervisor
 
         /// <summary>
         /// Fetches the commit count for a given pull request.
+        /// Returns null if the count could not be determined.
         /// </summary>
-        private async Task<int> GetPullRequestCommitCountAsync(string repoFullName, int prNumber)
+        private async Task<int?> GetPullRequestCommitCountAsync(string repoFullName, int prNumber)
         {
             try
             {
@@ -122,7 +123,7 @@ namespace AgentSupervisor
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    return 0;
+                    return null;
                 }
 
                 var json = await response.Content.ReadAsStringAsync();
@@ -138,7 +139,7 @@ namespace AgentSupervisor
                 Logger.LogError($"Error fetching commit count for {repoFullName}#{prNumber}", ex);
             }
 
-            return 0;
+            return null;
         }
 
         public async Task<List<PullRequestReview>> GetPendingReviewsAsync()
@@ -229,9 +230,9 @@ namespace AgentSupervisor
                         {
                             // Only fetch commit count for already-tracked PRs to avoid an extra API call
                             // per PR on every poll; new PRs are marked IsNew on first add regardless.
-                            var commitCount = _reviewRequestService.Contains(requestId)
+                            int? commitCount = _reviewRequestService.Contains(requestId)
                                 ? await GetPullRequestCommitCountAsync(repoFullName, prNumber)
-                                : 0;
+                                : null;
                             var entry = new ReviewRequestEntry
                             {
                                 Id = requestId,

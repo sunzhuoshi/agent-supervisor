@@ -187,8 +187,8 @@ namespace AgentSupervisor
                 {
                     try
                     {
-                        // Extract all necessary data directly from the search result
-                        // This avoids making an additional API call for each PR
+                        // Extract all necessary data directly from the search result;
+                        // for tracked PRs one additional API call per PR is made to fetch commit count
                         
                         // Get repository full name from repository_url
                         // Format: "https://api.github.com/repos/owner/repo"
@@ -227,7 +227,11 @@ namespace AgentSupervisor
                         // Add to ReviewRequestService if available
                         if (_reviewRequestService != null)
                         {
-                            var commitCount = await GetPullRequestCommitCountAsync(repoFullName, prNumber);
+                            // Only fetch commit count for already-tracked PRs to avoid an extra API call
+                            // per PR on every poll; new PRs are marked IsNew on first add regardless.
+                            var commitCount = _reviewRequestService.Contains(requestId)
+                                ? await GetPullRequestCommitCountAsync(repoFullName, prNumber)
+                                : 0;
                             var entry = new ReviewRequestEntry
                             {
                                 Id = requestId,

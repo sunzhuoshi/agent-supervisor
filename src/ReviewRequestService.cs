@@ -198,6 +198,14 @@ namespace AgentSupervisor
             }
         }
 
+        public bool Contains(string requestId)
+        {
+            lock (_lockObject)
+            {
+                return _requests.Any(r => r.Id == requestId);
+            }
+        }
+
         public int GetNewCount()
         {
             lock (_lockObject)

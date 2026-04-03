@@ -108,7 +108,7 @@ namespace AgentSupervisor
                     }
                     
                     // Check if commit count has changed (increase or decrease due to new commits,
-                    // force push, or rebase are all meaningful changes worth notifying about)
+                    // force-pushes or rebases are all meaningful changes worth notifying about)
                     if (entry.CommitCount.HasValue && existing.CommitCount != entry.CommitCount)
                     {
                         bool shouldNotify = existing.CommitCount.HasValue; // Only notify if we had a previous known count

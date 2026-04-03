@@ -225,7 +225,7 @@ namespace AgentSupervisor
                         var requestId = $"{repoFullName}#{prNumber}";
                         currentRequestIds.Add(requestId);
                         
-                        // Add to ReviewRequestService if available
+                        // Add to ReviewRequestService if available, fetching commit count with an additional API call per PR
                         if (_reviewRequestService != null)
                         {
                             // Only fetch commit count for already-tracked PRs to avoid an extra API call

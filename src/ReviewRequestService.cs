@@ -194,14 +194,6 @@ namespace AgentSupervisor
             }
         }
 
-        public bool Contains(string requestId)
-        {
-            lock (_lockObject)
-            {
-                return _requests.Any(r => r.Id == requestId);
-            }
-        }
-
         public DateTime? GetUpdatedAt(string requestId)
         {
             lock (_lockObject)

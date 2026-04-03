@@ -116,7 +116,7 @@ namespace AgentSupervisor
                 Logger.LogInfo($"HTTP GET {url}");
 
                 var startTime = DateTime.UtcNow;
-                var response = await _httpClient.GetAsync(url);
+                using var response = await _httpClient.GetAsync(url);
                 var elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
 
                 Logger.LogInfo($"HTTP Response: {(int)response.StatusCode} {response.StatusCode} | {elapsed:F0}ms | {url}");

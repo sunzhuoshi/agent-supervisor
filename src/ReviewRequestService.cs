@@ -80,7 +80,6 @@ namespace AgentSupervisor
 
         public void AddOrUpdate(ReviewRequestEntry entry)
         {
-            bool notifyNeeded = false;
             bool saveNeeded = false;
             lock (_lockObject)
             {
@@ -111,13 +110,11 @@ namespace AgentSupervisor
                     // force-pushes or rebases are all meaningful changes worth notifying about)
                     if (entry.CommitCount.HasValue && existing.CommitCount != entry.CommitCount)
                     {
-                        bool shouldNotify = existing.CommitCount.HasValue; // Only notify if we had a previous known count
-                        existing.CommitCount = entry.CommitCount;
-                        if (shouldNotify)
+                        if (existing.CommitCount.HasValue) // Only mark IsNew if we had a previous known count
                         {
                             existing.IsNew = true;
-                            notifyNeeded = true;
                         }
+                        existing.CommitCount = entry.CommitCount;
                         saveNeeded = true;
                     }
                 }
@@ -127,7 +124,6 @@ namespace AgentSupervisor
                     entry.IsNew = true;
                     entry.AddedAt = DateTime.UtcNow;
                     _requests.Add(entry);
-                    notifyNeeded = true;
                     saveNeeded = true;
                 }
                 
@@ -137,7 +133,7 @@ namespace AgentSupervisor
                 }
             }
             
-            if (notifyNeeded)
+            if (saveNeeded)
             {
                 NotifyObservers();
             }

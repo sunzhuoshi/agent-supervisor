@@ -80,7 +80,6 @@ namespace AgentSupervisor
 
         public void AddOrUpdate(ReviewRequestEntry entry)
         {
-            bool notifyNeeded = false;
             bool saveNeeded = false;
             lock (_lockObject)
             {
@@ -104,8 +103,15 @@ namespace AgentSupervisor
                     if (entry.UpdatedAt > existing.UpdatedAt)
                     {
                         existing.UpdatedAt = entry.UpdatedAt;
+                        saveNeeded = true;
+                    }
+                    
+                    // Check if commit count has changed (increase or decrease due to new commits,
+                    // force-pushes or rebases are all meaningful changes worth notifying about)
+                    if (entry.CommitCount.HasValue && existing.CommitCount != entry.CommitCount)
+                    {
                         existing.IsNew = true;
-                        notifyNeeded = true;
+                        existing.CommitCount = entry.CommitCount;
                         saveNeeded = true;
                     }
                 }
@@ -115,7 +121,6 @@ namespace AgentSupervisor
                     entry.IsNew = true;
                     entry.AddedAt = DateTime.UtcNow;
                     _requests.Add(entry);
-                    notifyNeeded = true;
                     saveNeeded = true;
                 }
                 
@@ -125,7 +130,7 @@ namespace AgentSupervisor
                 }
             }
             
-            if (notifyNeeded)
+            if (saveNeeded)
             {
                 NotifyObservers();
             }
@@ -183,6 +188,14 @@ namespace AgentSupervisor
             lock (_lockObject)
             {
                 return _requests.OrderByDescending(r => r.AddedAt).Select(r => r.Clone()).ToList();
+            }
+        }
+
+        public DateTime? GetUpdatedAt(string requestId)
+        {
+            lock (_lockObject)
+            {
+                return _requests.FirstOrDefault(r => r.Id == requestId)?.UpdatedAt;
             }
         }
 

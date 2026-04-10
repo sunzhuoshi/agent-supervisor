@@ -58,7 +58,7 @@ namespace AgentSupervisor
                 Logger.LogInfo($"HTTP GET {url}");
                 
                 var startTime = DateTime.UtcNow;
-                var response = await _httpClient.GetAsync(url);
+                using var response = await _httpClient.GetAsync(url);
                 var elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
                 
                 Logger.LogInfo($"HTTP Response: {(int)response.StatusCode} {response.StatusCode} | {elapsed:F0}ms | {url}");
@@ -104,6 +104,44 @@ namespace AgentSupervisor
             return false;
         }
 
+        /// <summary>
+        /// Fetches the commit count for a given pull request.
+        /// Returns null if the count could not be determined.
+        /// </summary>
+        private async Task<int?> GetPullRequestCommitCountAsync(string repoFullName, int prNumber)
+        {
+            try
+            {
+                var url = $"{Constants.GitHubApiBaseUrl}/repos/{repoFullName}/pulls/{prNumber}";
+                Logger.LogInfo($"HTTP GET {url}");
+
+                var startTime = DateTime.UtcNow;
+                using var response = await _httpClient.GetAsync(url);
+                var elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
+
+                Logger.LogInfo($"HTTP Response: {(int)response.StatusCode} {response.StatusCode} | {elapsed:F0}ms | {url}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return null;
+                }
+
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+
+                if (doc.RootElement.TryGetProperty("commits", out var commitsElement))
+                {
+                    return commitsElement.GetInt32();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Error fetching commit count for {repoFullName}#{prNumber}", ex);
+            }
+
+            return null;
+        }
+
         public async Task<List<PullRequestReview>> GetPendingReviewsAsync()
         {
             var reviews = new List<PullRequestReview>();
@@ -124,7 +162,7 @@ namespace AgentSupervisor
                 Logger.LogInfo($"HTTP GET {searchUrl}");
                 
                 var startTime = DateTime.UtcNow;
-                var response = await _httpClient.GetAsync(searchUrl);
+                using var response = await _httpClient.GetAsync(searchUrl);
                 var elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
                 
                 Logger.LogInfo($"HTTP Response: {(int)response.StatusCode} {response.StatusCode} | {elapsed:F0}ms | {searchUrl}");
@@ -150,8 +188,8 @@ namespace AgentSupervisor
                 {
                     try
                     {
-                        // Extract all necessary data directly from the search result
-                        // This avoids making an additional API call for each PR
+                        // Extract all necessary data directly from the search result;
+                        // for tracked PRs one additional API call per PR is made to fetch commit count
                         
                         // Get repository full name from repository_url
                         // Format: "https://api.github.com/repos/owner/repo"
@@ -187,9 +225,16 @@ namespace AgentSupervisor
                         var requestId = $"{repoFullName}#{prNumber}";
                         currentRequestIds.Add(requestId);
                         
-                        // Add to ReviewRequestService if available
+                        // Add to ReviewRequestService if available, fetching commit count with an additional API call per tracked PR
                         if (_reviewRequestService != null)
                         {
+                            // Fetch commit count only for already-tracked PRs whose updated_at has advanced.
+                            // This skips the extra API call when nothing has changed since the last poll,
+                            // and also skips it for new/untracked PRs (marked IsNew regardless).
+                            var storedUpdatedAt = _reviewRequestService.GetUpdatedAt(requestId);
+                            int? commitCount = storedUpdatedAt.HasValue && updatedAt > storedUpdatedAt.Value
+                                ? await GetPullRequestCommitCountAsync(repoFullName, prNumber)
+                                : null;
                             var entry = new ReviewRequestEntry
                             {
                                 Id = requestId,
@@ -199,7 +244,8 @@ namespace AgentSupervisor
                                 Title = title,
                                 Author = authorLogin,
                                 CreatedAt = createdAt,
-                                UpdatedAt = updatedAt
+                                UpdatedAt = updatedAt,
+                                CommitCount = commitCount
                             };
                             _reviewRequestService.AddOrUpdate(entry);
                         }
@@ -269,7 +315,7 @@ namespace AgentSupervisor
                 var url = $"{Constants.GitHubApiBaseUrl}/repos/{owner}/{repo}/releases/latest";
                 
                 var startTime = DateTime.UtcNow;
-                var response = await _httpClient.GetAsync(url);
+                using var response = await _httpClient.GetAsync(url);
                 var elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
                 
                 Logger.LogInfo($"HTTP Response: {(int)response.StatusCode} {response.StatusCode} | {elapsed:F0}ms | {url}");

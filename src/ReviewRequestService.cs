@@ -110,10 +110,7 @@ namespace AgentSupervisor
                     // force-pushes or rebases are all meaningful changes worth notifying about)
                     if (entry.CommitCount.HasValue && existing.CommitCount != entry.CommitCount)
                     {
-                        if (existing.CommitCount.HasValue) // Only mark IsNew if we had a previous known count
-                        {
-                            existing.IsNew = true;
-                        }
+                        existing.IsNew = true;
                         existing.CommitCount = entry.CommitCount;
                         saveNeeded = true;
                     }

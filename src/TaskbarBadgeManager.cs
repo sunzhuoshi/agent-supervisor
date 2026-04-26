@@ -1,7 +1,6 @@
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.IO;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 
@@ -165,24 +164,17 @@ namespace AgentSupervisor
         private void DrawBaseIcon(Graphics graphics)
         {
             // Load and draw the app_icon.ico as base
-            try
+            var baseIcon = IconLoader.TryLoad(Constants.AppIconFileName, Constants.TaskbarIconSize);
+            if (baseIcon != null)
             {
-                var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "res", "app_icon.ico");
-                if (File.Exists(iconPath))
+                using (baseIcon)
                 {
-                    using var baseIcon = new Icon(iconPath, 32, 32);
                     using var baseIconBitmap = baseIcon.ToBitmap();
-                    graphics.DrawImage(baseIconBitmap, 0, 0, 32, 32);
-                }
-                else
-                {
-                    Logger.LogWarning($"app_icon.ico not found at {iconPath}, using fallback");
-                    DrawFallbackIcon(graphics);
+                    graphics.DrawImage(baseIconBitmap, 0, 0, Constants.TaskbarIconSize, Constants.TaskbarIconSize);
                 }
             }
-            catch (Exception ex)
+            else
             {
-                Logger.LogError("Failed to load app_icon.ico", ex);
                 DrawFallbackIcon(graphics);
             }
         }

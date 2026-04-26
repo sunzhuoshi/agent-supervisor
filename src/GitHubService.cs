@@ -341,22 +341,8 @@ namespace AgentSupervisor
                     HtmlUrl = root.GetProperty("html_url").GetString() ?? ""
                 };
                 
-                if (root.TryGetProperty("published_at", out var published))
-                {
-                    var publishedStr = published.GetString();
-                    if (!string.IsNullOrEmpty(publishedStr) && DateTime.TryParse(publishedStr, out var publishedAt))
-                    {
-                        releaseInfo.PublishedAt = publishedAt;
-                    }
-                    else
-                    {
-                        releaseInfo.PublishedAt = DateTime.UtcNow;
-                    }
-                }
-                else
-                {
-                    releaseInfo.PublishedAt = DateTime.UtcNow;
-                }
+                TryParseJsonDateTime(root, "published_at", out var publishedAt);
+                releaseInfo.PublishedAt = publishedAt;
 
                 // Extract assets information
                 if (root.TryGetProperty("assets", out var assetsArray))
